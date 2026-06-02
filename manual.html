@@ -1,0 +1,815 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Manual do Usuário — SmokeDistance</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Crimson+Pro:wght@300;400;600&family=Space+Grotesk:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --fire:#FF6500;
+  --gold:#C8860A;
+  --gold-light:#E8A832;
+  --deep:#0A0400;
+  --surface:#130700;
+  --card:#1A0900;
+  --card2:#200E00;
+  --cream:#F5EDD8;
+  --muted:#8A7060;
+  --border:#2A1500;
+  --green:#2E7D32;
+  --blue:#1565C0;
+  --orange:#E65100;
+}
+html{scroll-behavior:smooth}
+body{
+  background:var(--deep);
+  color:var(--cream);
+  font-family:'Crimson Pro',Georgia,serif;
+  font-size:17px;
+  line-height:1.75;
+}
+
+/* NAV */
+nav{
+  position:fixed;top:0;left:0;right:0;z-index:100;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:1rem 3rem;
+  background:rgba(10,4,0,0.95);
+  border-bottom:1px solid var(--border);
+  backdrop-filter:blur(10px);
+}
+.nav-logo{font-family:'Cinzel',serif;font-size:1.1rem;font-weight:700;color:var(--gold-light);text-decoration:none;letter-spacing:0.1em;}
+.nav-logo span{color:var(--fire)}
+.nav-back{font-family:'Space Grotesk',sans-serif;font-size:0.8rem;color:var(--muted);text-decoration:none;letter-spacing:0.08em;text-transform:uppercase;transition:color 0.2s;}
+.nav-back:hover{color:var(--cream)}
+
+/* LAYOUT */
+.container{max-width:900px;margin:0 auto;padding:7rem 2rem 4rem;}
+
+/* COVER */
+.cover{
+  text-align:center;padding:4rem 0 5rem;
+  border-bottom:1px solid var(--border);
+  margin-bottom:4rem;
+}
+.cover-badge{
+  display:inline-block;
+  font-family:'Space Grotesk',sans-serif;
+  font-size:0.72rem;font-weight:500;
+  letter-spacing:0.2em;text-transform:uppercase;
+  color:var(--gold);
+  border:1px solid rgba(200,134,10,0.3);
+  padding:0.35rem 1rem;border-radius:2px;
+  margin-bottom:2rem;
+}
+.cover h1{
+  font-family:'Cinzel',serif;
+  font-size:clamp(2rem,5vw,3.5rem);
+  font-weight:700;line-height:1.1;
+  margin-bottom:1rem;
+}
+.cover h1 em{font-style:normal;color:var(--fire);}
+.cover-sub{font-size:1.1rem;font-weight:300;color:rgba(245,237,216,0.6);max-width:500px;margin:0 auto 2rem;}
+.cover-meta{
+  display:flex;gap:2rem;justify-content:center;flex-wrap:wrap;
+  font-family:'Space Grotesk',sans-serif;
+  font-size:0.8rem;color:var(--muted);
+  letter-spacing:0.06em;
+}
+
+/* ÍNDICE */
+.toc{
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:4px;
+  padding:2rem 2.5rem;
+  margin-bottom:4rem;
+}
+.toc h2{
+  font-family:'Cinzel',serif;font-size:1rem;font-weight:600;
+  color:var(--gold-light);letter-spacing:0.08em;
+  margin-bottom:1.2rem;
+}
+.toc ol{list-style:none;counter-reset:toc;}
+.toc li{
+  counter-increment:toc;
+  font-family:'Space Grotesk',sans-serif;
+  font-size:0.88rem;font-weight:400;
+  border-bottom:1px solid var(--border);
+  padding:0.5rem 0;
+}
+.toc li:last-child{border-bottom:none}
+.toc li::before{
+  content:counter(toc,decimal-leading-zero) " — ";
+  color:var(--fire);font-weight:600;
+}
+.toc a{color:var(--cream);text-decoration:none;transition:color 0.2s;}
+.toc a:hover{color:var(--gold-light)}
+
+/* SEÇÕES */
+.section{margin-bottom:5rem;padding-top:1rem;}
+.section-label{
+  font-family:'Space Grotesk',sans-serif;
+  font-size:0.7rem;font-weight:600;
+  letter-spacing:0.22em;text-transform:uppercase;
+  color:var(--fire);margin-bottom:0.6rem;display:block;
+}
+.section h2{
+  font-family:'Cinzel',serif;
+  font-size:clamp(1.4rem,3vw,2rem);
+  font-weight:700;
+  color:var(--cream);
+  margin-bottom:1.5rem;
+  padding-bottom:0.8rem;
+  border-bottom:1px solid var(--border);
+}
+.section h3{
+  font-family:'Cinzel',serif;
+  font-size:1.1rem;font-weight:600;
+  color:var(--gold-light);
+  margin:2rem 0 0.8rem;
+}
+.section p{
+  font-size:1rem;font-weight:300;
+  color:rgba(245,237,216,0.75);
+  line-height:1.8;margin-bottom:1rem;
+}
+.section strong{color:var(--cream);font-weight:600;}
+
+/* STEPS */
+.steps{display:flex;flex-direction:column;gap:0;margin:1.5rem 0;border:1px solid var(--border);border-radius:4px;overflow:hidden;}
+.step-item{
+  display:flex;gap:1.5rem;
+  padding:1.5rem;
+  border-bottom:1px solid var(--border);
+  background:var(--card);
+  transition:background 0.2s;
+}
+.step-item:last-child{border-bottom:none}
+.step-item:hover{background:var(--card2)}
+.step-num{
+  font-family:'Cinzel',serif;
+  font-size:1.8rem;font-weight:700;
+  color:rgba(255,101,0,0.25);
+  min-width:3rem;line-height:1;
+  padding-top:0.1rem;
+}
+.step-content{}
+.step-content strong{
+  display:block;
+  font-family:'Space Grotesk',sans-serif;
+  font-size:0.9rem;font-weight:600;
+  color:var(--gold-light);
+  letter-spacing:0.04em;
+  margin-bottom:0.4rem;
+}
+.step-content p{font-size:0.92rem;margin-bottom:0;}
+
+/* BOTÕES */
+.btn-tag{
+  display:inline-block;
+  font-family:'Space Grotesk',sans-serif;
+  font-size:0.78rem;font-weight:600;
+  padding:0.25rem 0.7rem;border-radius:3px;
+  margin:0 0.2rem;vertical-align:middle;
+}
+.btn-green{background:rgba(46,125,50,0.3);color:#81C784;border:1px solid rgba(46,125,50,0.5);}
+.btn-blue{background:rgba(21,101,192,0.3);color:#90CAF9;border:1px solid rgba(21,101,192,0.5);}
+.btn-orange{background:rgba(230,81,0,0.3);color:#FFCC02;border:1px solid rgba(230,81,0,0.5);}
+.btn-red{background:rgba(183,28,28,0.3);color:#EF9A9A;border:1px solid rgba(183,28,28,0.5);}
+.btn-gray{background:rgba(80,80,80,0.3);color:#BDBDBD;border:1px solid rgba(80,80,80,0.5);}
+
+/* ALERTA */
+.alert{
+  border-left:3px solid var(--fire);
+  background:rgba(255,101,0,0.08);
+  padding:1rem 1.2rem;
+  border-radius:0 4px 4px 0;
+  margin:1.2rem 0;
+  font-size:0.93rem;
+  color:rgba(245,237,216,0.8);
+}
+.alert-title{
+  font-family:'Space Grotesk',sans-serif;
+  font-size:0.78rem;font-weight:600;
+  color:var(--fire);letter-spacing:0.1em;
+  text-transform:uppercase;margin-bottom:0.4rem;
+}
+.alert-green{border-left-color:#4CAF50;background:rgba(76,175,80,0.08);}
+.alert-green .alert-title{color:#81C784;}
+.alert-blue{border-left-color:#2196F3;background:rgba(33,150,243,0.08);}
+.alert-blue .alert-title{color:#90CAF9;}
+
+/* GRID */
+.grid-2{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1rem;margin:1.5rem 0;}
+.card{
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:4px;
+  padding:1.5rem;
+}
+.card h4{
+  font-family:'Space Grotesk',sans-serif;
+  font-size:0.88rem;font-weight:600;
+  color:var(--gold-light);
+  margin-bottom:0.6rem;
+  letter-spacing:0.04em;
+}
+.card ul{list-style:none;display:flex;flex-direction:column;gap:0.3rem;}
+.card ul li{
+  font-size:0.88rem;font-weight:300;
+  color:rgba(245,237,216,0.65);
+  padding-left:1rem;position:relative;
+}
+.card ul li::before{content:'→';position:absolute;left:0;color:var(--fire);font-size:0.8rem;}
+
+/* TABLE */
+table{width:100%;border-collapse:collapse;margin:1.5rem 0;font-size:0.88rem;}
+th{
+  font-family:'Space Grotesk',sans-serif;
+  font-size:0.72rem;font-weight:600;
+  letter-spacing:0.1em;text-transform:uppercase;
+  color:var(--muted);
+  text-align:left;
+  padding:0.6rem 1rem;
+  border-bottom:1px solid var(--border);
+}
+td{
+  padding:0.7rem 1rem;
+  border-bottom:1px solid rgba(42,21,0,0.5);
+  color:rgba(245,237,216,0.7);
+  font-weight:300;
+}
+tr:hover td{background:rgba(255,101,0,0.04);}
+
+/* DIVIDER */
+hr{border:none;border-top:1px solid var(--border);margin:3rem 0;}
+
+/* FOOTER */
+footer{
+  text-align:center;
+  padding:3rem 2rem;
+  border-top:1px solid var(--border);
+  font-family:'Space Grotesk',sans-serif;
+  font-size:0.8rem;
+  color:var(--muted);
+}
+
+@media(max-width:600px){
+  nav{padding:1rem 1.5rem}
+  .container{padding:6rem 1.2rem 3rem}
+  .toc{padding:1.5rem}
+  .step-item{flex-direction:column;gap:0.5rem}
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="index.html" class="nav-logo">Smoke<span>Distance</span></a>
+  <a href="index.html" class="nav-back">← Voltar ao Site</a>
+</nav>
+
+<div class="container">
+
+  <!-- CAPA -->
+  <div class="cover">
+    <span class="cover-badge">Documentação Oficial</span>
+    <h1>Manual do<br><em>Usuário</em></h1>
+    <p class="cover-sub">Guia completo de operação do SmokeDistance — detecção e localização colaborativa de incêndios florestais.</p>
+    <div class="cover-meta">
+      <span>Versão 1.4.0</span>
+      <span>Junho de 2026</span>
+      <span>iOS e Android</span>
+    </div>
+  </div>
+
+  <!-- ÍNDICE -->
+  <div class="toc">
+    <h2>Índice</h2>
+    <ol>
+      <li><a href="#visao-geral">Visão Geral do App</a></li>
+      <li><a href="#primeira-vez">Primeiro Acesso</a></li>
+      <li><a href="#camera">Câmera de Campo — Travar e Enviar Foco</a></li>
+      <li><a href="#mapa">Mapa Tático</a></li>
+      <li><a href="#triangulacao">Triangulação Geodésica</a></li>
+      <li><a href="#satelites">Satélites (FIRMS / GOES / MSG)</a></li>
+      <li><a href="#propagacao">Propagação — Modelo Rothermel</a></li>
+      <li><a href="#compartilhar">Compartilhar e Alertas</a></li>
+      <li><a href="#fotos">Fototeca de Campo</a></li>
+      <li><a href="#agua">Marcadores de Água</a></li>
+      <li><a href="#offline">Modo Offline</a></li>
+      <li><a href="#configuracoes">Configurações</a></li>
+      <li><a href="#glossario">Glossário Técnico</a></li>
+    </ol>
+  </div>
+
+  <!-- 1. VISÃO GERAL -->
+  <div class="section" id="visao-geral">
+    <span class="section-label">01</span>
+    <h2>Visão Geral do App</h2>
+    <p>O SmokeDistance transforma qualquer smartphone em um sensor de campo para detecção e localização de incêndios florestais. O princípio central é a <strong>triangulação geodésica colaborativa</strong>: dois ou mais usuários em posições distintas apontam seus dispositivos para a mesma fumaça e o sistema calcula matematicamente a coordenada exata do foco.</p>
+    <p>O app combina dados de sensores embarcados do celular (GPS, bússola, barômetro, giroscópio) com imagens de satélite em tempo real (NASA FIRMS, GOES-16 e MSG) e o modelo matemático de propagação de fogo de Rothermel para fornecer uma visão completa da situação de campo.</p>
+
+    <h3>As 6 abas principais</h3>
+    <div class="grid-2">
+      <div class="card">
+        <h4>🗺️ Mapa Tático</h4>
+        <ul>
+          <li>Focos marcados em tempo real</li>
+          <li>Linhas de visada de todos os dispositivos</li>
+          <li>Pino de triangulação automática</li>
+          <li>Fontes d'água, picos, rotas</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h4>📷 Câmera de Campo</h4>
+        <ul>
+          <li>Overlay de bússola em tempo real</li>
+          <li>Travar azimute com foto automática</li>
+          <li>Envio direto ao mapa</li>
+          <li>Identificação de picos na mira</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h4>🛰️ Satélites</h4>
+        <ul>
+          <li>Focos NASA FIRMS (MODIS + VIIRS)</li>
+          <li>Imagens GOES-16 e MSG</li>
+          <li>Sobreposição no mapa</li>
+          <li>Confirmação independente</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h4>🔥 Propagação</h4>
+        <ul>
+          <li>Modelo Rothermel ROS</li>
+          <li>Direção e velocidade do fogo</li>
+          <li>Baseado em vento e vegetação</li>
+          <li>Polígono de propagação no mapa</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h4>📡 Compartilhar</h4>
+        <ul>
+          <li>Link de emergência com coordenadas</li>
+          <li>QR code para distribuição rápida</li>
+          <li>Envio via WhatsApp ou e-mail</li>
+          <li>Contatos de emergência pré-configurados</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h4>⚙️ Configurações</h4>
+        <ul>
+          <li>Modo escuro / claro</li>
+          <li>Calibração da bússola</li>
+          <li>ID do dispositivo</li>
+          <li>Versão do app</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. PRIMEIRO ACESSO -->
+  <div class="section" id="primeira-vez">
+    <span class="section-label">02</span>
+    <h2>Primeiro Acesso</h2>
+    <p>Ao abrir o app pela primeira vez, o SmokeDistance solicita as permissões necessárias para funcionar. Todas são obrigatórias para o funcionamento completo.</p>
+
+    <div class="steps">
+      <div class="step-item">
+        <div class="step-num">01</div>
+        <div class="step-content">
+          <strong>Permissão de Localização</strong>
+          <p>Selecione <strong>"Permitir enquanto o app estiver em uso"</strong>. O GPS é o sensor mais crítico — sem ele nenhuma linha de observação pode ser calculada.</p>
+        </div>
+      </div>
+      <div class="step-item">
+        <div class="step-num">02</div>
+        <div class="step-content">
+          <strong>Permissão de Câmera</strong>
+          <p>Necessária para a câmera de campo e captura de fotos geolocalizadas. Selecione <strong>"Permitir"</strong>.</p>
+        </div>
+      </div>
+      <div class="step-item">
+        <div class="step-num">03</div>
+        <div class="step-content">
+          <strong>Permissão de Notificações</strong>
+          <p>Permite receber alertas quando outros usuários marcarem focos próximos. Selecione <strong>"Permitir"</strong>.</p>
+        </div>
+      </div>
+      <div class="step-item">
+        <div class="step-num">04</div>
+        <div class="step-content">
+          <strong>Aguardar GPS</strong>
+          <p>No mapa, seu ícone de posição aparece assim que o GPS do celular adquire sinal. O marcador <span class="btn-tag btn-green">📶</span> indica o status da <strong>rede celular</strong> (internet), não do GPS — os dois são independentes. Em campo aberto o GPS adquire sinal em 5 a 30 segundos.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="alert alert-blue">
+      <div class="alert-title">💡 Dica — GPS vs Rede</div>
+      O GPS funciona por satélite e <strong>não precisa de internet</strong> para localizar você. A rede celular (📶) é necessária para sincronizar focos com outros dispositivos, carregar satélites e enviar alertas. Em áreas sem sinal de celular o app continua localizando você via GPS e salva os dados offline.
+    </div>
+  </div>
+
+  <!-- 3. CÂMERA -->
+  <div class="section" id="camera">
+    <span class="section-label">03</span>
+    <h2>Câmera de Campo — Travar e Enviar Foco</h2>
+    <p>A câmera é o coração do app. É aqui que você captura a direção exata da fumaça e envia a observação para o mapa colaborativo. O fluxo tem 3 etapas simples.</p>
+
+    <h3>Interface da câmera</h3>
+    <table>
+      <tr><th>Elemento</th><th>Descrição</th></tr>
+      <tr><td>🧭 Botão Bússola ON/OFF (topo)</td><td>Toque para ativar ou desativar o overlay de bússola visual sobreposto à câmera. <strong>O azimute em graus fica no HUD inferior esquerdo</strong>, não no topo.</td></tr>
+      <tr><td>✛ Mira verde (centro)</td><td>Crosshair de pontaria. Toque nela para identificar o pico montanhoso na direção apontada.</td></tr>
+      <tr><td>📍 HUD de dados (esquerda inferior)</td><td>Exibe GPS atual, altitude em metros e <strong>azimute em graus</strong> — este é o valor principal a observar ao apontar para a fumaça. Atualiza em tempo real conforme o celular se move.</td></tr>
+      <tr><td>+ / - (direita)</td><td>Controle de zoom digital. Alterna entre 0x e 10x.</td></tr>
+      <tr><td>🔒 Travar Foco (verde)</td><td>Trava o azimute e captura foto automaticamente. Toque novamente para destravar.</td></tr>
+      <tr><td>🗺️ Enviar ao Mapa (azul)</td><td>Ativo somente após travar. Envia a observação e a foto ao Firebase.</td></tr>
+      <tr><td>📸 Foto (laranja)</td><td>Tira foto independente e oferece publicação no mapa sem travar foco.</td></tr>
+      <tr><td>❌ (marrom)</td><td>Fecha a câmera e volta ao menu.</td></tr>
+    </table>
+
+    <h3>Passo a passo completo</h3>
+    <div class="steps">
+      <div class="step-item">
+        <div class="step-num">01</div>
+        <div class="step-content">
+          <strong>Apontar para a fumaça</strong>
+          <p>Abra a aba Câmera. Aponte o celular para a fumaça ou foco visível. Observe o azimute no HUD — ele atualiza em tempo real conforme você move o dispositivo. Aguarde estabilizar.</p>
+        </div>
+      </div>
+      <div class="step-item">
+        <div class="step-num">02</div>
+        <div class="step-content">
+          <strong>Pressionar 🔒 Travar Foco</strong>
+          <p>Quando a mira estiver alinhada com a fumaça, pressione <span class="btn-tag btn-green">🔒 Travar Foco</span>. Neste exato momento o app: (a) congela o azimute, (b) salva a posição GPS atual, (c) captura uma foto automaticamente. Uma mensagem confirma o travamento com o azimute registrado. Após travar, você pode mover o celular livremente — os dados já estão salvos.</p>
+        </div>
+      </div>
+      <div class="step-item">
+        <div class="step-num">03</div>
+        <div class="step-content">
+          <strong>Pressionar 🗺️ Enviar ao Mapa</strong>
+          <p>Com o foco travado, pressione <span class="btn-tag btn-blue">🗺️ Enviar ao Mapa</span>. O app envia para o Firebase: azimute, coordenadas GPS, altitude e a foto capturada. Em seguida, uma linha de observação colorida aparece no mapa de todos os usuários conectados, partindo da sua posição na direção do foco.</p>
+        </div>
+      </div>
+      <div class="step-item">
+        <div class="step-num">04</div>
+        <div class="step-content">
+          <strong>Confirmação do envio</strong>
+          <p>Uma mensagem exibe o azimute registrado, as coordenadas e confirma se a foto foi publicada no mapa. O botão se redefine automaticamente para uma nova observação.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="alert">
+      <div class="alert-title">⚠️ Importante</div>
+      O botão <strong>Enviar ao Mapa</strong> fica bloqueado (cinza) enquanto o foco não estiver travado. Você deve sempre <strong>Travar primeiro</strong> e depois Enviar. Isso garante que o azimute registrado é o exato no momento em que você estava apontado para a fumaça.<br><br>
+      Para <strong>cancelar e destravar</strong>, pressione novamente o botão <span class="btn-tag btn-red">🔓 Destravar</span> — o botão muda de cor e texto quando travado. Destravar descarta a foto e o azimute capturados, permitindo uma nova tentativa.
+    </div>
+
+    <h3>Identificação de picos (⛰️)</h3>
+    <p>Quando há picos cadastrados na região, uma dica aparece na tela: <em>"Toque na mira ✛ para identificar montanha"</em>. Ao tocar na mira verde, o app identifica o pico mais próximo na direção apontada (dentro de 30km e tolerância de 12°) e exibe nome, altitude e distância.</p>
+
+    <h3>Zoom</h3>
+    <p>Use os botões <strong>+</strong> e <strong>−</strong> na lateral direita para aproximar a imagem. O zoom vai de 0x a 10x. Também é possível usar o gesto de pinça (dois dedos) diretamente na tela da câmera.</p>
+  </div>
+
+  <!-- 4. MAPA -->
+  <div class="section" id="mapa">
+    <span class="section-label">04</span>
+    <h2>Mapa Tático</h2>
+    <p>O mapa é a tela central de coordenação. Exibe em tempo real todas as observações enviadas por todos os dispositivos conectados, além de fontes d'água, picos, rotas e dados satelitais.</p>
+
+    <h3>Controles superiores (barra horizontal)</h3>
+    <table>
+      <tr><th>Botão</th><th>Função</th></tr>
+      <tr><td><span class="btn-tag btn-green">🎯 Seguir</span></td><td>Centraliza o mapa na sua posição e mantém o rastreamento enquanto você se move.</td></tr>
+      <tr><td><span class="btn-tag btn-gray">🧭 Bús ON/OFF</span></td><td>Exibe ou oculta o overlay de bússola sobreposto ao mapa.</td></tr>
+      <tr><td><span class="btn-tag btn-gray">🧭 Norte / Rot. Mapa</span></td><td>Alterna entre mapa fixo no Norte e mapa que rotaciona conforme a orientação do dispositivo.</td></tr>
+      <tr><td><span class="btn-tag btn-red">🔥 Focos ON/OFF</span></td><td>Ativa ou desativa a camada WMS de focos de calor da NASA FIRMS sobre o mapa.</td></tr>
+      <tr><td><span class="btn-tag btn-orange">🔥 Satélite</span></td><td>Muda o tipo de mapa para visão satelital.</td></tr>
+      <tr><td><span class="btn-tag btn-gray">🏔️ Relevo</span></td><td>Exibe o mapa com camada de relevo e curvas de nível.</td></tr>
+      <tr><td><span class="btn-tag btn-blue">🛰️ Híbrido</span></td><td>Combina imagem satelital com rótulos de ruas e localidades.</td></tr>
+      <tr><td><span class="btn-tag btn-orange">🛣️ Rota</span></td><td>Calcula a rota até o ponto de triangulação (aparece apenas quando há triangulação ativa).</td></tr>
+    </table>
+
+    <h3>Controles inferiores</h3>
+    <table>
+      <tr><th>Botão</th><th>Função</th></tr>
+      <tr><td><span class="btn-tag btn-orange">🎯 Marcar Foco</span></td><td>Ativa o modo de marcação manual. Toque em qualquer ponto do mapa para marcar um foco naquela coordenada.</td></tr>
+      <tr><td><span class="btn-tag btn-blue">💧 Água</span></td><td>Ativa o modo de marcação de fontes d'água. Toque no mapa para adicionar um marcador azul.</td></tr>
+      <tr><td><span class="btn-tag btn-red">🗑️ Limpar</span></td><td>Exibe menu com opções: remover último foco, remover meus focos, ou limpar tudo.</td></tr>
+    </table>
+
+    <h3>Elementos visuais no mapa</h3>
+    <div class="grid-2">
+      <div class="card">
+        <h4>👁️ Marcador de observação</h4>
+        <ul>
+          <li>Círculo colorido com olho</li>
+          <li>Cada dispositivo tem uma cor única</li>
+          <li>Linha tracejada indica a direção do olhar</li>
+          <li>A linha some automaticamente após 2 horas para evitar dados desatualizados no mapa</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h4>🔥 Marcador de foco</h4>
+        <ul>
+          <li>Emoji de chamas no ponto marcado</li>
+          <li>Aparece quando enviado via câmera ou marcação manual</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h4>📍 Pino de triangulação</h4>
+        <ul>
+          <li>Aparece automaticamente quando há 2+ observações</li>
+          <li>Posição calculada pelo cruzamento das linhas</li>
+          <li>Mostrado na barra inferior com coordenadas</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h4>💧 Fontes d'água</h4>
+        <ul>
+          <li>Emoji de gota azul</li>
+          <li>Toque para ver coordenadas ou remover</li>
+          <li>Compartilhado entre todos os dispositivos</li>
+        </ul>
+      </div>
+    </div>
+
+    <h3>Barra de informações</h3>
+    <p>Na parte inferior do mapa, uma barra exibe em tempo real: suas coordenadas GPS atuais, o número de observações ativas e — quando disponível — as coordenadas calculadas pela triangulação ou a mensagem <em>"Aguardando triangulação..."</em>.</p>
+  </div>
+
+  <!-- 5. TRIANGULAÇÃO -->
+  <div class="section" id="triangulacao">
+    <span class="section-label">05</span>
+    <h2>Triangulação Geodésica</h2>
+    <p>A triangulação é o mecanismo central de localização do SmokeDistance. Ela calcula matematicamente a coordenada de um foco a partir do cruzamento de <strong>duas ou mais linhas de visada</strong> enviadas por observadores em posições distintas.</p>
+
+    <h3>Como funciona matematicamente</h3>
+    <p>Cada observação é uma semirreta que parte das coordenadas GPS do observador na direção definida pelo azimute registrado. Quando dois observadores enviam suas observações, o sistema calcula o ponto de interseção das duas semirretas usando trigonometria esférica (fórmula de Haversine para distâncias geodésicas).</p>
+
+    <div class="steps">
+      <div class="step-item">
+        <div class="step-num">A</div>
+        <div class="step-content">
+          <strong>Observador 1 envia</strong>
+          <p>Posição: Lat/Lon A. Azimute: 127°. O sistema cria a linha de visada partindo de A na direção 127°.</p>
+        </div>
+      </div>
+      <div class="step-item">
+        <div class="step-num">B</div>
+        <div class="step-content">
+          <strong>Observador 2 envia</strong>
+          <p>Posição: Lat/Lon B (diferente de A). Azimute: 063°. O sistema cria a segunda linha de visada.</p>
+        </div>
+      </div>
+      <div class="step-item">
+        <div class="step-num">C</div>
+        <div class="step-content">
+          <strong>Interseção calculada</strong>
+          <p>O algoritmo encontra o ponto mais próximo do cruzamento das duas linhas. Este ponto é exibido no mapa como o pino de triangulação com as coordenadas do foco.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="alert alert-green">
+      <div class="alert-title">✅ Boas práticas de triangulação</div>
+      Para maior precisão, os dois observadores devem estar a <strong>pelo menos 500 metros de distância um do outro</strong> e o ângulo entre as duas linhas de visada deve ser entre 30° e 150°. Ângulos muito pequenos ou muito grandes reduzem a precisão do cruzamento.
+    </div>
+
+    <h3>Apenas o último foco por dispositivo</h3>
+    <p>O sistema considera apenas a <strong>observação mais recente de cada dispositivo</strong>. Se você enviar uma segunda observação, ela substitui a anterior. Isso evita acúmulo de dados desatualizados e garante que o cálculo use as informações mais atuais de cada usuário.</p>
+  </div>
+
+  <!-- 6. SATÉLITES -->
+  <div class="section" id="satelites">
+    <span class="section-label">06</span>
+    <h2>Satélites — FIRMS / GOES / MSG</h2>
+    <p>O SmokeDistance integra dados de três sistemas de satélite para confirmação independente de focos de calor. Esses dados funcionam como uma segunda camada de validação das observações de campo.</p>
+
+    <h3>NASA FIRMS (Fire Information for Resource Management System)</h3>
+    <p>O FIRMS processa imagens dos satélites <strong>MODIS</strong> (Terra e Aqua) e <strong>VIIRS</strong> (Suomi NPP e NOAA-20) para detectar anomalias térmicas na superfície. No SmokeDistance, os focos FIRMS são exibidos como camada WMS diretamente sobre o mapa ao ativar o botão <span class="btn-tag btn-red">🔥 Focos ON</span>. A camada mostra focos detectados nas últimas 24 horas.</p>
+
+    <h3>GOES-16 (NOAA)</h3>
+    <p>O satélite geoestacionário GOES-16 cobre toda a América do Sul com imagens atualizadas a cada 5–15 minutos. Disponível na aba Satélites do app para visualização de nuvens, fumaça e focos de calor em tempo quase real.</p>
+
+    <h3>MSG (Meteosat Second Generation — EUMETSAT)</h3>
+    <p>O MSG complementa a cobertura com dados adicionais de infravermelho, especialmente úteis para detecção noturna de focos quando a fumaça não é visível.</p>
+
+    <div class="alert alert-blue">
+      <div class="alert-title">💡 Latência dos dados</div>
+      Os dados FIRMS têm latência de 3 a 6 horas após a passagem do satélite. Focos muito recentes (menos de 3h) podem não aparecer na camada ainda. Para incêndios ativos em tempo real, a triangulação por câmera é sempre mais atual que os dados satelitais.
+    </div>
+  </div>
+
+  <!-- 7. PROPAGAÇÃO -->
+  <div class="section" id="propagacao">
+    <span class="section-label">07</span>
+    <h2>Propagação — Modelo Rothermel</h2>
+    <p>A aba Propagação usa o <strong>Modelo de Rothermel</strong> (desenvolvido pelo USDA Forest Service) para calcular a velocidade e direção de espalhamento do fogo a partir do ponto de triangulação.</p>
+
+    <h3>Variáveis do modelo</h3>
+    <table>
+      <tr><th>Variável</th><th>Fonte no App</th></tr>
+      <tr><td>Velocidade do vento</td><td>API meteorológica (Open-Meteo) ou entrada manual</td></tr>
+      <tr><td>Direção do vento</td><td>API meteorológica ou bússola do dispositivo</td></tr>
+      <tr><td>Declividade do terreno</td><td>Serviço de elevação digital (DEM)</td></tr>
+      <tr><td>Tipo de vegetação</td><td>Seleção manual ou detecção por vegetação local</td></tr>
+      <tr><td>Umidade do combustível</td><td>Calculada a partir de dados de umidade relativa do ar</td></tr>
+    </table>
+
+    <h3>O que o modelo entrega</h3>
+    <p>O resultado é expresso em <strong>metros por minuto (m/min)</strong> e indica a velocidade de avanço da frente de fogo na direção predominante. O app exibe também um <strong>polígono de propagação</strong> no mapa, estimando a área atingida em diferentes intervalos de tempo (30min, 1h, 2h).</p>
+
+    <div class="alert">
+      <div class="alert-title">⚠️ Limitação</div>
+      O modelo Rothermel é uma estimativa matemática baseada em condições médias. Mudanças repentinas de vento, variações locais de vegetação ou topografia complexa podem alterar significativamente o comportamento real do fogo. Use como referência, não como previsão absoluta.
+    </div>
+  </div>
+
+  <!-- 8. COMPARTILHAR -->
+  <div class="section" id="compartilhar">
+    <span class="section-label">08</span>
+    <h2>Compartilhar e Alertas de Emergência</h2>
+    <p>A aba Compartilhar permite gerar e enviar alertas de emergência com as informações do foco detectado para contatos e autoridades.</p>
+
+    <h3>O que é incluído no alerta</h3>
+    <ul style="list-style:none;display:flex;flex-direction:column;gap:0.5rem;margin:1rem 0;">
+      <li style="padding-left:1.5rem;position:relative;font-size:0.95rem;color:rgba(245,237,216,0.75);"><span style="position:absolute;left:0;color:var(--fire);">→</span> Coordenadas GPS do foco (latitude e longitude)</li>
+      <li style="padding-left:1.5rem;position:relative;font-size:0.95rem;color:rgba(245,237,216,0.75);"><span style="position:absolute;left:0;color:var(--fire);">→</span> Link para o Google Maps com o pino exato</li>
+      <li style="padding-left:1.5rem;position:relative;font-size:0.95rem;color:rgba(245,237,216,0.75);"><span style="position:absolute;left:0;color:var(--fire);">→</span> Horário de detecção</li>
+      <li style="padding-left:1.5rem;position:relative;font-size:0.95rem;color:rgba(245,237,216,0.75);"><span style="position:absolute;left:0;color:var(--fire);">→</span> Dados meteorológicos no momento (temperatura, umidade, vento)</li>
+      <li style="padding-left:1.5rem;position:relative;font-size:0.95rem;color:rgba(245,237,216,0.75);"><span style="position:absolute;left:0;color:var(--fire);">→</span> QR Code para abertura direta no mapa</li>
+    </ul>
+
+    <h3>Contatos pré-configurados</h3>
+    <p>O app possui contatos de emergência configurados diretamente no código (Rafa — bombeiro, e Jubi — polícia ambiental), acessíveis com um toque para envio rápido via WhatsApp ou e-mail.</p>
+
+    <h3>Envio via WhatsApp</h3>
+    <p>O botão de WhatsApp abre o aplicativo diretamente com a mensagem de alerta pré-preenchida, incluindo as coordenadas e o link do mapa. Basta confirmar o envio.</p>
+  </div>
+
+  <!-- 9. FOTOTECA -->
+  <div class="section" id="fotos">
+    <span class="section-label">09</span>
+    <h2>Fototeca de Campo</h2>
+    <p>Todas as fotos capturadas pela câmera do SmokeDistance são armazenadas no Firebase Storage e aparecem como pinos no mapa, criando uma biblioteca visual geolocada de campo.</p>
+
+    <h3>Como as fotos são organizadas</h3>
+    <p>Cada foto é associada a um pino no mapa na posição exata onde foi tirada. Ao tocar em um pino de foto no mapa (ícone 📸), o app abre a <strong>Biblioteca de Campo</strong> exibindo a imagem em tela cheia com os metadados completos:</p>
+    <div class="grid-2">
+      <div class="card">
+        <h4>Metadados salvos em cada foto</h4>
+        <ul>
+          <li>Latitude e longitude (5 casas decimais)</li>
+          <li>Azimute no momento da captura (graus)</li>
+          <li>Altitude em metros</li>
+          <li>Data e hora do registro</li>
+          <li>ID do dispositivo que capturou</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h4>Tipos de foto no mapa</h4>
+        <ul>
+          <li>Foto automática ao travar foco</li>
+          <li>Foto manual via botão 📸 da câmera</li>
+          <li>Ambas publicadas automaticamente</li>
+          <li>Visíveis por todos os usuários conectados</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- 10. ÁGUA -->
+  <div class="section" id="agua">
+    <span class="section-label">10</span>
+    <h2>Marcadores de Água</h2>
+    <p>O mapa permite marcar fontes d'água (rios, açudes, tanques, represas, hidrantes rurais) como referência para combate ao incêndio. Os marcadores são compartilhados em tempo real com todos os usuários.</p>
+    <div class="alert alert-blue">
+      <div class="alert-title">💧 Por que mapear água?</div>
+      Em um incêndio florestal, o acesso rápido a fontes d'água é crítico para o combate. Brigadistas e bombeiros precisam saber <strong>onde encher tanques e caminhões-pipa</strong> sem perder tempo em campo. Ao marcar rios, açudes e pontos de captação no mapa compartilhado, qualquer usuário conectado enxerga imediatamente as fontes disponíveis — especialmente importante quando equipes de diferentes origens chegam ao local sem conhecer a região.
+    </div>
+
+    <div class="steps">
+      <div class="step-item">
+        <div class="step-num">01</div>
+        <div class="step-content">
+          <strong>Ativar modo água</strong>
+          <p>Pressione <span class="btn-tag btn-blue">💧 Água</span> na barra inferior do mapa. O botão fica azul escuro indicando modo ativo.</p>
+        </div>
+      </div>
+      <div class="step-item">
+        <div class="step-num">02</div>
+        <div class="step-content">
+          <strong>Tocar no mapa</strong>
+          <p>Toque no ponto exato onde está a fonte d'água. Um marcador 💧 azul aparece imediatamente no mapa e é sincronizado com todos os dispositivos.</p>
+        </div>
+      </div>
+      <div class="step-item">
+        <div class="step-num">03</div>
+        <div class="step-content">
+          <strong>Remover marcador</strong>
+          <p>Toque sobre o marcador 💧 no mapa. Um popup exibe as coordenadas e oferece o botão <span class="btn-tag btn-red">🗑️ Remover</span>.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 11. OFFLINE -->
+  <div class="section" id="offline">
+    <span class="section-label">11</span>
+    <h2>Modo Offline</h2>
+    <p>O SmokeDistance funciona em áreas sem cobertura de internet. Quando não há conexão, os focos marcados são salvos localmente e sincronizados automaticamente ao reconectar.</p>
+
+    <h3>Comportamento offline</h3>
+    <div class="grid-2">
+      <div class="card">
+        <h4>O que funciona offline</h4>
+        <ul>
+          <li>GPS e bússola (sensores locais)</li>
+          <li>Câmera e travamento de foco</li>
+          <li>Marcação de focos (salvo localmente)</li>
+          <li>Cálculo de triangulação local</li>
+          <li>Visualização do mapa em cache</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h4>O que requer conexão</h4>
+        <ul>
+          <li>Sync de focos entre dispositivos</li>
+          <li>Upload de fotos</li>
+          <li>Dados satelitais FIRMS/GOES</li>
+          <li>Push notifications</li>
+          <li>Dados meteorológicos em tempo real</li>
+        </ul>
+      </div>
+    </div>
+
+    <h3>Sincronização automática</h3>
+    <p>Ao detectar reconexão à internet, o app exibe automaticamente a mensagem <em>"📡 Sync Automático"</em> e envia todos os focos salvos offline. Nenhuma ação manual é necessária.</p>
+
+    <h3>Círculos de cobertura</h3>
+    <p>Quando o dispositivo perde sinal em área rural e depois reconecta, o app cria automaticamente no mapa um <strong>círculo azul</strong> indicando a área onde houve sinal, útil para mapear zonas sem cobertura para futuras operações.</p>
+  </div>
+
+  <!-- 12. CONFIGURAÇÕES -->
+  <div class="section" id="configuracoes">
+    <span class="section-label">12</span>
+    <h2>Configurações</h2>
+    <p>A aba de configurações permite personalizar o comportamento do app e consultar informações do sistema.</p>
+
+    <table>
+      <tr><th>Opção</th><th>Descrição</th></tr>
+      <tr><td>Modo Escuro</td><td>Alterna entre tema claro e escuro no mapa e nas telas do app.</td></tr>
+      <tr><td>Calibrar Bússola</td><td>Inicia o processo de calibração com movimento em 8. Recomendado antes de cada uso em campo.</td></tr>
+      <tr><td>ID do Dispositivo</td><td>Exibe o identificador único do aparelho usado para sincronização. Útil para identificar observações no mapa.</td></tr>
+      <tr><td>Versão do App</td><td>Exibe a versão atual instalada.</td></tr>
+    </table>
+  </div>
+
+  <!-- 13. GLOSSÁRIO -->
+  <div class="section" id="glossario">
+    <span class="section-label">13</span>
+    <h2>Glossário Técnico</h2>
+
+    <table>
+      <tr><th>Termo</th><th>Definição</th></tr>
+      <tr><td><strong>Azimute</strong></td><td>Ângulo horizontal medido em graus (0° a 360°) a partir do Norte geográfico no sentido horário. 0° = Norte, 90° = Leste, 180° = Sul, 270° = Oeste.</td></tr>
+      <tr><td><strong>Triangulação geodésica</strong></td><td>Técnica matemática de localização usando o cruzamento de linhas de visada de múltiplos observadores sobre a superfície curva da Terra.</td></tr>
+      <tr><td><strong>FIRMS</strong></td><td>Fire Information for Resource Management System. Sistema da NASA que processa imagens satelitais para detectar anomalias térmicas (focos de calor).</td></tr>
+      <tr><td><strong>MODIS</strong></td><td>Moderate Resolution Imaging Spectroradiometer. Sensor a bordo dos satélites Terra e Aqua da NASA. Passagem a cada 1–2 dias.</td></tr>
+      <tr><td><strong>VIIRS</strong></td><td>Visible Infrared Imaging Radiometer Suite. Sensor dos satélites Suomi NPP e NOAA-20. Resolução melhor que o MODIS para detecção de focos pequenos.</td></tr>
+      <tr><td><strong>GOES-16</strong></td><td>Satélite geoestacionário da NOAA posicionado sobre o Equador. Cobre as Américas com imagens a cada 5–15 minutos.</td></tr>
+      <tr><td><strong>Modelo Rothermel</strong></td><td>Modelo matemático desenvolvido por Richard Rothermel (USDA, 1972) para prever a velocidade de propagação do fogo em vegetação seca. Base de praticamente todos os sistemas modernos de previsão de comportamento do fogo.</td></tr>
+      <tr><td><strong>ROS</strong></td><td>Rate of Spread. Taxa de propagação do fogo em metros por minuto, calculada pelo modelo Rothermel.</td></tr>
+      <tr><td><strong>Haversine</strong></td><td>Fórmula trigonométrica que calcula a distância entre dois pontos na superfície esférica da Terra a partir de suas coordenadas de latitude e longitude.</td></tr>
+      <tr><td><strong>WMS</strong></td><td>Web Map Service. Padrão OGC para servir imagens de mapas georreferenciadas via HTTP. Usado para exibir a camada de focos FIRMS sobre o mapa.</td></tr>
+      <tr><td><strong>Firebase Firestore</strong></td><td>Banco de dados NoSQL em nuvem da Google que permite sincronização de dados em tempo real entre múltiplos dispositivos.</td></tr>
+      <tr><td><strong>Declinação magnética</strong></td><td>Diferença angular entre o Norte Magnético (apontado pela bússola) e o Norte Geográfico (eixo de rotação da Terra). Varia conforme a localização geográfica.</td></tr>
+      <tr><td><strong>DEM</strong></td><td>Digital Elevation Model. Modelo digital de elevação do terreno usado para calcular declividade na propagação do fogo.</td></tr>
+    </table>
+  </div>
+
+  <hr>
+
+  <div style="text-align:center;padding:2rem 0;">
+    <p style="font-family:'Space Grotesk',sans-serif;font-size:0.85rem;color:var(--muted);">Dúvidas ou sugestões: <a href="mailto:rafa.rp58@gmail.com" style="color:var(--gold-light);">rafa.rp58@gmail.com</a></p>
+  </div>
+
+</div>
+
+<footer>
+  © 2026 SmokeDistance — Todos os direitos reservados. Feito no Brasil 🇧🇷
+</footer>
+
+</body>
+</html>

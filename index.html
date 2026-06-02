@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SmokeDistance — Detecção Inteligente de Incêndios Florestais</title>
+<meta name="description" content="SmokeDistance transforma qualquer smartphone em um sensor inteligente de monitoramento de incêndios florestais. Triangulação geodésica, satélites em tempo real e alertas colaborativos.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Space+Grotesk:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --fire:#FF6500;
+  --gold:#C8860A;
+  --gold-light:#E8A832;
+  --deep:#0A0400;
+  --dark:#0F0600;
+  --surface:#160900;
+  --card:#1E0D00;
+  --cream:#F5EDD8;
+  --muted:#8A7060;
+  --border:#2A1500;
+}
+html{scroll-behavior:smooth}
+body{
+  background:var(--deep);
+  color:var(--cream);
+  font-family:'Crimson Pro',Georgia,serif;
+  font-size:18px;
+  line-height:1.7;
+  overflow-x:hidden;
+}
+nav{
+  position:fixed;top:0;left:0;right:0;z-index:100;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:1.2rem 4rem;
+  background:rgba(10,4,0,0.85);
+  backdrop-filter:blur(12px);
+  border-bottom:1px solid var(--border);
+}
+.nav-logo{
+  font-family:'Cinzel',serif;
+  font-size:1.3rem;font-weight:700;
+  color:var(--gold-light);
+  letter-spacing:0.15em;
+  text-decoration:none;
+}
+.nav-logo span{color:var(--fire)}
+.nav-links{display:flex;gap:2rem;list-style:none}
+.nav-links a{
+  font-family:'Space Grotesk',sans-serif;
+  font-size:0.85rem;font-weight:400;
+  color:var(--muted);
+  text-decoration:none;
+  letter-spacing:0.08em;
+  text-transform:uppercase;
+  transition:color 0.2s;
+}
+.nav-links a:hover{color:var(--cream)}
+.nav-cta{
+  font-family:'Space Grotesk',sans-serif;
+  font-size:0.82rem;font-weight:500;
+  background:var(--fire);color:#fff;
+  padding:0.55rem 1.4rem;
+  border-radius:3px;
+  text-decoration:none;
+  letter-spacing:0.06em;
+  text-transform:uppercase;
+  transition:background 0.2s;
+}
+.nav-cta:hover{background:#e05500}
+.hero{
+  min-height:100vh;
+  display:flex;align-items:center;justify-content:center;
+  position:relative;
+  padding:8rem 4rem 6rem;
+  text-align:center;
+  overflow:hidden;
+}
+.hero-bg{
+  position:absolute;inset:0;
+  background:
+    radial-gradient(ellipse 60% 50% at 50% 80%, rgba(200,80,0,0.18) 0%, transparent 70%),
+    radial-gradient(ellipse 40% 60% at 20% 50%, rgba(255,100,0,0.06) 0%, transparent 60%),
+    radial-gradient(ellipse 40% 60% at 80% 50%, rgba(200,100,0,0.06) 0%, transparent 60%);
+}
+.hero-grid{
+  position:absolute;inset:0;
+  background-image:
+    linear-gradient(rgba(200,134,10,0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(200,134,10,0.05) 1px, transparent 1px);
+  background-size:60px 60px;
+  mask-image:radial-gradient(ellipse 80% 80% at 50% 50%, black, transparent);
+}
+.hero-content{position:relative;z-index:2;max-width:860px;margin:0 auto}
+.hero-badge{
+  display:inline-block;
+  font-family:'Space Grotesk',sans-serif;
+  font-size:0.75rem;font-weight:500;
+  letter-spacing:0.18em;text-transform:uppercase;
+  color:var(--gold);
+  border:1px solid rgba(200,134,10,0.4);
+  padding:0.4rem 1.2rem;border-radius:2px;
+  margin-bottom:2.5rem;
+}
+.hero h1{
+  font-family:'Cinzel',serif;
+  font-size:clamp(2.8rem,7vw,5.5rem);
+  font-weight:700;
+  line-height:1.05;
+  letter-spacing:0.04em;
+  margin-bottom:1.5rem;
+}
+.hero h1 em{font-style:normal;color:var(--fire);}
+.hero-sub{
+  font-size:1.25rem;font-weight:300;
+  color:rgba(245,237,216,0.7);
+  max-width:600px;margin:0 auto 3rem;
+  line-height:1.8;
+}
+.hero-actions{display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;margin-bottom:4rem}
+.btn-primary{
+  display:inline-flex;align-items:center;gap:0.5rem;
+  background:var(--fire);color:#fff;
+  padding:0.9rem 2.2rem;border-radius:3px;
+  font-family:'Space Grotesk',sans-serif;
+  font-size:0.9rem;font-weight:500;
+  letter-spacing:0.06em;text-transform:uppercase;
+  text-decoration:none;
+  transition:background 0.2s,transform 0.1s;
+}
+.btn-primary:hover{background:#e05500;transform:translateY(-1px)}
+.btn-secondary{
+  display:inline-flex;align-items:center;gap:0.5rem;
+  border:1px solid rgba(200,134,10,0.5);color:var(--gold-light);
+  padding:0.9rem 2.2rem;border-radius:3px;
+  font-family:'Space Grotesk',sans-serif;
+  font-size:0.9rem;font-weight:400;
+  letter-spacing:0.06em;text-transform:uppercase;
+  text-decoration:none;
+  transition:border-color 0.2s,color 0.2s;
+}
+.btn-secondary:hover{border-color:var(--gold);color:var(--cream)}
+.hero-stats{
+  display:flex;gap:3rem;justify-content:center;flex-wrap:wrap;
+  padding-top:3rem;
+  border-top:1px solid var(--border);
+}
+.stat-item{text-align:center}
+.stat-num{
+  display:block;font-family:'Cinzel',serif;
+  font-size:2rem;font-weight:700;color:var(--fire);line-height:1;
+}
+.stat-label{
+  font-family:'Space Grotesk',sans-serif;
+  font-size:0.75rem;font-weight:400;color:var(--muted);
+  letter-spacing:0.1em;text-transform:uppercase;margin-top:0.3rem;
+}
+section{padding:6rem 4rem}
+.section-tag{
+  font-family:'Space Grotesk',sans-serif;
+  font-size:0.72rem;font-weight:500;
+  letter-spacing:0.2em;text-transform:uppercase;
+  color:var(--fire);margin-bottom:1rem;display:block;
+}
+.section-title{
+  font-family:'Cinzel',serif;
+  font-size:clamp(1.8rem,4vw,2.8rem);
+  font-weight:600;line-height:1.15;margin-bottom:1.2rem;
+}
+.section-sub{font-size:1.1rem;font-weight:300;color:rgba(245,237,216,0.65);max-width:560px;line-height:1.8;}
+.how{background:var(--surface)}
+.how-inner{max-width:1100px;margin:0 auto;text-align:center}
+.how-steps{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+  gap:0;margin-top:4rem;
+  border:1px solid var(--border);border-radius:4px;overflow:hidden;
+}
+.step{padding:2.5rem 2rem;border-right:1px solid var(--border);position:relative;}
+.step:last-child{border-right:none}
+.step-num{font-family:'Cinzel',serif;font-size:3rem;font-weight:700;color:rgba(255,101,0,0.15);line-height:1;margin-bottom:1rem;}
+.step h3{font-family:'Cinzel',serif;font-size:1rem;font-weight:600;letter-spacing:0.06em;margin-bottom:0.8rem;color:var(--gold-light);}
+.step p{font-size:0.95rem;font-weight:300;color:rgba(245,237,216,0.6);line-height:1.7;}
+.features{max-width:1100px;margin:0 auto}
+.features-header{margin-bottom:4rem}
+.features-grid{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));
+  gap:1.5px;background:var(--border);
+  border:1px solid var(--border);border-radius:4px;overflow:hidden;
+}
+.feature-card{background:var(--card);padding:2.5rem 2rem;transition:background 0.2s;}
+.feature-card:hover{background:#251000}
+.feature-icon{width:48px;height:48px;border:1px solid rgba(200,134,10,0.3);border-radius:4px;display:flex;align-items:center;justify-content:center;margin-bottom:1.5rem;font-size:1.4rem;}
+.feature-card h3{font-family:'Cinzel',serif;font-size:1.05rem;font-weight:600;letter-spacing:0.04em;color:var(--gold-light);margin-bottom:0.8rem;}
+.feature-card p{font-size:0.95rem;font-weight:300;color:rgba(245,237,216,0.6);line-height:1.7;}
+.feature-tag{display:inline-block;margin-top:1rem;font-family:'Space Grotesk',sans-serif;font-size:0.72rem;font-weight:500;letter-spacing:0.12em;text-transform:uppercase;color:var(--fire);opacity:0.8;}
+.audience{background:var(--surface)}
+.audience-inner{max-width:1100px;margin:0 auto}
+.audience-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1.5rem;margin-top:4rem;}
+.audience-card{border:1px solid var(--border);border-radius:4px;padding:2.5rem 2rem;position:relative;overflow:hidden;}
+.audience-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--fire);transform:scaleX(0);transform-origin:left;transition:transform 0.3s;}
+.audience-card:hover::before{transform:scaleX(1)}
+.audience-card h3{font-family:'Cinzel',serif;font-size:1.1rem;font-weight:600;color:var(--cream);margin-bottom:0.8rem;}
+.audience-card p{font-size:0.95rem;font-weight:300;color:rgba(245,237,216,0.6);line-height:1.7;}
+.audience-list{list-style:none;margin-top:1rem;display:flex;flex-direction:column;gap:0.4rem;}
+.audience-list li{font-family:'Space Grotesk',sans-serif;font-size:0.83rem;font-weight:400;color:var(--muted);padding-left:1rem;position:relative;}
+.audience-list li::before{content:'—';position:absolute;left:0;color:var(--fire);}
+.download{text-align:center;background:radial-gradient(ellipse 50% 80% at 50% 100%, rgba(200,80,0,0.15) 0%, transparent 70%);}
+.download-inner{max-width:700px;margin:0 auto}
+.download h2{font-family:'Cinzel',serif;font-size:clamp(2rem,5vw,3.5rem);font-weight:700;margin-bottom:1.5rem;}
+.download-sub{font-size:1.1rem;font-weight:300;color:rgba(245,237,216,0.65);margin-bottom:3rem;}
+.store-buttons{display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;}
+.store-btn{display:inline-flex;align-items:center;gap:0.8rem;border:1px solid var(--border);background:var(--card);padding:1rem 1.8rem;border-radius:4px;text-decoration:none;color:var(--cream);transition:border-color 0.2s,background 0.2s;}
+.store-btn:hover{border-color:var(--gold);background:#251000}
+.store-btn-icon{font-size:1.8rem;line-height:1}
+.store-btn-text small{display:block;font-family:'Space Grotesk',sans-serif;font-size:0.72rem;font-weight:400;color:var(--muted);letter-spacing:0.08em;text-transform:uppercase;}
+.store-btn-text strong{font-family:'Cinzel',serif;font-size:1.05rem;font-weight:600;color:var(--cream);}
+.privacy{background:var(--surface)}
+.privacy-inner{max-width:800px;margin:0 auto}
+.privacy h2{font-family:'Cinzel',serif;font-size:1.8rem;font-weight:600;margin-bottom:2rem;color:var(--gold-light);}
+.privacy h3{font-family:'Cinzel',serif;font-size:1.1rem;font-weight:600;color:var(--cream);margin:2rem 0 0.8rem;}
+.privacy p,.privacy li{font-size:0.98rem;font-weight:300;color:rgba(245,237,216,0.65);line-height:1.8;}
+.privacy ul{padding-left:1.5rem;margin-top:0.5rem}
+.privacy ul li{margin-bottom:0.4rem}
+.privacy-contact{margin-top:2rem;padding:1.5rem;border:1px solid var(--border);border-radius:4px;font-family:'Space Grotesk',sans-serif;font-size:0.85rem;color:var(--muted);}
+footer{padding:3rem 4rem;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem;}
+.footer-logo{font-family:'Cinzel',serif;font-size:1.1rem;font-weight:700;color:var(--gold);letter-spacing:0.12em;}
+.footer-logo span{color:var(--fire)}
+.footer-copy{font-family:'Space Grotesk',sans-serif;font-size:0.8rem;color:var(--muted);}
+.reveal{opacity:0;transform:translateY(24px);transition:opacity 0.7s ease,transform 0.7s ease}
+.reveal.visible{opacity:1;transform:none}
+@media(max-width:768px){
+  nav{padding:1rem 1.5rem}
+  .nav-links{display:none}
+  section{padding:4rem 1.5rem}
+  .hero{padding:7rem 1.5rem 4rem}
+  footer{padding:2rem 1.5rem;flex-direction:column;text-align:center}
+  .hero-stats{gap:1.5rem}
+  .step{border-right:none;border-bottom:1px solid var(--border)}
+  .step:last-child{border-bottom:none}
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="#" class="nav-logo">Smoke<span>Distance</span></a>
+  <ul class="nav-links">
+    <li><a href="#funcionalidades">Funcionalidades</a></li>
+    <li><a href="#como-funciona">Como Funciona</a></li>
+    <li><a href="#publico">Para Quem</a></li>
+    <li><a href="#privacidade">Privacidade</a></li>
+    <li><a href="manual.html">Manual</a></li>
+  </ul>
+  <a href="#download" class="nav-cta">Baixar App</a>
+</nav>
+
+<section class="hero" id="hero">
+  <div class="hero-bg"></div>
+  <div class="hero-grid"></div>
+  <div class="hero-content">
+    <span class="hero-badge">🔥 Detecção Precoce de Incêndios</span>
+    <h1>Vigilância que<br><em>salva florestas</em></h1>
+    <p class="hero-sub">SmokeDistance transforma qualquer smartphone em um sensor inteligente de monitoramento ambiental, com triangulação geodésica e satélites em tempo real.</p>
+    <div class="hero-actions">
+      <a href="#download" class="btn-primary">↓ Baixar Grátis</a>
+      <a href="#como-funciona" class="btn-secondary">Como funciona →</a>
+    </div>
+    <div class="hero-stats">
+      <div class="stat-item">
+        <span class="stat-num">GPS</span>
+        <span class="stat-label">Triangulação Geodésica</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-num">FIRMS</span>
+        <span class="stat-label">Satélites NASA/NOAA</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-num">ROS</span>
+        <span class="stat-label">Modelo Rothermel</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-num">↗ Real</span>
+        <span class="stat-label">Sync entre Dispositivos</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="how" id="como-funciona">
+  <div class="how-inner reveal">
+    <span class="section-tag">Metodologia</span>
+    <h2 class="section-title">Como o SmokeDistance funciona</h2>
+    <p class="section-sub" style="margin:0 auto">Três observadores, um resultado preciso. O app usa seus sensores embarcados para localizar incêndios com precisão geodésica.</p>
+    <div class="how-steps">
+      <div class="step">
+        <div class="step-num">01</div>
+        <h3>Observação</h3>
+        <p>O usuário aponta para a fumaça usando a câmera. O app captura azimute, inclinação, GPS e altitude via sensores do celular.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">02</div>
+        <h3>Triangulação</h3>
+        <p>Com dois ou mais observadores em posições distintas, o sistema cruza as linhas de visada e calcula a localização exata do foco.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">03</div>
+        <h3>Confirmação</h3>
+        <p>O usuário pressiona <strong style="color:#E8A832">Travar Foco</strong> — o azimute é fixado e uma foto é capturada automaticamente. Em seguida pressiona <strong style="color:#E8A832">Enviar ao Mapa</strong> e a linha de observação aparece no mapa de todos os usuários conectados em tempo real.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">04</div>
+        <h3>Alerta</h3>
+        <p>A localização é compartilhada em tempo real com todos os usuários conectados e autoridades via notificação de emergência.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="funcionalidades" style="padding:6rem 4rem">
+  <div class="features">
+    <div class="features-header reveal">
+      <span class="section-tag">O Aplicativo</span>
+      <h2 class="section-title">Cada tela, uma missão</h2>
+      <p class="section-sub">Seis módulos integrados, cada um desenhado para uma etapa do ciclo de detecção e resposta.</p>
+    </div>
+    <div class="features-grid reveal">
+      <div class="feature-card">
+        <div class="feature-icon">🗺️</div>
+        <h3>Mapa Tático</h3>
+        <p>Visualização em tempo real dos focos marcados, linhas de observação de todos os usuários conectados, fontes d'água e pontos de risco. Bússola digital integrada mostra o azimute de cada observador.</p>
+        <span class="feature-tag">Google Maps + Firebase Sync</span>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">📷</div>
+        <h3>Câmera de Campo</h3>
+        <p>Captura fotos geolocalizadas com azimute, altitude e inclinação embutidos nos metadados. Overlay de bússola e linha de visada sobreposta à imagem em tempo real.</p>
+        <span class="feature-tag">GPS · Barômetro · Bússola</span>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🛰️</div>
+        <h3>Satélites</h3>
+        <p>Integração com FIRMS (NASA), GOES-16 e MSG para confirmação independente de focos de calor. Focos ativos exibidos sobre o mapa com timestamp e intensidade radiativa.</p>
+        <span class="feature-tag">FIRMS · GOES · MSG</span>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🔥</div>
+        <h3>Propagação</h3>
+        <p>Modelo matemático Rothermel calcula a velocidade e direção de espalhamento do fogo baseado em vento, declividade, tipo de vegetação e umidade do combustível.</p>
+        <span class="feature-tag">Modelo Rothermel ROS</span>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">📡</div>
+        <h3>Compartilhar</h3>
+        <p>Gera links de emergência e QR codes com a localização do foco, mapa de propagação e dados meteorológicos. Envio direto para WhatsApp, e-mail ou autoridades.</p>
+        <span class="feature-tag">Alertas de Emergência</span>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">📸</div>
+        <h3>Fototeca de Campo</h3>
+        <p>Galeria de fotos organizadas por pino no mapa. Cada registro contém imagem, hora, coordenadas, azimute e usuário que capturou — rastreabilidade total de campo.</p>
+        <span class="feature-tag">Firebase Storage</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="audience" id="publico">
+  <div class="audience-inner reveal">
+    <span class="section-tag">Para Quem</span>
+    <h2 class="section-title">Feito para quem está na linha de frente</h2>
+    <p class="section-sub">Do cidadão ao brigadista, o SmokeDistance se adapta ao nível de cada usuário.</p>
+    <div class="audience-grid">
+      <div class="audience-card">
+        <h3>🚒 Brigadistas e Bombeiros</h3>
+        <p>Coordenação de campo com triangulação colaborativa entre múltiplos agentes. Mapa tático compartilhado, propagação em tempo real e registro fotográfico geolocalizados.</p>
+        <ul class="audience-list">
+          <li>Triangulação multi-dispositivo</li>
+          <li>Compartilhamento de linhas de visada</li>
+          <li>Alertas push entre a equipe</li>
+        </ul>
+      </div>
+      <div class="audience-card">
+        <h3>🌿 Polícia Ambiental</h3>
+        <p>Registro oficial de ocorrências com foto, coordenada, azimute e timestamp — tudo em um único pino de mapa. Evidências rastreáveis para laudos e relatórios.</p>
+        <ul class="audience-list">
+          <li>Registro com metadados completos</li>
+          <li>Fototeca por localização</li>
+          <li>Exportação de dados de campo</li>
+        </ul>
+      </div>
+      <div class="audience-card">
+        <h3>🏡 Proprietários Rurais</h3>
+        <p>Monitoramento da própria propriedade. Configure pontos de água, marque áreas de risco e receba notificação imediata quando outros usuários detectarem fumaça próxima.</p>
+        <ul class="audience-list">
+          <li>Marcação de pontos d'água</li>
+          <li>Alertas de focos próximos</li>
+          <li>Visualização satelital</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="download" id="download">
+  <div class="download-inner reveal">
+    <span class="section-tag">Disponível Agora</span>
+    <h2>Baixe e proteja<br>sua região</h2>
+    <p class="download-sub">Gratuito para cidadãos. Disponível para iOS e Android.</p>
+    <div class="store-buttons">
+      <a href="manual.html" class="store-btn" style="border-color:rgba(200,134,10,0.5)">
+        <span class="store-btn-icon">📖</span>
+        <span class="store-btn-text">
+          <small>Leia o</small>
+          <strong>Manual Completo</strong>
+        </span>
+      </a>
+      <a href="https://apps.apple.com" class="store-btn">
+        <span class="store-btn-icon">🍎</span>
+        <span class="store-btn-text">
+          <small>Baixar na</small>
+          <strong>App Store</strong>
+        </span>
+      </a>
+      <a href="https://play.google.com/apps/internaltest/4701705624836304760" class="store-btn">
+        <span class="store-btn-icon">▶</span>
+        <span class="store-btn-text">
+          <small>Disponível no</small>
+          <strong>Google Play</strong>
+        </span>
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- SCREENSHOTS -->
+<section style="padding:5rem 2rem;background:var(--surface)">
+  <div style="max-width:1100px;margin:0 auto">
+    <div class="reveal" style="text-align:center;margin-bottom:3rem">
+      <span class="section-tag">Veja em Ação</span>
+      <h2 class="section-title">O app no campo real</h2>
+      <p class="section-sub" style="margin:0 auto">Capturas reais do SmokeDistance em operação na Chapada Diamantina, Bahia.</p>
+    </div>
+    <div class="reveal" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(155px,1fr));gap:1.2rem;align-items:start">
+      <div style="display:flex;flex-direction:column;gap:0.5rem">
+        <img src="images/mapa-tatico_1.png" alt="Mapa Tático" style="width:100%;border-radius:14px;border:1px solid var(--border);box-shadow:0 4px 20px rgba(0,0,0,0.4)">
+        <span style="font-family:'Space Grotesk',sans-serif;font-size:0.7rem;color:var(--muted);text-align:center;letter-spacing:0.08em;text-transform:uppercase">🗺️ Mapa Tático</span>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:0.5rem">
+        <img src="images/camera-foco.png" alt="Câmera" style="width:100%;border-radius:14px;border:1px solid var(--border);box-shadow:0 4px 20px rgba(0,0,0,0.4)">
+        <span style="font-family:'Space Grotesk',sans-serif;font-size:0.7rem;color:var(--muted);text-align:center;letter-spacing:0.08em;text-transform:uppercase">📷 Câmera</span>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:0.5rem">
+        <img src="images/camera-travada.png" alt="Foco Travado" style="width:100%;border-radius:14px;border:1px solid var(--border);box-shadow:0 4px 20px rgba(0,0,0,0.4)">
+        <span style="font-family:'Space Grotesk',sans-serif;font-size:0.7rem;color:var(--muted);text-align:center;letter-spacing:0.08em;text-transform:uppercase">🔒 Foco Travado</span>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:0.5rem">
+        <img src="images/satelites.png" alt="Satélites" style="width:100%;border-radius:14px;border:1px solid var(--border);box-shadow:0 4px 20px rgba(0,0,0,0.4)">
+        <span style="font-family:'Space Grotesk',sans-serif;font-size:0.7rem;color:var(--muted);text-align:center;letter-spacing:0.08em;text-transform:uppercase">🛰️ Satélites</span>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:0.5rem">
+        <img src="images/propagacao-ros.png" alt="Propagação" style="width:100%;border-radius:14px;border:1px solid var(--border);box-shadow:0 4px 20px rgba(0,0,0,0.4)">
+        <span style="font-family:'Space Grotesk',sans-serif;font-size:0.7rem;color:var(--muted);text-align:center;letter-spacing:0.08em;text-transform:uppercase">🔥 Propagação</span>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:0.5rem">
+        <img src="images/propagacao-dados.png" alt="Dados ROS" style="width:100%;border-radius:14px;border:1px solid var(--border);box-shadow:0 4px 20px rgba(0,0,0,0.4)">
+        <span style="font-family:'Space Grotesk',sans-serif;font-size:0.7rem;color:var(--muted);text-align:center;letter-spacing:0.08em;text-transform:uppercase">📊 Dados ROS</span>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:0.5rem">
+        <img src="images/compartilhar.png" alt="Compartilhar" style="width:100%;border-radius:14px;border:1px solid var(--border);box-shadow:0 4px 20px rgba(0,0,0,0.4)">
+        <span style="font-family:'Space Grotesk',sans-serif;font-size:0.7rem;color:var(--muted);text-align:center;letter-spacing:0.08em;text-transform:uppercase">📡 Compartilhar</span>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:0.5rem">
+        <img src="images/biblioteca de campo.png" alt="Biblioteca" style="width:100%;border-radius:14px;border:1px solid var(--border);box-shadow:0 4px 20px rgba(0,0,0,0.4)">
+        <span style="font-family:'Space Grotesk',sans-serif;font-size:0.7rem;color:var(--muted);text-align:center;letter-spacing:0.08em;text-transform:uppercase">📸 Fototeca</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="privacy" id="privacidade">
+  <div class="privacy-inner reveal">
+    <span class="section-tag">Legal</span>
+    <h2>Política de Privacidade</h2>
+    <p>Última atualização: junho de 2026</p>
+    <h3>1. Dados Coletados</h3>
+    <p>O SmokeDistance coleta os seguintes dados para funcionamento do aplicativo:</p>
+    <ul>
+      <li><strong>Localização (GPS):</strong> usada exclusivamente para triangulação de focos e exibição no mapa. Não é armazenada permanentemente sem ação do usuário.</li>
+      <li><strong>Fotos de campo:</strong> capturadas pelo usuário e armazenadas no Firebase Storage associadas a um pino de localização.</li>
+      <li><strong>Dados de sensores:</strong> bússola, barômetro e giroscópio são usados localmente para cálculo de azimute e altitude — não são transmitidos.</li>
+      <li><strong>Identificador de dispositivo:</strong> usado para sincronização colaborativa entre usuários da mesma sessão.</li>
+    </ul>
+    <h3>2. Como Usamos os Dados</h3>
+    <p>Os dados coletados são utilizados exclusivamente para:</p>
+    <ul>
+      <li>Triangulação geodésica colaborativa de focos de incêndio</li>
+      <li>Exibição de focos no mapa compartilhado entre usuários</li>
+      <li>Armazenamento de fotos de campo geolocalizadas</li>
+      <li>Envio de alertas de emergência entre usuários</li>
+    </ul>
+    <h3>3. Compartilhamento de Dados</h3>
+    <p>O SmokeDistance <strong>não vende, não aluga e não comercializa</strong> dados de usuários. Os dados são compartilhados somente:</p>
+    <ul>
+      <li>Com outros usuários do mesmo grupo de monitoramento</li>
+      <li>Com o Firebase (Google) para sincronização em tempo real</li>
+      <li>Com APIs de satélite (NASA FIRMS, NOAA) — apenas coordenadas são enviadas</li>
+    </ul>
+    <h3>4. Retenção de Dados</h3>
+    <p>Fotos e focos marcados são retidos no Firebase enquanto o usuário não os remover. O usuário pode excluir seus dados a qualquer momento dentro do aplicativo.</p>
+    <h3>5. Permissões do Aplicativo</h3>
+    <ul>
+      <li><strong>Câmera:</strong> captura de fotos de campo</li>
+      <li><strong>Localização (em uso):</strong> triangulação e exibição no mapa</li>
+      <li><strong>Notificações:</strong> alertas de emergência</li>
+      <li><strong>Rede:</strong> sincronização Firebase e dados de satélite</li>
+    </ul>
+    <h3>6. Segurança</h3>
+    <p>Os dados são protegidos por autenticação Firebase e regras de segurança do Firestore. As comunicações são criptografadas via HTTPS/TLS.</p>
+    <h3>7. Contato</h3>
+    <div class="privacy-contact">
+      Para dúvidas sobre privacidade entre em contato:<br>
+      📧 rafa.rp58@gmail.com
+    </div>
+  </div>
+</section>
+
+<footer>
+  <span class="footer-logo">Smoke<span>Distance</span></span>
+  <span class="footer-copy">© 2026 SmokeDistance. Todos os direitos reservados. Feito no Brasil 🇧🇷</span>
+</footer>
+
+<script>
+const reveals = document.querySelectorAll('.reveal');
+const io = new IntersectionObserver((entries) => {
+  entries.forEach(e => { if(e.isIntersecting){ e.target.classList.add('visible'); io.unobserve(e.target); }});
+}, {threshold:0.1});
+reveals.forEach(r => io.observe(r));
+</script>
+</body>
+</html>
