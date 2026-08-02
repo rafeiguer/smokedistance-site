@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AguiaFire — Central de Comando</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ground:#16130f;
+  --panel:#1f1a14;
+  --panel-2:#28211a;
+  --line:#3a3128;
+  --ember:#ff6b2c;
+  --ember-dim:#b8451a;
+  --veg:#7da954;
+  --warn:#e8b73a;
+  --danger:#e05252;
+  --text:#ece4d6;
+  --muted:#8d8272;
+  --mono:ui-monospace,'Cascadia Mono','JetBrains Mono',Menlo,monospace;
+  --disp:'Barlow Condensed',system-ui,sans-serif;
+  --body:'Barlow',system-ui,sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--ground);color:var(--text);font-family:var(--body);font-size:14px;overflow:hidden;height:100vh;display:flex;flex-direction:column}
+
+/* ── TOP BAR ─────────────────────────── */
+header{display:flex;align-items:center;gap:20px;padding:10px 18px;background:var(--panel);border-bottom:1px solid var(--line)}
+.brand{font-family:var(--disp);font-weight:700;font-size:20px;letter-spacing:.5px;display:flex;align-items:center;gap:8px}
+.brand .flame{color:var(--ember)}
+.op-tag{font-family:var(--disp);font-weight:600;font-size:15px;letter-spacing:1px;text-transform:uppercase;padding:3px 12px;border:1px solid var(--ember-dim);border-radius:3px;color:var(--ember)}
+.chips{display:flex;gap:10px;margin-left:auto}
+.chip{background:var(--panel-2);border:1px solid var(--line);border-radius:3px;padding:4px 10px;font-family:var(--mono);font-size:12px;display:flex;gap:6px;align-items:center}
+.chip b{color:var(--warn);font-weight:600}
+.clock{font-family:var(--mono);font-size:15px;color:var(--text);padding-left:14px;border-left:1px solid var(--line)}
+.user{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted);padding-left:14px;border-left:1px solid var(--line)}
+.user .dot{width:8px;height:8px;border-radius:50%;background:var(--veg)}
+
+/* ── LAYOUT ──────────────────────────── */
+main{flex:1;display:grid;grid-template-columns:270px 1fr 300px;min-height:0}
+.col{background:var(--panel);border-right:1px solid var(--line);overflow-y:auto;display:flex;flex-direction:column}
+.col:last-child{border-right:none;border-left:1px solid var(--line)}
+.col h2{font-family:var(--disp);font-weight:600;font-size:13px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);padding:12px 14px 8px}
+
+/* ── BRIGADE CARDS ───────────────────── */
+.bcard{margin:0 10px 10px;background:var(--panel-2);border:1px solid var(--line);border-radius:5px;padding:10px 12px;cursor:pointer;transition:border-color .15s}
+.bcard:hover{border-color:var(--muted)}
+.bcard.sel{border-color:var(--ember);box-shadow:0 0 0 1px var(--ember-dim)}
+.bcard .head{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.bcard .name{font-family:var(--disp);font-weight:700;font-size:17px;letter-spacing:.3px}
+.bcard .age{margin-left:auto;font-family:var(--mono);font-size:11px;padding:2px 7px;border-radius:3px}
+.age.ok{background:rgba(125,169,84,.15);color:var(--veg)}
+.age.warn{background:rgba(232,183,58,.15);color:var(--warn)}
+.age.old{background:rgba(224,82,82,.15);color:var(--danger)}
+.bcard .meta{font-size:12px;color:var(--muted);margin-bottom:8px}
+.bar{height:5px;background:#0f0c09;border-radius:3px;overflow:hidden;margin:3px 0 7px}
+.bar i{display:block;height:100%;border-radius:3px}
+.bar-label{display:flex;justify-content:space-between;font-family:var(--mono);font-size:11px;color:var(--muted)}
+.bar-label b{color:var(--text);font-weight:500}
+.prog{display:flex;align-items:center;gap:8px;margin-top:8px}
+.prog .pct{font-family:var(--disp);font-weight:700;font-size:20px;color:var(--veg);min-width:44px}
+.prog .lbl{font-size:11px;color:var(--muted);line-height:1.3}
+
+/* ── MAP ─────────────────────────────── */
+.map-wrap{position:relative;background:#12100c;overflow:hidden}
+.map-wrap svg{width:100%;height:100%;display:block}
+.contour{fill:none;stroke:#241f18;stroke-width:1}
+.trail-path{fill:none;stroke:#5d5344;stroke-width:1.5;stroke-dasharray:4 4}
+.route{fill:none;stroke:var(--veg);stroke-width:2;stroke-dasharray:6 5;opacity:.85}
+.fire-poly{fill:rgba(255,107,44,.28);stroke:var(--ember);stroke-width:1.5}
+.prop-ring{fill:none;stroke:var(--ember);stroke-width:1;stroke-dasharray:5 6;opacity:.55;animation:propPulse 3s ease-in-out infinite}
+@keyframes propPulse{0%,100%{opacity:.3}50%{opacity:.7}}
+.b-token{cursor:pointer}
+.b-token circle.ring{fill:none;stroke-width:2}
+.b-token circle.core{fill:var(--panel-2);stroke:var(--text);stroke-width:1.2}
+.b-token text{font-family:var(--disp);font-weight:700;font-size:11px;fill:var(--text);text-anchor:middle;pointer-events:none}
+.b-token .tag{font-family:var(--mono);font-weight:400;font-size:9px;fill:var(--muted)}
+.b-token.sel circle.core{stroke:var(--ember);stroke-width:2}
+.mp-token text{font-family:var(--mono);font-size:9px;fill:var(--warn);text-anchor:middle}
+.map-legend{position:absolute;left:12px;bottom:12px;background:rgba(31,26,20,.92);border:1px solid var(--line);border-radius:5px;padding:8px 12px;font-size:11px;color:var(--muted);display:flex;flex-direction:column;gap:4px}
+.map-legend span{display:flex;align-items:center;gap:7px}
+.sw{width:14px;height:3px;border-radius:2px;display:inline-block}
+.map-title{position:absolute;top:12px;left:12px;font-family:var(--disp);font-weight:600;font-size:13px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);background:rgba(31,26,20,.92);border:1px solid var(--line);border-radius:5px;padding:5px 12px}
+.fire-badge{position:absolute;top:12px;right:12px;background:rgba(184,69,26,.16);border:1px solid var(--ember-dim);border-radius:5px;padding:7px 13px;font-family:var(--mono);font-size:12px;color:var(--ember)}
+.fire-badge b{font-family:var(--disp);font-size:16px;letter-spacing:.5px}
+
+/* ── RIGHT PANEL ─────────────────────── */
+.section{padding:0 14px 12px;border-bottom:1px solid var(--line);margin-bottom:4px}
+.kv{display:flex;justify-content:space-between;font-size:12.5px;padding:3px 0}
+.kv .k{color:var(--muted)}
+.kv .v{font-family:var(--mono);font-size:12px}
+.calc{background:var(--panel-2);border:1px solid var(--line);border-radius:5px;padding:10px 12px;margin-top:8px}
+.calc .big{font-family:var(--disp);font-weight:700;font-size:26px;line-height:1;color:var(--text)}
+.calc .big small{font-size:14px;color:var(--muted);font-weight:500}
+.calc .sub{font-size:11px;color:var(--muted);margin-top:4px}
+.verdict{margin-top:10px;padding:9px 11px;border-radius:5px;font-size:12.5px;line-height:1.45}
+.verdict.win{background:rgba(125,169,84,.12);border:1px solid rgba(125,169,84,.4);color:#b9d59a}
+.verdict.lose{background:rgba(224,82,82,.1);border:1px solid rgba(224,82,82,.4);color:#eda7a7}
+.alert{margin:10px 14px;background:rgba(232,183,58,.1);border:1px solid rgba(232,183,58,.45);border-radius:5px;padding:10px 12px;font-size:12.5px}
+.alert b{color:var(--warn)}
+.alert .act{margin-top:8px}
+button.btn{font-family:var(--disp);font-weight:600;font-size:14px;letter-spacing:.8px;text-transform:uppercase;background:var(--ember-dim);color:var(--text);border:none;border-radius:4px;padding:8px 14px;cursor:pointer;width:100%}
+button.btn:hover{background:var(--ember)}
+button.btn.ghost{background:transparent;border:1px solid var(--line);color:var(--muted)}
+button.btn.ghost:hover{border-color:var(--muted);color:var(--text)}
+.est-note{font-size:10.5px;color:var(--muted);margin-top:6px;font-style:italic}
+
+/* ── TICKER ──────────────────────────── */
+footer{background:var(--panel);border-top:1px solid var(--line);height:96px;display:flex;flex-direction:column}
+footer h2{font-family:var(--disp);font-weight:600;font-size:12px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);padding:7px 16px 3px}
+.ticker{flex:1;overflow-y:auto;padding:0 16px 8px;font-family:var(--mono);font-size:11.5px;line-height:1.7}
+.ticker .t{color:var(--muted);margin-right:10px}
+.ticker .ev-fire{color:var(--ember)}
+.ticker .ev-ok{color:var(--veg)}
+.ticker .ev-warn{color:var(--warn)}
+@media (prefers-reduced-motion:reduce){.prop-ring{animation:none}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand"><span class="flame">▲</span> AguiaFire <span style="color:var(--muted);font-weight:500;font-size:13px">CENTRAL DE COMANDO</span></div>
+  <div class="op-tag">OP-2026-014 · Morrão / Vale do Capão</div>
+  <div class="chips">
+    <div class="chip">VENTO <b>NE 14 km/h</b></div>
+    <div class="chip">UMID <b>31%</b></div>
+    <div class="chip">TEMP <b>29°C</b></div>
+    <div class="chip">VEG <b>Campo rupestre</b></div>
+  </div>
+  <div class="clock" id="clock">14:32:07</div>
+  <div class="user"><span class="dot"></span> Jubi · Coordenador</div>
+</header>
+
+<main>
+  <!-- ── LEFT: BRIGADAS ── -->
+  <div class="col">
+    <h2>Brigadas em campo · 3</h2>
+    <div id="cards"></div>
+    <div style="padding:4px 10px 14px">
+      <button class="btn ghost">+ Despachar nova brigada</button>
+    </div>
+  </div>
+
+  <!-- ── CENTER: MAPA ── -->
+  <div class="map-wrap">
+    <div class="map-title">Mapa Operacional</div>
+    <div class="fire-badge">FOCO ATIVO · <b>12,4 ha</b> · avanço 0,8 ha/h</div>
+    <svg viewBox="0 0 900 620" preserveAspectRatio="xMidYMid slice" id="map">
+      <!-- contorno de relevo -->
+      <g>
+        <ellipse class="contour" cx="560" cy="200" rx="230" ry="130"/>
+        <ellipse class="contour" cx="560" cy="200" rx="180" ry="95"/>
+        <ellipse class="contour" cx="560" cy="200" rx="130" ry="62"/>
+        <ellipse class="contour" cx="560" cy="200" rx="80" ry="34"/>
+        <ellipse class="contour" cx="200" cy="470" rx="190" ry="110"/>
+        <ellipse class="contour" cx="200" cy="470" rx="130" ry="70"/>
+        <ellipse class="contour" cx="200" cy="470" rx="75" ry="38"/>
+      </g>
+      <!-- trilhas -->
+      <path class="trail-path" d="M60,600 C180,540 260,470 330,400 S480,300 545,255"/>
+      <path class="trail-path" d="M880,590 C790,500 720,430 660,360"/>
+      <!-- rota sugerida até Brigada 2 -->
+      <path class="route" d="M60,600 C180,540 260,470 330,400 S430,330 470,300"/>
+      <!-- fogo -->
+      <path class="fire-poly" d="M520,230 C560,200 620,205 650,240 C680,275 665,320 625,335 C585,350 535,340 515,305 C498,275 495,250 520,230 Z"/>
+      <path class="prop-ring" d="M495,215 C545,175 640,180 682,228 C724,276 705,340 650,362 C595,384 520,372 492,325 C468,285 465,240 495,215 Z"/>
+      <text x="585" y="278" style="font-family:var(--mono);font-size:10px;fill:var(--ember);text-anchor:middle">FOCO-3 · triangulado</text>
+      <text x="700" y="370" style="font-family:var(--mono);font-size:9px;fill:var(--ember-dim);text-anchor:middle">propagação +15 min</text>
+      <!-- ponto de encontro -->
+      <g class="mp-token">
+        <rect x="378" y="428" width="14" height="14" fill="none" stroke="var(--warn)" stroke-width="1.5" transform="rotate(45 385 435)"/>
+        <text x="385" y="462">PT ENCONTRO</text>
+      </g>
+      <!-- tokens de brigada (JS) -->
+      <g id="tokens"></g>
+    </svg>
+    <div class="map-legend">
+      <span><i class="sw" style="background:var(--ember)"></i> Foco / propagação prevista</span>
+      <span><i class="sw" style="background:var(--veg)"></i> Rota sugerida (GraphHopper · a pé)</span>
+      <span><i class="sw" style="background:#5d5344"></i> Trilha</span>
+      <span><i class="sw" style="background:var(--warn)"></i> Ponto de encontro</span>
+    </div>
+  </div>
+
+  <!-- ── RIGHT: DETALHE ── -->
+  <div class="col" id="detail"></div>
+</main>
+
+<footer>
+  <h2>Registro da operação</h2>
+  <div class="ticker" id="ticker"></div>
+</footer>
+
+<script>
+const brigades=[
+ {id:'B1',name:'Brigada Capão',members:6,out:'11:20',mission:'Flanco norte — conter avanço na linha da trilha do Morrão',
+  fuel:{cur:14,max:30},water:{cur:22,max:40},food:{cur:9,max:12},blowers:4,
+  prog:65,ageMin:4,x:610,y:150,
+  calc:{hoursLeft:'2h20',fightRate:1.1,note:'vence o fogo no setor com folga de 0,3 ha/h'}},
+ {id:'B2',name:'ACV-VC',members:4,out:'12:05',mission:'Flanco sul — proteger vegetação densa junto ao córrego',
+  fuel:{cur:5,max:25},water:{cur:8,max:30},food:{cur:6,max:8},blowers:3,
+  prog:40,ageMin:43,x:470,y:300,
+  calc:{hoursLeft:'1h40',fightRate:0.6,note:'combustível esgota antes do fim previsto (+3h)'},
+  supply:'Combustível esgota em ~1h40. Missão prevista para +3h. Despachar suprimento?'},
+ {id:'B3',name:'BV-VC',members:5,out:'13:10',mission:'Reserva móvel — apoio e suprimento a partir do ponto de encontro',
+  fuel:{cur:20,max:20},water:{cur:35,max:35},food:{cur:10,max:10},blowers:2,
+  prog:0,ageMin:9,x:385,y:400,
+  calc:{hoursLeft:'4h00',fightRate:0.9,note:'pronta para despacho — 25 min até B2 pela rota sugerida'}}
+];
+let sel='B2';
+
+function ageClass(m){return m<10?'ok':m<60?'warn':'old'}
+function ageColor(m){return m<10?'var(--veg)':m<60?'var(--warn)':'var(--danger)'}
+function pctColor(v,max){const r=v/max;return r>.5?'var(--veg)':r>.25?'var(--warn)':'var(--danger)'}
+
+function renderCards(){
+ document.getElementById('cards').innerHTML=brigades.map(b=>`
+  <div class="bcard ${b.id===sel?'sel':''}" onclick="pick('${b.id}')">
+   <div class="head"><span class="name">${b.name}</span>
+    <span class="age ${ageClass(b.ageMin)}">há ${b.ageMin} min</span></div>
+   <div class="meta">${b.members} pessoas · saída ${b.out} · ${b.blowers} sopradores</div>
+   <div class="bar-label"><span>Combustível</span><b>${b.fuel.cur} / ${b.fuel.max} L</b></div>
+   <div class="bar"><i style="width:${b.fuel.cur/b.fuel.max*100}%;background:${pctColor(b.fuel.cur,b.fuel.max)}"></i></div>
+   <div class="bar-label"><span>Água</span><b>${b.water.cur} / ${b.water.max} L</b></div>
+   <div class="bar"><i style="width:${b.water.cur/b.water.max*100}%;background:${pctColor(b.water.cur,b.water.max)}"></i></div>
+   <div class="prog"><span class="pct">${b.prog}%</span><span class="lbl">da missão concluída<br>informado do campo</span></div>
+  </div>`).join('');
+}
+
+function renderTokens(){
+ document.getElementById('tokens').innerHTML=brigades.map(b=>`
+  <g class="b-token ${b.id===sel?'sel':''}" onclick="pick('${b.id}')">
+   <circle class="ring" cx="${b.x}" cy="${b.y}" r="17" stroke="${ageColor(b.ageMin)}"/>
+   <circle class="core" cx="${b.x}" cy="${b.y}" r="12"/>
+   <text x="${b.x}" y="${b.y+4}">${b.id}</text>
+   <text class="tag" x="${b.x}" y="${b.y+32}">${b.name} · há ${b.ageMin} min</text>
+  </g>`).join('');
+}
+
+function renderDetail(){
+ const b=brigades.find(x=>x.id===sel);
+ const win=b.calc.fightRate>=0.8;
+ document.getElementById('detail').innerHTML=`
+  <h2>${b.name} · Detalhe da missão</h2>
+  <div class="section">
+   <div class="kv"><span class="k">Missão</span></div>
+   <div style="font-size:13px;line-height:1.45;margin-bottom:6px">${b.mission}</div>
+   <div class="kv"><span class="k">Efetivo</span><span class="v">${b.members} pessoas</span></div>
+   <div class="kv"><span class="k">Saída</span><span class="v">${b.out}</span></div>
+   <div class="kv"><span class="k">Sopradores</span><span class="v">${b.blowers} un</span></div>
+   <div class="kv"><span class="k">Óleo 2T</span><span class="v">1,2 L</span></div>
+   <div class="kv"><span class="k">Última posição</span><span class="v" style="color:${ageColor(b.ageMin)}">há ${b.ageMin} min · alt 1.240 m</span></div>
+  </div>
+  <div class="section">
+   <div class="kv"><span class="k" style="font-family:var(--disp);font-size:13px;letter-spacing:1px;text-transform:uppercase">Calculadora operacional</span></div>
+   <div class="calc">
+    <div class="big">${b.calc.hoursLeft} <small>de combate restantes</small></div>
+    <div class="sub">com ${b.fuel.cur} L · ${b.blowers} sopradores · vento NE 14 km/h · declividade média</div>
+    <div class="verdict ${win?'win':'lose'}">
+     ${win?'▲ Capacidade de extinção supera o avanço do fogo — ':'▼ Fogo avança mais rápido que a capacidade atual — '}
+     ${b.calc.note}
+    </div>
+    <div class="est-note">Estimativa — coeficientes em calibração (7 de 10 operações registradas)</div>
+   </div>
+  </div>
+  ${b.supply?`<div class="alert"><b>⚠ Suprimento necessário.</b><br>${b.supply}
+   <div class="act"><button class="btn" onclick="dispatch()">Despachar B3 com combustível</button></div></div>`:''}
+  <div class="section" style="border:none;margin-top:auto;padding-top:10px">
+   <button class="btn ghost">Definir novo ponto de encontro</button>
+  </div>`;
+}
+
+function pick(id){sel=id;renderCards();renderTokens();renderDetail();}
+
+const evts=[
+ ['14:29','ev-warn','B2 solicitou suprimento: combustível'],
+ ['14:21','ev-ok','B1 atualizou progresso: 65% — flanco norte contido'],
+ ['14:15','ev-fire','Propagação recalculada: avanço 0,8 ha/h (vento NE 14 km/h)'],
+ ['13:49','ev-ok','B2 sincronizou 6 posições registradas offline'],
+ ['13:10','ev-ok','B3 despachada — reserva móvel no ponto de encontro'],
+ ['12:38','ev-fire','FOCO-3 triangulado por 2 visadas (B1 + torre) — 12,4 ha'],
+];
+function renderTicker(){
+ document.getElementById('ticker').innerHTML=evts.map(e=>
+  `<div><span class="t">${e[0]}</span><span class="${e[1]}">${e[2]}</span></div>`).join('');
+}
+function dispatch(){
+ evts.unshift(['14:32','ev-ok','B3 despachada com 15 L de combustível → B2 · ETA 25 min pela rota sugerida']);
+ renderTicker();
+ const b=brigades.find(x=>x.id==='B2');delete b.supply;renderDetail();
+}
+
+/* relógio + envelhecimento simulado dos dados */
+setInterval(()=>{
+ const d=new Date();
+ document.getElementById('clock').textContent=d.toLocaleTimeString('pt-BR');
+},1000);
+setInterval(()=>{
+ brigades.forEach(b=>b.ageMin++);
+ renderCards();renderTokens();if(document.querySelector('.bcard')) renderDetail();
+},60000);
+
+renderCards();renderTokens();renderDetail();renderTicker();
+</script>
+</body>
+</html>
