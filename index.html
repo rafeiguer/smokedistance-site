@@ -70,6 +70,16 @@ nav{
   transition:background 0.2s;
 }
 .nav-cta:hover{background:#e05500}
+.nav-cta-ghost{
+  font-size:0.68rem!important;
+  padding:0.4rem 0.9rem!important;
+  letter-spacing:0.03em!important;
+}
+.nav-cta-ghost .proto-tag{display:inline}
+@media(max-width:768px){
+  .nav-cta-ghost .proto-tag{display:none}
+  .nav-cta-ghost{padding:0.35rem 0.7rem!important}
+}
 .hero{
   min-height:100vh;
   display:flex;align-items:center;justify-content:center;
@@ -253,7 +263,7 @@ footer{padding:3rem 4rem;border-top:1px solid var(--border);display:flex;align-i
     <li><a href="#privacidade">Privacidade</a></li>
     <li><a href="manual.html">Manual</a></li>
   </ul>
-  <a href="central-de-comando.html" class="nav-cta" style="background:transparent;border:1px solid var(--gold);color:var(--gold-light)">Central de Comando <span style="opacity:.6;font-size:.75em">· protótipo</span></a>
+  <a href="central-de-comando.html" class="nav-cta nav-cta-ghost" style="background:transparent;border:1px solid var(--gold);color:var(--gold-light)">Central de Comando <span class="proto-tag" style="opacity:.6">· protótipo</span></a>
   <a href="#download" class="nav-cta">Baixar App</a>
 </nav>
 
