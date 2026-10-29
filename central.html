@@ -10,7 +10,7 @@
 /* Mesmo visual do app ("liquid glass" — src/styles/glass.js) com as divisões
    coloridas do manual. Um só arquivo, sem build: abre direto no GitHub Pages. */
 :root{
-  --fundo:#0C1411; --painel:rgba(22,32,28,.78); --painel-forte:rgba(16,24,20,.92);
+  --fundo:#0C1411; --painel:rgba(22,32,28,.78); --painel-forte:rgba(16,24,20,.94);
   --borda:rgba(255,255,255,.16); --pilula:rgba(255,255,255,.06); --pilula-borda:rgba(255,255,255,.32);
   --texto:#F2F6F3; --suave:rgba(242,246,243,.68); --fraco:rgba(242,246,243,.45);
   --fogo:#FF6B35; --fogo-forte:#E53935; --alerta:#FBBF24; --verde:#4ADE80; --verde-escuro:#2E7D32;
@@ -22,8 +22,8 @@
 html,body{height:100%}
 body{background:var(--fundo);color:var(--texto);font-family:var(--fonte);font-size:14px;overflow:hidden}
 button,input,select{font:inherit;color:inherit}
-.vidro{background:var(--painel);border:1px solid var(--borda);border-radius:var(--raio);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);position:relative;overflow:hidden}
-.vidro::before{content:"";position:absolute;inset:0 0 50% 0;background:linear-gradient(180deg,rgba(255,255,255,.07),transparent);pointer-events:none}
+.vidro{background:var(--painel);border:1px solid var(--borda);border-radius:var(--raio);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);position:relative}
+.vidro::before{content:"";position:absolute;inset:0 0 50% 0;border-radius:var(--raio) var(--raio) 0 0;background:linear-gradient(180deg,rgba(255,255,255,.07),transparent);pointer-events:none}
 
 /* Pílulas (igual Pilula.js) */
 .pil{display:inline-flex;align-items:center;gap:6px;border-radius:999px;border:1px solid var(--pilula-borda);background:var(--pilula);padding:7px 13px;font-size:12.5px;font-weight:700;cursor:pointer;white-space:nowrap;position:relative;overflow:hidden;transition:background .15s,border-color .15s}
@@ -32,8 +32,8 @@ button,input,select{font:inherit;color:inherit}
 .pil.ativo{background:color-mix(in srgb,var(--c,var(--verde)) 34%,transparent);border-color:color-mix(in srgb,var(--c,var(--verde)) 75%,transparent)}
 .pil.destaque{background:var(--c,var(--fogo));border-color:rgba(255,255,255,.28);color:#fff}
 .pil.grande{padding:11px 18px;font-size:14px}
-.pil:disabled{opacity:.5;cursor:default}
-.ponto{width:10px;height:10px;border-radius:50%;background:var(--c);display:inline-block}
+.pil:disabled{opacity:.45;cursor:default}
+.ponto{width:10px;height:10px;border-radius:50%;background:var(--c);display:inline-block;flex-shrink:0}
 
 /* ── LOGIN ── */
 #login{position:fixed;inset:0;z-index:2000;display:flex;align-items:center;justify-content:center;padding:16px;background:radial-gradient(circle at 50% 30%,rgba(255,107,53,.18),transparent 55%),var(--fundo)}
@@ -46,18 +46,21 @@ button,input,select{font:inherit;color:inherit}
 /* ── ESTRUTURA ── */
 #app{display:none;height:100%;flex-direction:column}
 #app.on{display:flex}
-header{display:flex;align-items:center;gap:12px;padding:10px 16px;border-bottom:1px solid var(--borda);background:var(--painel-forte);flex-wrap:wrap}
+header{display:flex;align-items:center;gap:12px;padding:10px 16px;border-bottom:1px solid var(--borda);background:var(--painel-forte);flex-wrap:wrap;position:relative;z-index:900}
 .titulo{font-weight:800;font-size:17px;letter-spacing:.3px;display:flex;align-items:center;gap:8px}
 .titulo small{color:var(--suave);font-weight:600;font-size:12px}
 .chips{display:flex;gap:8px;flex-wrap:wrap;margin-left:auto}
-.chip{display:flex;align-items:center;gap:6px;border:1px solid var(--borda);border-radius:999px;padding:4px 11px;font-size:12px;background:var(--pilula)}
+.chip{display:flex;align-items:center;gap:6px;border:1px solid var(--borda);border-radius:999px;padding:4px 11px;font-size:12px;background:var(--pilula);white-space:nowrap}
 .chip b{color:var(--alerta)}
 .relogio{font-family:var(--mono);font-size:14px}
 .usuario{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--suave)}
 .usuario img{width:26px;height:26px;border-radius:50%}
-main{flex:1;display:grid;grid-template-columns:320px 1fr 380px;min-height:0}
-.col{overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:12px;background:rgba(0,0,0,.18)}
-.col::-webkit-scrollbar{width:8px}.col::-webkit-scrollbar-thumb{background:var(--borda);border-radius:8px}
+/* minmax(0,1fr): sem isso as colunas crescem com o conteúdo e não rolam */
+main{flex:1;display:grid;grid-template-columns:330px minmax(0,1fr) 390px;grid-template-rows:minmax(0,1fr);min-height:0;overflow:hidden}
+.col{overflow-y:auto;min-height:0;padding:12px;display:flex;flex-direction:column;gap:12px;background:rgba(0,0,0,.18);overscroll-behavior:contain}
+.col>.vidro{flex-shrink:0}
+.col::-webkit-scrollbar,.rolagem::-webkit-scrollbar{width:8px;height:8px}
+.col::-webkit-scrollbar-thumb,.rolagem::-webkit-scrollbar-thumb{background:var(--borda);border-radius:8px}
 
 /* Divisões coloridas (padrão do manual) */
 .secao{padding:14px;border-left:4px solid var(--c,var(--verde))}
@@ -66,7 +69,8 @@ main{flex:1;display:grid;grid-template-columns:320px 1fr 380px;min-height:0}
 .linha{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 .kv{display:flex;justify-content:space-between;gap:10px;font-size:13px;padding:3px 0}
 .kv span:first-child{color:var(--suave)}
-.kv b{font-family:var(--mono);font-weight:600}
+.kv b{font-family:var(--mono);font-weight:600;text-align:right}
+.rolagem{overflow-y:auto;overscroll-behavior:contain}
 
 /* Camadas */
 .camada{display:flex;align-items:center;gap:10px;padding:7px 4px;cursor:pointer;border-bottom:1px solid rgba(255,255,255,.06);font-size:13px}
@@ -74,13 +78,28 @@ main{flex:1;display:grid;grid-template-columns:320px 1fr 380px;min-height:0}
 .camada input{accent-color:var(--verde);width:16px;height:16px}
 .camada .qtd{margin-left:auto;color:var(--fraco);font-family:var(--mono);font-size:12px}
 
-/* Registro (idade do dado) */
-.evento{display:flex;gap:10px;padding:7px 0;border-bottom:1px solid rgba(255,255,255,.06);font-size:12.5px;line-height:1.4}
+/* Registro (clicável, com idade do dado) */
+.evento{display:flex;gap:10px;padding:7px 6px;border-bottom:1px solid rgba(255,255,255,.06);font-size:12.5px;line-height:1.4;border-radius:10px;cursor:pointer}
+.evento:hover{background:rgba(255,255,255,.06)}
 .evento:last-child{border-bottom:none}
 .idade{font-family:var(--mono);font-size:11px;padding:1px 7px;border-radius:999px;white-space:nowrap;height:fit-content}
 .idade.ok{background:rgba(74,222,128,.15);color:var(--verde)}
 .idade.atencao{background:rgba(251,191,36,.15);color:var(--alerta)}
 .idade.velho{background:rgba(229,57,53,.15);color:#EF9A9A}
+
+/* Mensagens e tarefas */
+#listaMsg{max-height:320px;display:flex;flex-direction:column;gap:8px;padding-right:2px}
+.msg{padding:9px 11px;border-radius:14px;background:rgba(255,255,255,.06);border:1px solid var(--borda);font-size:13px;line-height:1.4}
+.msg.minha{background:rgba(96,165,250,.14);border-color:rgba(96,165,250,.45)}
+.msg.tarefa{border-color:rgba(251,191,36,.6);cursor:pointer}
+.msg.feita .texto{text-decoration:line-through;color:var(--suave)}
+.msg .autor{font-size:11px;color:var(--suave);font-weight:700;margin-bottom:2px;display:flex;gap:6px;align-items:center}
+.msg .autor .x{margin-left:auto;background:none;border:none;color:var(--fraco);cursor:pointer}
+.msg .local{font-size:11px;color:var(--azul);cursor:pointer}
+.entrada{display:flex;gap:6px;margin-top:8px}
+.entrada input[type=text]{flex:1;min-width:0;background:rgba(255,255,255,.06);border:1px solid var(--borda);border-radius:999px;padding:8px 12px;outline:none}
+.entrada input[type=text]:focus{border-color:var(--azul)}
+.rapidas{display:flex;gap:6px;overflow-x:auto;padding:6px 0 2px}
 
 /* ── MAPA ── */
 .mapa-area{position:relative;min-height:0}
@@ -89,21 +108,36 @@ main{flex:1;display:grid;grid-template-columns:320px 1fr 380px;min-height:0}
 .ferramentas{position:absolute;z-index:500;left:12px;right:12px;top:12px;display:flex;gap:8px;flex-wrap:wrap;align-items:flex-start;pointer-events:none}
 .ferramentas>*{pointer-events:auto}
 .barra{padding:8px;display:flex;gap:6px;flex-wrap:wrap;align-items:center}
-.aviso-mapa{position:absolute;z-index:500;left:50%;bottom:18px;transform:translateX(-50%);padding:8px 14px;font-size:12.5px;display:none}
+.aviso-mapa{position:absolute;z-index:500;left:50%;bottom:18px;transform:translateX(-50%);padding:8px 14px;font-size:12.5px;display:none;white-space:nowrap}
 .aviso-mapa.on{display:block}
+.legenda{position:absolute;z-index:500;left:12px;bottom:12px;padding:10px 12px;font-size:11.5px;color:var(--suave);max-width:260px}
+.legenda summary{cursor:pointer;font-weight:800;color:var(--texto);list-style:none}
+.legenda summary::-webkit-details-marker{display:none}
+.legenda ul{list-style:none;margin-top:6px;display:flex;flex-direction:column;gap:4px}
+.legenda li{display:flex;align-items:center;gap:8px}
+.amostra{width:22px;height:0;border-top:3px solid var(--c);flex-shrink:0}
+.amostra.tracejada{border-top-style:dashed}
 .leaflet-container{font-family:var(--fonte)}
 .leaflet-popup-content-wrapper,.leaflet-popup-tip{background:var(--painel-forte);color:var(--texto);border:1px solid var(--borda)}
 .leaflet-popup-content{margin:12px 14px;font-size:13px;line-height:1.5}
-.leaflet-popup-content img{max-width:220px;border-radius:12px;display:block;margin-top:6px}
 .leaflet-control-attribution{background:rgba(12,20,17,.7)!important;color:var(--fraco)!important}
 .leaflet-control-attribution a{color:var(--suave)!important}
 .marcador{display:flex;align-items:center;justify-content:center;border-radius:50%;border:2px solid #fff;font-size:15px}
-.btn-pop{margin-top:8px;border-radius:999px;border:1px solid rgba(255,255,255,.25);background:rgba(229,57,53,.85);color:#fff;padding:6px 12px;cursor:pointer;font-weight:700;font-size:12px}
+.btn-pop{margin:8px 6px 0 0;border-radius:999px;border:1px solid rgba(255,255,255,.25);background:rgba(255,255,255,.1);color:#fff;padding:6px 12px;cursor:pointer;font-weight:700;font-size:12px}
+.btn-pop.perigo{background:rgba(229,57,53,.85)}
+
+/* ── VISOR DE FOTO (arrastável) ── */
+#visor{position:fixed;z-index:1500;left:50%;top:90px;transform:translateX(-50%);width:min(560px,94vw);display:none;box-shadow:0 18px 50px rgba(0,0,0,.55)}
+#visor.on{display:block}
+#visor .alca{display:flex;align-items:center;gap:8px;padding:10px 14px;cursor:move;user-select:none;touch-action:none;border-bottom:1px solid var(--borda);font-weight:800}
+#visor .alca .fechar{margin-left:auto}
+#visor img{display:block;width:100%;max-height:68vh;object-fit:contain;background:#000;border-radius:0 0 var(--raio) var(--raio)}
+#visor .info{padding:8px 14px 12px;font-size:12.5px;color:var(--suave)}
 
 /* ── EQUIPAMENTOS (tabela estilo planilha) ── */
 .planilha-wrap{overflow-x:auto;border:1px solid var(--borda);border-radius:14px}
-table.planilha{border-collapse:collapse;width:100%;min-width:620px;font-size:12.5px}
-.planilha th{background:rgba(255,255,255,.06);color:var(--suave);font-size:10.5px;letter-spacing:.8px;text-transform:uppercase;text-align:left;padding:7px 8px;font-weight:700;white-space:nowrap}
+table.planilha{border-collapse:collapse;width:100%;min-width:640px;font-size:12.5px}
+.planilha th{background:rgba(255,255,255,.06);color:var(--suave);font-size:10.5px;letter-spacing:.8px;text-transform:uppercase;text-align:left;padding:7px 8px;font-weight:700;white-space:nowrap;position:sticky;top:0}
 .planilha td{border-top:1px solid rgba(255,255,255,.07);padding:0}
 .planilha input,.planilha select{width:100%;background:transparent;border:none;padding:8px;outline:none;min-width:54px}
 .planilha input:focus,.planilha select:focus{background:rgba(96,165,250,.12)}
@@ -116,9 +150,12 @@ table.planilha{border-collapse:collapse;width:100%;min-width:620px;font-size:12.
 .campo label{display:block;font-size:11px;color:var(--suave);margin-bottom:3px}
 .campo input{width:100%;background:rgba(255,255,255,.06);border:1px solid var(--borda);border-radius:12px;padding:8px 10px;font-family:var(--mono);outline:none}
 .campo input:focus{border-color:var(--azul)}
+.resumo{margin-top:12px;padding:12px;border-radius:16px;background:rgba(192,132,252,.1);border:1px solid rgba(192,132,252,.45)}
+.resumo h3{font-size:12px;letter-spacing:1px;text-transform:uppercase;color:var(--roxo);margin-bottom:8px}
+.resumo .grande{font-size:24px;font-weight:800;font-family:var(--mono)}
 .resultado{display:grid;grid-template-columns:1fr auto;gap:2px 10px;padding:10px 12px;border-radius:14px;background:rgba(255,255,255,.04);border:1px solid var(--borda);margin-top:8px}
 .resultado .nome{font-weight:800}
-.resultado .valor{font-family:var(--mono);text-align:right}
+.resultado .valor{font-family:var(--mono);text-align:right;font-weight:700}
 .resultado .sub{grid-column:1/-1;font-size:12px;color:var(--suave)}
 .resultado.ruim{border-color:rgba(229,57,53,.6);background:rgba(229,57,53,.1)}
 .resultado.ok{border-color:rgba(74,222,128,.45)}
@@ -129,21 +166,24 @@ table.planilha{border-collapse:collapse;width:100%;min-width:620px;font-size:12.
 /* ── ABAS (celular) ── */
 nav.abas{display:none}
 @media (max-width:980px){
-  body{font-size:14px}
   header{padding:calc(8px + env(safe-area-inset-top)) 12px 8px}
   .chips{order:3;width:100%;margin-left:0;overflow-x:auto;flex-wrap:nowrap}
   .relogio{display:none}
   main{display:block;position:relative}
   .mapa-area{position:absolute;inset:0}
-  .col{position:absolute;left:0;right:0;bottom:0;max-height:62%;z-index:600;background:var(--painel-forte);border-top:1px solid var(--borda);border-radius:22px 22px 0 0;display:none}
+  .col{position:absolute;left:0;right:0;bottom:0;max-height:66%;z-index:600;background:var(--painel-forte);border-top:1px solid var(--borda);border-radius:22px 22px 0 0;display:none}
   .col.mostra{display:flex}
   .col>.vidro{display:none}
   .col>.vidro.mostra{display:block}
-  nav.abas{display:flex;justify-content:space-around;gap:4px;padding:8px 8px calc(8px + env(safe-area-inset-bottom));border-top:1px solid var(--borda);background:var(--painel-forte)}
-  nav.abas button{flex:1;background:none;border:none;color:var(--suave);font-size:11px;font-weight:700;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px 0;cursor:pointer}
+  nav.abas{display:flex;overflow-x:auto;gap:2px;padding:6px 6px calc(6px + env(safe-area-inset-bottom));border-top:1px solid var(--borda);background:var(--painel-forte)}
+  nav.abas button{flex:1;min-width:58px;background:none;border:none;color:var(--suave);font-size:10.5px;font-weight:700;display:flex;flex-direction:column;align-items:center;gap:1px;padding:4px 0;cursor:pointer;position:relative}
   nav.abas button span{font-size:19px}
   nav.abas button.on{color:var(--verde)}
+  nav.abas .badge{position:absolute;top:0;right:8px;background:var(--fogo-forte);color:#fff;border-radius:999px;font-size:9.5px;padding:0 5px}
   .ferramentas{left:8px;right:8px;top:8px}
+  .legenda{display:none}
+  .aviso-mapa{white-space:normal;width:86%;text-align:center}
+  #visor{top:70px}
 }
 </style>
 </head>
@@ -154,7 +194,7 @@ nav.abas{display:none}
   <div class="caixa vidro">
     <div class="marca">🦅</div>
     <h1>Central de Controle</h1>
-    <p>Mapa ao vivo das visadas, focos, fotos, água, trilhas e rotas de serviço — o mesmo dado do app SmokeDistance, com desenho de rota e cálculo de equipamentos.</p>
+    <p>Mapa ao vivo das visadas, focos, fotos, água, trilhas, brigadas e rotas de serviço — o mesmo dado do app SmokeDistance, com desenho de rota, mensagens e cálculo de equipamentos.</p>
     <button class="pil destaque grande" id="btnEntrar" style="--c:var(--fogo)">Entrar com Google</button>
     <div class="erro" id="loginErro"></div>
     <p style="margin:18px 0 0;font-size:12px"><a href="manual.html" style="color:var(--suave)">← Manual do app</a></p>
@@ -166,18 +206,29 @@ nav.abas{display:none}
     <div class="titulo">🦅 Central de Controle <small>SmokeDistance</small></div>
     <div class="chips" id="chips"><div class="chip">Tempo no foco: carregando…</div></div>
     <div class="relogio" id="relogio">--:--:--</div>
-    <div class="usuario"><img id="foto" alt=""><span id="nome"></span><button class="pil" id="btnSair">Sair</button></div>
+    <div class="usuario"><img id="foto" alt=""><span id="nome"></span><a class="pil" href="manual.html" title="Manual">📖</a><button class="pil" id="btnSair">Sair</button></div>
   </header>
 
   <main>
-    <!-- ESQUERDA: camadas + registro -->
+    <!-- ESQUERDA: mensagens + camadas + registro -->
     <div class="col" id="colEsq">
+      <section class="vidro secao" id="secMsg" style="--c:var(--roxo)">
+        <h2>💬 Mensagens e tarefas <span class="dica" id="pendentes" style="text-transform:none;letter-spacing:0;font-weight:400"></span></h2>
+        <div id="listaMsg" class="rolagem"><span class="dica">Carregando…</span></div>
+        <div class="rapidas" id="rapidas"></div>
+        <div class="entrada">
+          <button class="pil" id="btnTarefa" style="--c:var(--alerta)" title="Enviar como tarefa">☐ Tarefa</button>
+          <input type="text" id="txtMsg" maxlength="500" placeholder="Mensagem para as brigadas…">
+          <button class="pil destaque" id="btnEnviar" style="--c:var(--azul)">Enviar</button>
+        </div>
+      </section>
       <section class="vidro secao" id="secCamadas" style="--c:var(--verde)">
         <h2>🗂️ Camadas do mapa</h2>
         <div id="listaCamadas"></div>
       </section>
       <section class="vidro secao" id="secRegistro" style="--c:var(--alerta)">
         <h2>📜 Registro da operação</h2>
+        <p class="dica" style="margin:-4px 0 6px">Clique num evento para ir até ele no mapa.</p>
         <div id="registro" class="dica">Aguardando dados…</div>
       </section>
     </div>
@@ -189,7 +240,8 @@ nav.abas{display:none}
         <div class="vidro barra" id="barraTipos"></div>
         <div class="vidro barra">
           <button class="pil destaque" id="btnDesenhar" style="--c:var(--azul)">✏️ Desenhar</button>
-          <button class="pil" id="btnDesfazer" disabled>↶ Desfazer</button>
+          <button class="pil" id="btnDesfazer" disabled title="Desfaz sua última ação nesta tela">↶ Desfazer</button>
+          <button class="pil" id="btnLimpar" title="Esconde os traços só neste navegador">🧹 Limpar</button>
           <select class="pil" id="selBase" title="Camada base">
             <option value="sat">Satélite</option>
             <option value="relevo">Relevo</option>
@@ -197,6 +249,21 @@ nav.abas{display:none}
           </select>
         </div>
       </div>
+      <details class="vidro legenda" open>
+        <summary>Legenda ▾</summary>
+        <ul>
+          <li>🔥 Foco triangulado</li>
+          <li><span class="amostra tracejada" style="--c:#FFEB3B"></span>Margem de erro do foco (o fogo deve estar dentro)</li>
+          <li>👁️ Visada · linha = direção mirada (20 km)</li>
+          <li>📌 Foco marcado à mão</li>
+          <li>📸 Foto · 💧 Água · 🚒 Brigada</li>
+          <li><span class="amostra" style="--c:#60A5FA"></span>Rota</li>
+          <li><span class="amostra" style="--c:#E53935"></span>Aceiro / linha de controle</li>
+          <li><span class="amostra tracejada" style="--c:#4ADE80"></span>Rota de fuga</li>
+          <li><span class="amostra" style="--c:#FBBF24"></span>Anotação</li>
+          <li><span class="amostra" style="--c:#2E7D32"></span>Trilha verificada · <span class="amostra tracejada" style="--c:#FFB300"></span>comunidade</li>
+        </ul>
+      </details>
       <div class="vidro aviso-mapa" id="avisoMapa">✏️ Risque no mapa. Ao soltar, o traço vai para o app de todos.</div>
     </div>
 
@@ -208,7 +275,7 @@ nav.abas{display:none}
       </section>
       <section class="vidro secao" id="secEquip" style="--c:var(--fogo)">
         <h2>🧰 Equipamentos</h2>
-        <div class="planilha-wrap">
+        <div class="planilha-wrap rolagem">
           <table class="planilha">
             <thead><tr><th>Equipamento</th><th>Qtd</th><th>Em uso</th><th>Combustível</th><th>Mistura</th><th>Tanque L</th><th>Consumo L/h</th><th>Vazão L/min</th><th></th></tr></thead>
             <tbody id="tabEquip"></tbody>
@@ -219,19 +286,19 @@ nav.abas{display:none}
           <button class="pil ativo" id="btnSalvarEquip" style="--c:var(--verde)">💾 Salvar tabela</button>
           <span class="estado-salvo" id="estadoEquip"></span>
         </div>
-        <p class="dica" style="margin-top:8px">Consumo de fábrica (motor em carga): BR 600 1,21 L/h · BR 800 1,47 L/h, mistura 50:1. As bombas ficam em branco até conferir a plaqueta. "Em uso" é quantos estão ligados agora.</p>
+        <p class="dica" style="margin-top:8px">Consumo de fábrica (motor em carga): BR 600 1,21 L/h · BR 800 1,47 L/h, mistura 50:1. As bombas ficam em branco até conferir a plaqueta. "Em uso" = quantos estão ligados agora (vazio = todos).</p>
       </section>
       <section class="vidro secao" id="secCalc" style="--c:var(--roxo)">
         <h2>🧮 Calculadora de autonomia</h2>
         <div class="campos">
-          <div class="campo"><label>Gasolina (L)</label><input type="number" min="0" step="0.5" data-calc="gasolina"></div>
-          <div class="campo"><label>Óleo 2T (L)</label><input type="number" min="0" step="0.1" data-calc="oleo"></div>
+          <div class="campo"><label>Duração da missão (h)</label><input type="number" min="0" step="0.5" data-calc="duracao"></div>
+          <div class="campo"><label>Pessoas</label><input type="number" min="0" step="1" data-calc="pessoas"></div>
+          <div class="campo"><label>Gasolina levada (L)</label><input type="number" min="0" step="0.5" data-calc="gasolina"></div>
+          <div class="campo"><label>Óleo 2T levado (L)</label><input type="number" min="0" step="0.1" data-calc="oleo"></div>
           <div class="campo"><label>Diesel (L)</label><input type="number" min="0" step="0.5" data-calc="diesel"></div>
           <div class="campo"><label>Água de combate (L)</label><input type="number" min="0" step="10" data-calc="agua"></div>
-          <div class="campo"><label>Pessoas</label><input type="number" min="0" step="1" data-calc="pessoas"></div>
           <div class="campo"><label>Água potável (L)</label><input type="number" min="0" step="1" data-calc="potavel"></div>
           <div class="campo"><label>Hidratação L/h por pessoa</label><input type="number" min="0" step="0.1" data-calc="hidratacao" placeholder="ex.: 0,5"></div>
-          <div class="campo"><label>Duração da missão (h)</label><input type="number" min="0" step="0.5" data-calc="duracao"></div>
         </div>
         <div id="resultados"></div>
       </section>
@@ -240,19 +307,27 @@ nav.abas{display:none}
 
   <nav class="abas" id="abas">
     <button data-aba="mapa" class="on"><span>🗺️</span>Mapa</button>
-    <button data-aba="secCamadas"><span>🗂️</span>Camadas</button>
+    <button data-aba="secMsg"><span>💬</span>Msgs<i class="badge" id="badgeMsg" hidden></i></button>
     <button data-aba="secRegistro"><span>📜</span>Registro</button>
+    <button data-aba="secCamadas"><span>🗂️</span>Camadas</button>
     <button data-aba="secTempo"><span>🌤️</span>Tempo</button>
     <button data-aba="secEquip"><span>🧰</span>Equip.</button>
     <button data-aba="secCalc"><span>🧮</span>Cálculo</button>
   </nav>
 </div>
 
+<!-- Visor de foto arrastável -->
+<div id="visor" class="vidro">
+  <div class="alca" id="visorAlca">📸 Foto de campo <span class="dica" id="visorQuando"></span><button class="pil fechar" id="visorFechar">✕</button></div>
+  <a id="visorLink" target="_blank" rel="noopener"><img id="visorImg" alt="Foto de campo"></a>
+  <div class="info" id="visorInfo"></div>
+</div>
+
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script type="module">
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js';
 import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js';
-import { getFirestore, collection, query, orderBy, limit, onSnapshot, addDoc, deleteDoc, doc, getDoc, setDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js';
+import { getFirestore, collection, query, orderBy, limit, onSnapshot, addDoc, deleteDoc, updateDoc, doc, getDoc, setDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js';
 
 // Config pública do app web (a mesma do app — a segurança vem das firestore.rules)
 const app = initializeApp({
@@ -279,7 +354,9 @@ const idade = (d) => {
   return { txt, cls: min < 10 ? 'ok' : min < 60 ? 'atencao' : 'velho' };
 };
 const duracao = (h) => !Number.isFinite(h) ? '—' : `${Math.floor(h)}h${String(Math.round((h % 1) * 60)).padStart(2, '0')}`;
-const n = (v) => { const x = parseFloat(String(v).replace(',', '.')); return Number.isFinite(x) ? x : 0; };
+const n = (v) => { const x = parseFloat(String(v ?? '').replace(',', '.')); return Number.isFinite(x) ? x : 0; };
+const lerLocal = (k, padrao) => { try { return JSON.parse(localStorage.getItem(k)) ?? padrao; } catch { return padrao; } };
+const gravarLocal = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} };
 
 // Mesmas cores/tipos do app (rotaServicoService.js)
 const TIPOS = [
@@ -289,11 +366,13 @@ const TIPOS = [
   { id: 'anotacao', nome: 'Anotação', cor: '#FBBF24' },
 ];
 const tipoDe = (id) => TIPOS.find(t => t.id === id) || TIPOS[3];
+const RAPIDAS = ['📍 Seguir a rota azul', '⚠️ Recuar para a zona de segurança', '⛽ Suprimento a caminho', '✅ Recebido', '🕓 Aguardar no ponto de encontro'];
 // Cor da visada por aparelho — mesma regra do MapScreen do app
 const CORES_VISADA = ['#00FF00', '#FF9800', '#00BCD4', '#E91E63', '#FFEB3B', '#9C27B0'];
 const corVisada = (f) => CORES_VISADA[Math.abs(String(f.deviceId || f.id || '').split('').reduce((a, c) => a + c.charCodeAt(0), 0)) % CORES_VISADA.length];
 
 let usuario = null, papel = null;
+const ehChefe = () => ['admin', 'coordinator'].includes(papel);
 
 /* ───────────── LOGIN ───────────── */
 const provedor = new GoogleAuthProvider();
@@ -316,7 +395,7 @@ onAuthStateChanged(auth, async (u) => {
   // Sessão anônima não entra na Central: exige conta Google
   if (!u || u.isAnonymous) { usuario = null; $('login').style.display = 'flex'; $('app').classList.remove('on'); return; }
   usuario = u;
-  papel = (await u.getIdTokenResult()).claims.role || null;
+  papel = (await u.getIdTokenResult(true)).claims.role || null;
   $('login').style.display = 'none';
   $('app').classList.add('on');
   $('nome').textContent = `${u.displayName || u.email}${papel ? ' · ' + papel : ''}`;
@@ -335,6 +414,7 @@ let baseAtual;
 
 const CAMADAS = [
   { id: 'rota', nome: '🧭 Rota de serviço', cor: 'var(--azul)' },
+  { id: 'brigadas', nome: '🚒 Brigadas', cor: 'var(--alerta)' },
   { id: 'tri', nome: '🔥 Focos triangulados', cor: 'var(--fogo-forte)' },
   { id: 'visadas', nome: '👁️ Visadas', cor: 'var(--fogo)' },
   { id: 'manuais', nome: '📌 Focos marcados', cor: 'var(--fogo)' },
@@ -343,7 +423,6 @@ const CAMADAS = [
   { id: 'trilhas', nome: '🥾 Trilhas', cor: 'var(--verde)' },
 ];
 const grupos = {};
-const contagem = {};
 
 function iniciar() {
   if (iniciado) return;
@@ -353,16 +432,18 @@ function iniciar() {
   baseAtual = bases.sat().addTo(mapa);
   $('selBase').onchange = (e) => { mapa.removeLayer(baseAtual); baseAtual = bases[e.target.value]().addTo(mapa); };
 
-  CAMADAS.forEach(c => { grupos[c.id] = L.layerGroup().addTo(mapa); contagem[c.id] = 0; });
+  CAMADAS.forEach(c => { grupos[c.id] = L.layerGroup().addTo(mapa); });
   desenharListaCamadas();
   montarTipos();
   montarDesenho();
   montarAbas();
+  montarVisor();
+  montarMensagens();
   escutarDados();
   montarEquipamentos();
   setInterval(() => { $('relogio').textContent = new Date().toLocaleTimeString('pt-BR'); }, 1000);
-  // "há X min" muda devagar: redesenhar a lista a cada 15 s basta (poupa o celular)
-  setInterval(desenharRegistro, 15000);
+  // "há X min" muda devagar: redesenhar a cada 15 s basta (poupa o celular)
+  setInterval(() => { desenharRegistro(); desenharBrigadas(); }, 15000);
   setTimeout(desenharRegistro, 2500);
 }
 
@@ -375,7 +456,7 @@ function desenharListaCamadas() {
     cb.checked ? g.addTo(mapa) : mapa.removeLayer(g);
   });
 }
-const atualizarQtd = (id, q) => { contagem[id] = q; const el = $(`qtd-${id}`); if (el) el.textContent = q; };
+const atualizarQtd = (id, q) => { const el = $(`qtd-${id}`); if (el) el.textContent = q; };
 
 let primeiraVista = true;
 function enquadrar(pontos) {
@@ -385,40 +466,40 @@ function enquadrar(pontos) {
   mapa.fitBounds(L.latLngBounds(pontos), { padding: [40, 40], maxZoom: 15 });
 }
 
-const icone = (emoji, cor, tam = 30) => L.divIcon({ className: '', iconSize: [tam, tam], iconAnchor: [tam / 2, tam / 2],
-  html: `<div class="marcador" style="width:${tam}px;height:${tam}px;background:${cor}">${emoji}</div>` });
+const icone = (emoji, cor, tam = 30, borda = '#fff') => L.divIcon({ className: '', iconSize: [tam, tam], iconAnchor: [tam / 2, tam / 2],
+  html: `<div class="marcador" style="width:${tam}px;height:${tam}px;background:${cor};border-color:${borda}">${emoji}</div>` });
+
+// Ir até um ponto do mapa (registro, mensagem com posição)
+function irPara(lat, lon, abrir) {
+  if (!Number.isFinite(lat)) return;
+  if (window.matchMedia('(max-width:980px)').matches) document.querySelector('#abas [data-aba="mapa"]').click();
+  mapa.flyTo([lat, lon], Math.max(mapa.getZoom(), 16), { duration: .8 });
+  if (abrir) setTimeout(abrir, 850);
+}
 
 /* ───────────── DADOS AO VIVO ───────────── */
-const eventos = { rota: [], tri: [], visadas: [], fotos: [], trilhas: [] };
-let tracos = [], ultimaTri = null;
+// eventos[categoria] = [{ d, txt, cls, lat, lon, abrir }]
+const eventos = { rota: [], tri: [], visadas: [], fotos: [], trilhas: [], brigadas: [], msg: [] };
+let tracos = [], ultimaTri = null, brigadas = [];
 
 function escutarDados() {
   const erro = (nome) => (e) => console.warn(`Central: ${nome}`, e.message);
 
   onSnapshot(query(collection(db, 'rotaServico'), orderBy('criadoEm', 'desc'), limit(300)), (snap) => {
     tracos = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-    const g = grupos.rota; g.clearLayers();
-    tracos.forEach(t => {
-      if (!(t.pontos?.length > 1)) return;
-      const tipo = tipoDe(t.tipo);
-      const linha = L.polyline(t.pontos.map(p => [p.latitude, p.longitude]), { color: tipo.cor, weight: 5, lineCap: 'round', dashArray: t.tipo === 'fuga' ? '12 8' : null }).addTo(g);
-      linha.bindPopup(() => popupTraco(t));
-    });
-    atualizarQtd('rota', tracos.length);
-    $('btnDesfazer').disabled = !tracos.some(t => t.autorUid === usuario?.uid);
-    eventos.rota = tracos.slice(0, 30).map(t => ({ d: quando(t.criadoEm), txt: `🧭 ${tipoDe(t.tipo).nome} desenhada por ${t.autorNome || 'Anônimo'}${t.origem === 'site' ? ' (Central)' : ' (app)'}` }));
+    desenharTracos();
   }, erro('rotaServico'));
 
   onSnapshot(query(collection(db, 'triangulacoes'), orderBy('calculadaEm', 'desc'), limit(30)), (snap) => {
     const g = grupos.tri; g.clearLayers();
     const lista = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-    lista.forEach(t => {
-      L.marker([t.latitude, t.longitude], { icon: icone('🔥', 'rgba(183,28,28,.92)', 38), zIndexOffset: 900 }).addTo(g).bindPopup(popupTri(t));
-      if (Number.isFinite(t.erroM)) L.circle([t.latitude, t.longitude], { radius: t.erroM, color: '#FFEB3B', weight: 1, fillOpacity: .06, dashArray: '4 4' }).addTo(g);
+    eventos.tri = lista.map(t => {
+      const m = L.marker([t.latitude, t.longitude], { icon: icone('🔥', 'rgba(183,28,28,.92)', 38, '#FFEB3B'), zIndexOffset: 900 }).addTo(g).bindPopup(popupTri(t));
+      if (Number.isFinite(t.erroM)) L.circle([t.latitude, t.longitude], { radius: t.erroM, color: '#FFEB3B', weight: 1.5, fillOpacity: .06, dashArray: '4 4', interactive: false }).addTo(g);
+      return { d: quando(t.calculadaEm), txt: `🔥 Foco triangulado · ± ${t.erroM ?? '?'} m`, cls: 'fogo', lat: t.latitude, lon: t.longitude, abrir: () => m.openPopup() };
     });
     atualizarQtd('tri', lista.length);
     ultimaTri = lista[0] || null;
-    eventos.tri = lista.map(t => ({ d: quando(t.calculadaEm), txt: `🔥 Foco triangulado ${t.latitude.toFixed(4)}, ${t.longitude.toFixed(4)} · ± ${t.erroM ?? '?'} m`, cls: 'fogo' }));
     enquadrar(lista.map(t => [t.latitude, t.longitude]));
     carregarTempo();
   }, erro('triangulacoes'));
@@ -427,37 +508,38 @@ function escutarDados() {
     const focos = snap.docs.map(d => ({ id: d.id, ...d.data() }));
     const gv = grupos.visadas, gm = grupos.manuais; gv.clearLayers(); gm.clearLayers();
     let nv = 0, nm = 0;
-    focos.forEach(f => {
+    eventos.visadas = [];
+    focos.forEach((f, i) => {
       const lat = parseFloat(f.latitude), lon = parseFloat(f.longitude), az = parseFloat(f.azimuth);
       if (!Number.isFinite(lat) || !Number.isFinite(lon)) return;
+      let m;
       if (f.tipo === 'manual' || !Number.isFinite(az)) {
         nm++;
-        L.marker([lat, lon], { icon: icone('📌', 'rgba(255,107,53,.9)', 28) }).addTo(gm)
+        m = L.marker([lat, lon], { icon: icone('📌', 'rgba(255,107,53,.9)', 28) }).addTo(gm)
           .bindPopup(`<b>📌 Foco marcado</b><br>${lat.toFixed(5)}, ${lon.toFixed(5)}<br><span class="dica">${esc(hhmm(quando(f.createdAt)))}</span>`);
-        return;
+      } else {
+        nv++;
+        const cor = corVisada(f), r = az * Math.PI / 180, dist = 20000; // linha de 20 km, igual ao app
+        const fim = [lat + (dist / 111000) * Math.cos(r), lon + (dist / (111000 * Math.cos(lat * Math.PI / 180))) * Math.sin(r)];
+        L.polyline([[lat, lon], fim], { color: cor, weight: 3, dashArray: '10 6', opacity: .9, interactive: false }).addTo(gv);
+        m = L.marker([lat, lon], { icon: icone('👁️', cor, 26) }).addTo(gv)
+          .bindPopup(`<b>👁️ Visada ${esc(f.tipo || '')}</b><br>Azimute: <b>${Math.round(az)}°</b><br>${lat.toFixed(5)}, ${lon.toFixed(5)}<br><span class="dica">${esc(hhmm(quando(f.createdAt)))} · ${esc(f.observadorId || '')}</span>`);
       }
-      nv++;
-      const cor = corVisada(f), r = az * Math.PI / 180, dist = 20000; // linha de 20 km, igual ao app
-      const fim = [lat + (dist / 111000) * Math.cos(r), lon + (dist / (111000 * Math.cos(lat * Math.PI / 180))) * Math.sin(r)];
-      L.polyline([[lat, lon], fim], { color: cor, weight: 3, dashArray: '10 6', opacity: .9 }).addTo(gv);
-      L.marker([lat, lon], { icon: icone('👁️', cor, 26) }).addTo(gv)
-        .bindPopup(`<b>👁️ Visada ${esc(f.tipo || '')}</b><br>Azimute: <b>${Math.round(az)}°</b><br>${lat.toFixed(5)}, ${lon.toFixed(5)}<br><span class="dica">${esc(hhmm(quando(f.createdAt)))} · ${esc(f.observadorId || '')}</span>`);
+      if (i < 40) eventos.visadas.push({ d: quando(f.createdAt), txt: f.tipo === 'manual' ? '📌 Foco marcado no mapa' : `👁️ Visada ${f.tipo || ''} · az ${Math.round(az)}°`, cls: 'fogo', lat, lon, abrir: () => m.openPopup() });
     });
     atualizarQtd('visadas', nv); atualizarQtd('manuais', nm);
-    eventos.visadas = focos.slice(0, 40).map(f => ({ d: quando(f.createdAt), txt: f.tipo === 'manual' ? `📌 Foco marcado no mapa` : `👁️ Visada ${f.tipo || ''} · az ${Math.round(parseFloat(f.azimuth))}°`, cls: 'fogo' }));
   }, erro('focos'));
 
   onSnapshot(query(collection(db, 'fotos_campo'), orderBy('createdAt', 'desc'), limit(100)), (snap) => {
     const g = grupos.fotos; g.clearLayers();
     const fotos = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-    fotos.forEach(f => {
+    eventos.fotos = [];
+    fotos.forEach((f, i) => {
       if (!Number.isFinite(f.latitude)) return;
-      const url = /^https:\/\/firebasestorage\.googleapis\.com\//.test(f.fotoUrl || '') ? f.fotoUrl : '';
-      L.marker([f.latitude, f.longitude], { icon: icone('📸', 'rgba(0,0,0,.75)', 28) }).addTo(g)
-        .bindPopup(`<b>📸 Foto de campo</b>${f.azimuth ? ` · az ${Math.round(f.azimuth)}°` : ''}<br><span class="dica">${esc(hhmm(quando(f.createdAt)))}</span>${url ? `<a href="${esc(url)}" target="_blank" rel="noopener"><img src="${esc(url)}" alt="foto" loading="lazy"></a>` : ''}`);
+      L.marker([f.latitude, f.longitude], { icon: icone('📸', 'rgba(0,0,0,.75)', 28) }).addTo(g).on('click', () => abrirFoto(f));
+      if (i < 20) eventos.fotos.push({ d: quando(f.createdAt), txt: '📸 Foto publicada — clique para ver', lat: f.latitude, lon: f.longitude, abrir: () => abrirFoto(f) });
     });
     atualizarQtd('fotos', fotos.length);
-    eventos.fotos = fotos.slice(0, 20).map(f => ({ d: quando(f.createdAt), txt: '📸 Foto publicada' }));
   }, erro('fotos_campo'));
 
   onSnapshot(collection(db, 'waterMarkers'), (snap) => {
@@ -474,55 +556,138 @@ function escutarDados() {
   onSnapshot(query(collection(db, 'trilhas'), orderBy('criadaEm', 'desc'), limit(200)), (snap) => {
     const g = grupos.trilhas; g.clearLayers();
     const lista = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-    lista.forEach(t => {
+    eventos.trilhas = [];
+    lista.forEach((t, i) => {
       const pts = (t.pontos || []).map(p => [p.la, p.lo]);
       if (pts.length < 2) return;
-      L.polyline(pts, { color: t.verificada ? '#2E7D32' : '#FFB300', weight: 4, dashArray: t.verificada ? null : '8 6' }).addTo(g)
+      const linha = L.polyline(pts, { color: t.verificada ? '#2E7D32' : '#FFB300', weight: 4, dashArray: t.verificada ? null : '8 6' }).addTo(g)
         .bindPopup(`<b>${t.verificada ? '✅' : '🥾'} ${esc(t.nome || 'Trilha')}</b><br>${esc(t.tipo || '')} · ${((t.distanciaM || 0) / 1000).toFixed(2)} km${t.subidaM != null ? ` · ↗ ${t.subidaM} m` : ''}<br><span class="dica">Mapeada por ${esc(t.apelido || 'Anônimo')}</span>`);
+      if (i < 10) eventos.trilhas.push({ d: quando(t.criadaEm), txt: `🥾 Trilha "${t.nome || 'Trilha'}" publicada`, lat: pts[0][0], lon: pts[0][1], abrir: () => { mapa.fitBounds(linha.getBounds(), { padding: [40, 40] }); linha.openPopup(); } });
     });
     atualizarQtd('trilhas', lista.length);
-    eventos.trilhas = lista.slice(0, 10).map(t => ({ d: quando(t.criadaEm), txt: `🥾 Trilha "${t.nome || 'Trilha'}" publicada` }));
   }, erro('trilhas'));
+
+  onSnapshot(collection(db, 'brigadas'), (snap) => {
+    brigadas = snap.docs.map(d => ({ id: d.id, ...d.data() })).filter(b => b.ativa && Number.isFinite(b.latitude));
+    desenharBrigadas();
+  }, erro('brigadas'));
+}
+
+function desenharBrigadas() {
+  if (!grupos.brigadas) return;
+  const g = grupos.brigadas; g.clearLayers();
+  eventos.brigadas = brigadas.map(b => {
+    const d = quando(b.atualizadoEm), i = idade(d);
+    const cor = { ok: '#4ADE80', atencao: '#FBBF24', velho: '#E53935' }[i.cls];
+    const m = L.marker([b.latitude, b.longitude], { icon: icone('🚒', 'rgba(0,0,0,.8)', 34, cor), zIndexOffset: 800 }).addTo(g)
+      .bindPopup(`<b>🚒 ${esc(b.nome || 'Brigada')}</b><br>Posição <b style="color:${cor}">${i.txt}</b> (${hhmm(d)})${b.precisaoM ? `<br>Precisão do GPS ± ${b.precisaoM} m` : ''}`);
+    return { d, txt: `🚒 ${b.nome || 'Brigada'} enviou a posição`, lat: b.latitude, lon: b.longitude, abrir: () => m.openPopup() };
+  });
+  atualizarQtd('brigadas', brigadas.length);
 }
 
 function popupTri(t) {
   const c = t.clima;
   return `<b>🔥 Foco triangulado</b><br>${t.latitude.toFixed(5)}, ${t.longitude.toFixed(5)}`
-    + `${Number.isFinite(t.erroM) ? `<br>🎯 Precisão ± ${t.erroM} m` : ''}`
+    + `${Number.isFinite(t.erroM) ? `<br>🎯 Precisão ± ${t.erroM} m <span class="dica">(círculo amarelo tracejado)</span>` : ''}`
     + `${t.altitudeTerrenoM != null ? `<br>⛰️ Terreno ${t.altitudeTerrenoM} m` : ''}`
     + `<br>👁️ ${(t.visadas || []).length} visadas · ${esc(hhmm(quando(t.calculadaEm)))}`
     + (c ? `<br><br>🌡️ ${esc(c.temp)}°C · 💧 ${esc(c.umidade)}% · 💨 ${esc(c.ventoKmh)} km/h de ${cardeal(c.ventoDirecao)}<br><b style="color:var(--alerta)">Fogo tende a ir para ${cardeal(c.ventoDirecao + 180)}</b>` : '');
 }
 
+/* ───────────── REGISTRO (clicável) ───────────── */
+let eventosVisiveis = [];
+function desenharRegistro() {
+  eventosVisiveis = Object.values(eventos).flat().filter(e => e.d).sort((a, b) => b.d - a.d).slice(0, 80);
+  $('registro').innerHTML = eventosVisiveis.length ? eventosVisiveis.map((e, i) => {
+    const id = idade(e.d);
+    return `<div class="evento" data-ev="${i}" title="Ir até no mapa"><span class="idade ${id.cls}">${id.txt}</span><span style="${e.cls === 'fogo' ? 'color:var(--fogo)' : ''}">${esc(e.txt)} <span class="dica">${hhmm(e.d)}</span></span></div>`;
+  }).join('') : '<span class="dica">Nenhum evento ainda.</span>';
+}
+$('registro').addEventListener('click', (ev) => {
+  const el = ev.target.closest('[data-ev]');
+  if (!el) return;
+  const e = eventosVisiveis[+el.dataset.ev];
+  if (e) irPara(e.lat, e.lon, e.abrir);
+});
+
+/* ───────────── VISOR DE FOTO (arrastável) ───────────── */
+function abrirFoto(f) {
+  const url = /^https:\/\/firebasestorage\.googleapis\.com\//.test(f.fotoUrl || '') ? f.fotoUrl : '';
+  if (!url) return;
+  $('visorImg').src = url;
+  $('visorLink').href = url;
+  $('visorQuando').textContent = hhmm(quando(f.createdAt));
+  $('visorInfo').textContent = `${f.latitude.toFixed(5)}, ${f.longitude.toFixed(5)}${f.azimuth ? ` · azimute ${Math.round(f.azimuth)}°` : ''} · clique na foto para abrir em tamanho original`;
+  $('visor').classList.add('on');
+}
+function montarVisor() {
+  const v = $('visor'), alca = $('visorAlca');
+  $('visorFechar').onclick = () => v.classList.remove('on');
+  let ini = null;
+  alca.addEventListener('pointerdown', (e) => {
+    if (e.target.closest('button')) return;
+    const r = v.getBoundingClientRect();
+    ini = { x: e.clientX - r.left, y: e.clientY - r.top };
+    v.style.transform = 'none'; v.style.left = r.left + 'px'; v.style.top = r.top + 'px';
+    alca.setPointerCapture(e.pointerId);
+  });
+  alca.addEventListener('pointermove', (e) => {
+    if (!ini) return;
+    const x = Math.min(Math.max(e.clientX - ini.x, -v.offsetWidth + 80), innerWidth - 80);
+    const y = Math.min(Math.max(e.clientY - ini.y, 0), innerHeight - 50);
+    v.style.left = x + 'px'; v.style.top = y + 'px';
+  });
+  alca.addEventListener('pointerup', () => { ini = null; });
+}
+
+/* ───────────── DESENHO (mesmo sistema do app) ───────────── */
+// Limpar/esconder vale só neste navegador; apagar para todos só o autor.
+let tipoSel = 'rota', desenhando = false;
+let escondidos = lerLocal('central_escondidos', []);
+const historico = []; // ações desta tela p/ Desfazer: {acao:'desenho', id} | {acao:'esconder', ids}
+const mudarEscondidos = (ids) => { escondidos = ids; gravarLocal('central_escondidos', ids.slice(-1000)); desenharTracos(); };
+
+function desenharTracos() {
+  const g = grupos.rota; g.clearLayers();
+  const visiveis = tracos.filter(t => !escondidos.includes(t.id));
+  visiveis.forEach(t => {
+    if (!(t.pontos?.length > 1)) return;
+    const tipo = tipoDe(t.tipo);
+    L.polyline(t.pontos.map(p => [p.latitude, p.longitude]), { color: tipo.cor, weight: 5, lineCap: 'round', dashArray: t.tipo === 'fuga' ? '12 8' : null })
+      .addTo(g).bindPopup(() => popupTraco(t));
+  });
+  atualizarQtd('rota', visiveis.length);
+  $('btnDesfazer').disabled = !historico.length;
+  $('btnLimpar').textContent = escondidos.some(id => tracos.some(t => t.id === id)) ? '🧹 Limpar · ↩️' : '🧹 Limpar';
+  eventos.rota = visiveis.slice(0, 30).map(t => {
+    const p = t.pontos?.[0];
+    return { d: quando(t.criadoEm), txt: `🧭 ${tipoDe(t.tipo).nome} desenhada por ${t.autorNome || 'Anônimo'}${t.origem === 'site' ? ' (Central)' : ' (app)'}`, lat: p?.latitude, lon: p?.longitude };
+  });
+}
+
 function popupTraco(t) {
   const div = document.createElement('div');
-  div.innerHTML = `<b>${esc(tipoDe(t.tipo).nome)}</b><br>✏️ ${esc(t.autorNome || 'Anônimo')}${t.origem === 'site' ? ' (Central)' : ' (app)'}<br><span class="dica">${esc(hhmm(quando(t.criadoEm)))}</span>`;
-  if (t.autorUid === usuario?.uid || ['admin', 'coordinator'].includes(papel)) {
+  div.innerHTML = `<b>${esc(tipoDe(t.tipo).nome)}</b><br>✏️ ${esc(t.autorNome || 'Anônimo')}${t.origem === 'site' ? ' (Central)' : ' (app)'}<br><span class="dica">${esc(hhmm(quando(t.criadoEm)))}</span><br>`;
+  const esconder = document.createElement('button');
+  esconder.className = 'btn-pop'; esconder.textContent = '🙈 Esconder (só aqui)';
+  esconder.onclick = () => { mapa.closePopup(); historico.push({ acao: 'esconder', ids: [t.id] }); mudarEscondidos([...escondidos, t.id]); };
+  div.appendChild(esconder);
+  if (t.autorUid === usuario?.uid || ehChefe()) {
     const b = document.createElement('button');
-    b.className = 'btn-pop'; b.textContent = '🗑️ Apagar traço';
+    b.className = 'btn-pop perigo'; b.textContent = '🗑️ Apagar para todos';
     b.onclick = () => { mapa.closePopup(); deleteDoc(doc(db, 'rotaServico', t.id)).catch(e => alert('Não foi possível apagar: ' + e.message)); };
-    div.appendChild(document.createElement('br')); div.appendChild(b);
+    div.appendChild(b);
   }
   return div;
 }
 
-/* ───────────── REGISTRO ───────────── */
-function desenharRegistro() {
-  const todos = Object.values(eventos).flat().filter(e => e.d).sort((a, b) => b.d - a.d).slice(0, 60);
-  $('registro').innerHTML = todos.length ? todos.map(e => {
-    const i = idade(e.d);
-    return `<div class="evento"><span class="idade ${i.cls}">${i.txt}</span><span style="${e.cls === 'fogo' ? 'color:var(--fogo)' : ''}">${esc(e.txt)} <span class="dica">${hhmm(e.d)}</span></span></div>`;
-  }).join('') : '<span class="dica">Nenhum evento ainda.</span>';
-}
-
-/* ───────────── DESENHO (mesmo sistema do app) ───────────── */
-let tipoSel = 'rota', desenhando = false;
 function montarTipos() {
   $('barraTipos').innerHTML = TIPOS.map(t => `<button class="pil${t.id === tipoSel ? ' ativo' : ''}" data-tipo="${t.id}" style="--c:${t.cor}"><span class="ponto" style="--c:${t.cor}"></span>${t.nome}</button>`).join('');
   document.querySelectorAll('[data-tipo]').forEach(b => b.onclick = () => {
     tipoSel = b.dataset.tipo;
     document.querySelectorAll('[data-tipo]').forEach(x => x.classList.toggle('ativo', x === b));
-    $('btnDesenhar').style.setProperty('--c', tipoDe(tipoSel).cor);
+    if (!desenhando) $('btnDesenhar').style.setProperty('--c', tipoDe(tipoSel).cor);
   });
 }
 
@@ -531,7 +696,7 @@ function montarDesenho() {
   const PASSO_PX = 6, MAX = 500;
   let pontos = [], ultimoPx = null, linhaViva = null, ativo = false;
 
-  const alternar = () => {
+  $('btnDesenhar').onclick = () => {
     desenhando = !desenhando;
     $('btnDesenhar').textContent = desenhando ? '✋ Mover mapa' : '✏️ Desenhar';
     $('btnDesenhar').style.setProperty('--c', desenhando ? 'var(--fogo-forte)' : tipoDe(tipoSel).cor);
@@ -540,13 +705,11 @@ function montarDesenho() {
     const acao = desenhando ? 'disable' : 'enable';
     ['dragging', 'touchZoom', 'doubleClickZoom', 'boxZoom', 'keyboard'].forEach(h => mapa[h]?.[acao]());
   };
-  $('btnDesenhar').onclick = alternar;
 
   el.addEventListener('pointerdown', (e) => {
-    if (!desenhando || e.target.closest('.ferramentas, .leaflet-control')) return;
+    if (!desenhando || e.target.closest('.ferramentas, .leaflet-control, .legenda')) return;
     ativo = true; el.setPointerCapture(e.pointerId);
-    const ll = mapa.mouseEventToLatLng(e);
-    pontos = [ll]; ultimoPx = mapa.mouseEventToContainerPoint(e);
+    pontos = [mapa.mouseEventToLatLng(e)]; ultimoPx = mapa.mouseEventToContainerPoint(e);
     linhaViva = L.polyline(pontos, { color: tipoDe(tipoSel).cor, weight: 5, lineCap: 'round', dashArray: tipoSel === 'fuga' ? '12 8' : null }).addTo(mapa);
     e.preventDefault();
   });
@@ -562,7 +725,7 @@ function montarDesenho() {
     const lista = pontos; pontos = [];
     if (lista.length < 2) { linhaViva?.remove(); return; }
     try {
-      await addDoc(collection(db, 'rotaServico'), {
+      const ref = await addDoc(collection(db, 'rotaServico'), {
         tipo: tipoSel,
         pontos: lista.map(p => ({ latitude: p.lat, longitude: p.lng })),
         autorUid: usuario.uid,
@@ -570,16 +733,103 @@ function montarDesenho() {
         origem: 'site',
         criadoEm: serverTimestamp(),
       });
+      historico.push({ acao: 'desenho', id: ref.id });
+      $('btnDesfazer').disabled = false;
     } catch (err) { alert('Não foi possível salvar o traço: ' + err.message); }
     finally { linhaViva?.remove(); } // a versão salva volta pelo onSnapshot
   };
   el.addEventListener('pointerup', soltar);
   el.addEventListener('pointercancel', soltar);
 
+  // Desfazer: desenho meu → apaga; esconder/limpar → mostra de novo
   $('btnDesfazer').onclick = () => {
-    const meu = tracos.find(t => t.autorUid === usuario?.uid);
-    if (meu) deleteDoc(doc(db, 'rotaServico', meu.id)).catch(e => alert('Não foi possível desfazer: ' + e.message));
+    const ult = historico.pop();
+    if (!ult) return;
+    if (ult.acao === 'desenho') deleteDoc(doc(db, 'rotaServico', ult.id)).catch(e => alert('Não foi possível desfazer: ' + e.message));
+    else mudarEscondidos(escondidos.filter(id => !ult.ids.includes(id)));
+    $('btnDesfazer').disabled = !historico.length;
   };
+
+  $('btnLimpar').onclick = () => {
+    const visiveis = tracos.filter(t => !escondidos.includes(t.id)).map(t => t.id);
+    const temEscondidos = escondidos.some(id => tracos.some(t => t.id === id));
+    if (visiveis.length && confirm(`Esconder os ${visiveis.length} traços SÓ neste navegador?\nO app e os outros continuam vendo. Dá para desfazer.`)) {
+      historico.push({ acao: 'esconder', ids: visiveis });
+      mudarEscondidos([...escondidos, ...visiveis]);
+    } else if (!visiveis.length && temEscondidos && confirm('Mostrar de novo todos os traços escondidos?')) {
+      historico.length = 0;
+      mudarEscondidos([]);
+    }
+  };
+}
+
+/* ───────────── MENSAGENS E TAREFAS ───────────── */
+let msgTarefa = false, mensagens = [], vistasEm = lerLocal('central_msg_vistas', Date.now());
+function montarMensagens() {
+  $('rapidas').innerHTML = RAPIDAS.map((r, i) => `<button class="pil" data-rapida="${i}">${esc(r)}</button>`).join('');
+  document.querySelectorAll('[data-rapida]').forEach(b => b.onclick = () => enviarMsg(RAPIDAS[+b.dataset.rapida], false));
+  $('btnTarefa').onclick = () => {
+    msgTarefa = !msgTarefa;
+    $('btnTarefa').classList.toggle('ativo', msgTarefa);
+    $('btnTarefa').textContent = msgTarefa ? '☑ Tarefa' : '☐ Tarefa';
+    $('txtMsg').placeholder = msgTarefa ? 'Nova tarefa para as brigadas…' : 'Mensagem para as brigadas…';
+  };
+  $('btnEnviar').onclick = () => enviarMsg($('txtMsg').value, msgTarefa);
+  $('txtMsg').addEventListener('keydown', (e) => { if (e.key === 'Enter') enviarMsg($('txtMsg').value, msgTarefa); });
+
+  $('listaMsg').addEventListener('click', (ev) => {
+    const del = ev.target.closest('[data-del-msg]');
+    if (del) { ev.stopPropagation(); if (confirm('Apagar esta mensagem para todos?')) deleteDoc(doc(db, 'mensagens', del.dataset.delMsg)).catch(e => alert(e.message)); return; }
+    const loc = ev.target.closest('[data-ir]');
+    if (loc) { const [la, lo] = loc.dataset.ir.split(',').map(Number); irPara(la, lo); return; }
+    const t = ev.target.closest('[data-tarefa]');
+    if (t) {
+      const m = mensagens.find(x => x.id === t.dataset.tarefa);
+      updateDoc(doc(db, 'mensagens', m.id), { feita: !m.feita, feitaPor: usuario.displayName || 'Central', feitaEm: serverTimestamp() }).catch(e => alert(e.message));
+    }
+  });
+
+  onSnapshot(query(collection(db, 'mensagens'), orderBy('criadoEm', 'desc'), limit(100)), (snap) => {
+    mensagens = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    desenharMensagens();
+  }, (e) => console.warn('Central: mensagens', e.message));
+}
+
+async function enviarMsg(texto, tarefa) {
+  const t = String(texto || '').trim().slice(0, 500);
+  if (!t) return;
+  try {
+    await addDoc(collection(db, 'mensagens'), {
+      texto: t, tipo: tarefa ? 'tarefa' : 'msg', feita: false,
+      autorUid: usuario.uid, autorNome: usuario.displayName || 'Central', origem: 'site',
+      criadoEm: serverTimestamp(),
+    });
+    $('txtMsg').value = '';
+    if (msgTarefa) $('btnTarefa').click();
+  } catch (e) { alert('Não foi possível enviar: ' + e.message); }
+}
+
+function desenharMensagens() {
+  const pend = mensagens.filter(m => m.tipo === 'tarefa' && !m.feita).length;
+  $('pendentes').textContent = pend ? `· ${pend} tarefa(s) aberta(s)` : '';
+  const abaMsgAberta = !window.matchMedia('(max-width:980px)').matches || $('secMsg').classList.contains('mostra');
+  if (abaMsgAberta) { vistasEm = Date.now(); gravarLocal('central_msg_vistas', vistasEm); }
+  const novas = mensagens.filter(m => m.autorUid !== usuario?.uid && (m.criadoEm?.toMillis?.() ?? 0) > vistasEm).length;
+  $('badgeMsg').hidden = !novas; $('badgeMsg').textContent = novas;
+
+  $('listaMsg').innerHTML = mensagens.length ? mensagens.map(m => {
+    const minha = m.autorUid === usuario?.uid, tarefa = m.tipo === 'tarefa';
+    const podeApagar = minha || ehChefe();
+    return `<div class="msg${minha ? ' minha' : ''}${tarefa ? ' tarefa' : ''}${m.feita ? ' feita' : ''}" ${tarefa ? `data-tarefa="${m.id}" title="Clique para marcar como ${m.feita ? 'aberta' : 'feita'}"` : ''}>
+      <div class="autor">${tarefa ? (m.feita ? '☑️ TAREFA FEITA ·' : '☐ TAREFA ·') : ''} ${esc(m.autorNome || 'Anônimo')}${m.origem === 'site' ? ' (Central)' : ' (app)'} · ${hhmm(quando(m.criadoEm))}
+        ${podeApagar ? `<button class="x" data-del-msg="${m.id}" title="Apagar">✕</button>` : ''}</div>
+      <div class="texto">${esc(m.texto)}</div>
+      ${Number.isFinite(m.latitude) ? `<div class="local" data-ir="${m.latitude},${m.longitude}">📍 ver no mapa onde foi enviada</div>` : ''}
+      ${tarefa && m.feita ? `<div class="dica">Feita por ${esc(m.feitaPor || '?')}</div>` : ''}
+    </div>`;
+  }).join('') : '<span class="dica">Nenhuma mensagem ainda. Mensagens do app aparecem aqui.</span>';
+
+  eventos.msg = mensagens.slice(0, 30).map(m => ({ d: quando(m.criadoEm), txt: `${m.tipo === 'tarefa' ? '📋 Tarefa' : '💬'} ${m.autorNome || ''}: ${m.texto}`.slice(0, 120), lat: m.latitude, lon: m.longitude }));
 }
 
 /* ───────────── ABAS (celular) ───────────── */
@@ -589,7 +839,8 @@ function montarAbas() {
     const alvo = b.dataset.aba;
     document.querySelectorAll('.col').forEach(c => c.classList.remove('mostra'));
     document.querySelectorAll('.col>.vidro').forEach(s => s.classList.remove('mostra'));
-    if (alvo !== 'mapa') { const s = $(alvo); s.classList.add('mostra'); s.parentElement.classList.add('mostra'); }
+    if (alvo !== 'mapa') { const s = $(alvo); s.classList.add('mostra'); s.parentElement.classList.add('mostra'); s.parentElement.scrollTop = 0; }
+    if (alvo === 'secMsg') desenharMensagens();
     setTimeout(() => mapa.invalidateSize(), 50);
   });
 }
@@ -622,7 +873,7 @@ async function carregarTempo() {
       <div class="kv"><span>🔥 Fogo tende a ir para</span><b style="color:var(--alerta)">${cardeal(c.wind_direction_10m + 180)}</b></div>
       ${virada ? '<div class="resultado ruim"><span class="nome">⚠️ Virada de vento prevista</span><span></span><span class="sub">A direção muda 45° ou mais nas próximas 6 h — revise a rota de fuga.</span></div>' : ''}
       <div class="vento-prev">${d.hourly.time.map((t, i) => `<div>${t.slice(11, 13)}h<b>${cardeal(dirs[i])}</b>${Math.round(d.hourly.wind_speed_10m[i])}</div>`).join('')}</div>
-      <p class="dica" style="margin-top:6px">Vento (direção de onde vem e km/h) nas próximas horas · Open-Meteo</p>`;
+      <p class="dica" style="margin-top:6px">Vento nas próximas horas (de onde vem, km/h) · Open-Meteo</p>`;
   } catch (e) {
     $('tempo').textContent = 'Sem dados de tempo agora.';
   }
@@ -633,10 +884,10 @@ setInterval(() => { if (iniciado) carregarTempo(); }, 10 * 60000);
 // Valores de fábrica conferidos: STIHL BR 600 (1,21 L/h EPA, tanque 1,4 L) e
 // BR 800 (1,47 L/h, tanque 2,0 L), mistura 50:1. Bombas em branco até a plaqueta.
 const PADRAO = [
-  { nome: 'Soprador STIHL BR 600', qtd: 9, uso: 0, comb: 'mistura', prop: 50, tanque: 1.4, consumo: 1.21, vazao: '' },
-  { nome: 'Soprador STIHL BR 800', qtd: 1, uso: 0, comb: 'mistura', prop: 50, tanque: 2.0, consumo: 1.47, vazao: '' },
-  { nome: 'Bomba Mosquito (conferir plaqueta)', qtd: 1, uso: 0, comb: 'mistura', prop: '', tanque: '', consumo: '', vazao: '' },
-  { nome: 'Motobomba Wildfire/Honda (conferir)', qtd: 1, uso: 0, comb: 'gasolina', prop: '', tanque: '', consumo: '', vazao: '' },
+  { nome: 'Soprador STIHL BR 600', qtd: 9, uso: '', comb: 'mistura', prop: 50, tanque: 1.4, consumo: 1.21, vazao: '' },
+  { nome: 'Soprador STIHL BR 800', qtd: 1, uso: '', comb: 'mistura', prop: 50, tanque: 2.0, consumo: 1.47, vazao: '' },
+  { nome: 'Bomba Mosquito (conferir plaqueta)', qtd: 1, uso: '', comb: 'mistura', prop: '', tanque: '', consumo: '', vazao: '' },
+  { nome: 'Motobomba Wildfire/Honda (conferir)', qtd: 1, uso: '', comb: 'gasolina', prop: '', tanque: '', consumo: '', vazao: '' },
 ];
 const DOC_CATALOGO = doc(db, 'catalogoEquipamentos', 'padrao');
 let linhas = [];
@@ -646,19 +897,18 @@ async function montarEquipamentos() {
     const s = await getDoc(DOC_CATALOGO);
     linhas = s.exists() ? s.data().linhas : null;
   } catch { linhas = null; }
-  if (!linhas) { try { linhas = JSON.parse(localStorage.getItem('central_equip')); } catch {} }
+  if (!linhas) linhas = lerLocal('central_equip', null);
   if (!linhas?.length) linhas = PADRAO.map(l => ({ ...l }));
   desenharTabela();
 
   // Estoques da calculadora: só neste navegador (mudam a cada saída)
-  let calc = {};
-  try { calc = JSON.parse(localStorage.getItem('central_calc')) || {}; } catch {}
+  const calc = lerLocal('central_calc', {});
   document.querySelectorAll('[data-calc]').forEach(i => {
     if (calc[i.dataset.calc] != null) i.value = calc[i.dataset.calc];
-    i.oninput = () => { calc[i.dataset.calc] = i.value; try { localStorage.setItem('central_calc', JSON.stringify(calc)); } catch {} calcular(); };
+    i.oninput = () => { calc[i.dataset.calc] = i.value; gravarLocal('central_calc', calc); calcular(); };
   });
 
-  $('btnLinha').onclick = () => { linhas.push({ nome: '', qtd: 1, uso: 0, comb: 'gasolina', prop: '', tanque: '', consumo: '', vazao: '' }); desenharTabela(); };
+  $('btnLinha').onclick = () => { linhas.push({ nome: '', qtd: 1, uso: '', comb: 'gasolina', prop: '', tanque: '', consumo: '', vazao: '' }); desenharTabela(); };
   $('btnSalvarEquip').onclick = salvarTabela;
   calcular();
 }
@@ -668,7 +918,7 @@ function desenharTabela() {
   $('tabEquip').innerHTML = linhas.map((l, i) => `<tr>
     <td><input data-i="${i}" data-k="nome" value="${esc(l.nome)}" placeholder="Equipamento" style="min-width:170px"></td>
     <td><input class="num" data-i="${i}" data-k="qtd" type="number" min="0" value="${esc(l.qtd)}"></td>
-    <td><input class="num" data-i="${i}" data-k="uso" type="number" min="0" value="${esc(l.uso)}"></td>
+    <td><input class="num" data-i="${i}" data-k="uso" type="number" min="0" value="${esc(l.uso)}" placeholder="todos"></td>
     <td><select data-i="${i}" data-k="comb">${sel(l.comb)}</select></td>
     <td><input class="num" data-i="${i}" data-k="prop" type="number" min="0" value="${esc(l.prop)}" placeholder="50" title="Proporção da mistura (50 = 50:1)"></td>
     <td><input class="num" data-i="${i}" data-k="tanque" type="number" min="0" step="0.1" value="${esc(l.tanque)}"></td>
@@ -684,7 +934,7 @@ function desenharTabela() {
 }
 
 async function salvarTabela() {
-  try { localStorage.setItem('central_equip', JSON.stringify(linhas)); } catch {}
+  gravarLocal('central_equip', linhas);
   try {
     await setDoc(DOC_CATALOGO, { linhas, atualizadoEm: serverTimestamp(), atualizadoPor: usuario.displayName || usuario.email });
     $('estadoEquip').textContent = '✅ salvo para todos';
@@ -699,42 +949,60 @@ async function salvarTabela() {
 function calcular() {
   const v = {};
   document.querySelectorAll('[data-calc]').forEach(i => v[i.dataset.calc] = n(i.value));
-  let gas = 0, oleo = 0, diesel = 0, agua = 0, avisoUso = '';
+  // "Em uso" vazio = todos ligados
+  const emUso = (l) => (String(l.uso ?? '').trim() === '' ? n(l.qtd) : n(l.uso));
+  let gas = 0, oleo = 0, diesel = 0, agua = 0, ligados = 0, avisos = [];
   linhas.forEach(l => {
-    const uso = n(l.uso), c = n(l.consumo), R = n(l.prop);
-    if (uso > n(l.qtd)) avisoUso = `"${l.nome}" está com mais em uso do que a quantidade.`;
+    const uso = emUso(l), c = n(l.consumo), R = n(l.prop);
+    if (uso > n(l.qtd)) avisos.push(`"${l.nome}" está com mais em uso do que a quantidade.`);
+    if (uso > 0 && !c && l.comb !== 'nenhum') avisos.push(`"${l.nome || 'equipamento'}" sem consumo (L/h) — fica fora do cálculo.`);
+    if (uso > 0 && c) ligados += uso;
     if (l.comb === 'mistura' && R > 0) { gas += uso * c * R / (R + 1); oleo += uso * c / (R + 1); }
     else if (l.comb === 'mistura' || l.comb === 'gasolina') gas += uso * c;
     else if (l.comb === 'diesel') diesel += uso * c;
     agua += uso * n(l.vazao) * 60;
   });
   const potavel = v.pessoas * v.hidratacao;
+  const H = v.duracao;
   const recursos = [
-    { nome: '⛽ Gasolina', est: v.gasolina, h: gas, un: 'L' },
-    { nome: '🛢️ Óleo 2T', est: v.oleo, h: oleo, un: 'L', casas: 2 },
-    { nome: '⛽ Diesel', est: v.diesel, h: diesel, un: 'L' },
-    { nome: '💧 Água de combate', est: v.agua, h: agua, un: 'L', casas: 0 },
-    { nome: '🚰 Água potável', est: v.potavel, h: potavel, un: 'L' },
+    { nome: '⛽ Gasolina', est: v.gasolina, h: gas, casas: 1 },
+    { nome: '🛢️ Óleo 2T', est: v.oleo, h: oleo, casas: 2 },
+    { nome: '⛽ Diesel', est: v.diesel, h: diesel, casas: 1 },
+    { nome: '💧 Água de combate', est: v.agua, h: agua, casas: 0 },
+    { nome: '🚰 Água potável', est: v.potavel, h: potavel, casas: 1 },
   ].filter(r => r.h > 0);
-
-  if (!recursos.length) {
-    $('resultados').innerHTML = `<p class="dica" style="margin-top:10px">Marque na tabela quantos equipamentos estão <b>em uso</b> e preencha os estoques — a autonomia aparece aqui.${avisoUso ? `<br><span style="color:var(--alerta)">⚠️ ${esc(avisoUso)}</span>` : ''}</p>`;
-    return;
-  }
   const agora = Date.now();
-  $('resultados').innerHTML = recursos.map(r => {
-    const aut = r.est > 0 ? r.est / r.h : 0;
-    const acaba = new Date(agora + aut * 3600000);
-    const falta = v.duracao > 0 ? Math.max(0, r.h * v.duracao - r.est) : 0;
-    const ruim = v.duracao > 0 && aut < v.duracao;
-    return `<div class="resultado ${v.duracao > 0 ? (ruim ? 'ruim' : 'ok') : ''}">
-      <span class="nome">${r.nome}</span><span class="valor">${duracao(aut)}</span>
-      <span class="sub">Gasto ${r.h.toFixed(r.casas ?? 2)} ${r.un}/h · ${r.est > 0 ? `acaba às <b>${hhmm(acaba)}</b>` : 'sem estoque informado'}${ruim ? ` · <b style="color:#EF9A9A">faltam ${falta.toFixed(r.casas ?? 1)} ${r.un} para a missão</b>` : ''}</span>
+  const linhasRes = recursos.map(r => ({ ...r, aut: r.est > 0 ? r.est / r.h : 0, total: H > 0 ? r.h * H : null }));
+  const limitante = linhasRes.filter(r => r.est > 0).sort((a, b) => a.aut - b.aut)[0];
+
+  // Resultado final: o que levar, quanto dura e o que acaba primeiro
+  let resumo = '';
+  if (recursos.length) {
+    resumo = `<div class="resumo"><h3>Resultado final</h3>
+      <div class="kv"><span>Equipamentos ligados</span><b>${ligados}</b></div>
+      ${H > 0 ? `<div class="kv"><span>Missão</span><b>${duracao(H)} · até ${hhmm(new Date(agora + H * 3600000))}</b></div>` : ''}
+      ${linhasRes.map(r => `<div class="kv"><span>${r.nome}${H > 0 ? ' p/ a missão' : ' por hora'}</span><b>${H > 0 ? `${r.total.toFixed(r.casas)} L` : `${r.h.toFixed(r.casas)} L/h`}</b></div>`).join('')}
+      ${limitante ? `<div style="margin-top:8px">Com o que foi levado, a operação dura</div>
+        <div class="grande" style="color:${H > 0 && limitante.aut < H ? 'var(--fogo-forte)' : 'var(--verde)'}">${duracao(limitante.aut)}</div>
+        <div class="dica">acaba primeiro: <b>${limitante.nome}</b> às <b>${hhmm(new Date(agora + limitante.aut * 3600000))}</b>${H > 0 ? (limitante.aut < H ? ' — <b style="color:#EF9A9A">antes do fim da missão</b>' : ' — dá para a missão inteira') : ''}</div>`
+        : '<div class="dica" style="margin-top:6px">Preencha o que foi levado (litros) para saber quanto dura.</div>'}
     </div>`;
-  }).join('') + (avisoUso ? `<p class="dica" style="margin-top:6px;color:var(--alerta)">⚠️ ${esc(avisoUso)}</p>` : '')
-    + '<p class="dica" style="margin-top:8px">Mistura 50:1 → a cada 51 L de mistura, 50 L são gasolina e 1 L é óleo 2T. Consumo de fábrica com motor em carga; o real varia com a operação.</p>';
+  }
+
+  $('resultados').innerHTML = !recursos.length
+    ? `<p class="dica" style="margin-top:10px">Preencha o consumo dos equipamentos na tabela e a duração da missão — o total de litros e a duração aparecem aqui.</p>`
+    : resumo + linhasRes.map(r => {
+      const ruim = H > 0 && r.est > 0 && r.aut < H;
+      const falta = H > 0 ? Math.max(0, r.total - r.est) : 0;
+      return `<div class="resultado ${H > 0 && r.est > 0 ? (ruim ? 'ruim' : 'ok') : ''}">
+        <span class="nome">${r.nome}</span><span class="valor">${r.est > 0 ? duracao(r.aut) : '—'}</span>
+        <span class="sub">Gasto ${r.h.toFixed(r.casas + 1)} L/h${H > 0 ? ` · precisa de ${r.total.toFixed(r.casas)} L na missão` : ''}${r.est > 0 ? ` · levado ${r.est} L · acaba às <b>${hhmm(new Date(agora + r.aut * 3600000))}</b>` : ' · informe quanto foi levado'}${ruim ? ` · <b style="color:#EF9A9A">faltam ${falta.toFixed(r.casas)} L</b>` : ''}</span>
+      </div>`;
+    }).join('');
+  $('resultados').innerHTML += (avisos.length ? `<p class="dica" style="margin-top:8px;color:var(--alerta)">${avisos.map(esc).join('<br>')}</p>` : '')
+    + '<p class="dica" style="margin-top:8px">Mistura 50:1 → em 51 L de mistura, 50 L são gasolina e 1 L é óleo 2T. Consumo de fábrica com motor em carga; o real varia com a operação.</p>';
 }
-// Hora de "acaba às" anda com o relógio
+// "Acaba às" anda com o relógio
 setInterval(() => { if (iniciado && linhas.length) calcular(); }, 60000);
 </script>
 </body>
