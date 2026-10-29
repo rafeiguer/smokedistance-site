@@ -728,7 +728,12 @@ footer{
     <h2>Água e Cobertura de Rede</h2>
 
     <h3>💧 Fontes de água</h3>
-    <p>Rios, açudes, tanques e represas são críticos para encher tanques e caminhões-pipa. Marque com <span class="btn-tag btn-blue">💧 Água</span> e toque no ponto do mapa. O marcador aparece para todos. Tocar num 💧 mostra as coordenadas e a opção <span class="btn-tag btn-red">🗑️ Remover</span>.</p>
+    <p>Rios, açudes, tanques e represas são críticos para encher tanques e caminhões-pipa. Marque com <span class="btn-tag btn-blue">💧 Água</span> e toque no ponto do mapa. O marcador aparece para todos. Não é possível marcar duas fontes a menos de 50 m uma da outra.</p>
+    <p>Tocar num 💧 mostra as coordenadas e:</p>
+    <ul class="lista">
+      <li><span class="btn-tag btn-red">🗑️ Remover</span> — só para quem marcou a fonte (ou administrador).</li>
+      <li><span class="btn-tag btn-orange">⚠️ Reportar (não existe)</span> — para os demais. Com reportes de <strong>2 pessoas diferentes</strong>, a fonte sai do mapa. Assim ninguém apaga sozinho uma fonte que outras equipes usam.</li>
+    </ul>
 
     <h3>📶 Círculos de cobertura</h3>
     <p>Quando o celular perde o sinal em área rural, o app marca no mapa um <strong>círculo azul</strong> centrado no último ponto onde ainda havia conexão. Assim as equipes sabem para onde voltar quando precisam de sinal. Os círculos podem ser limpos do seu celular em Configurações.</p>
@@ -874,9 +879,9 @@ footer{
     <div class="tabela"><table>
       <tr><th>Elemento</th><th>Função</th></tr>
       <tr><td>📊 Resumo</td><td>Número de focos, sua posição, data e hora, e o foco triangulado.</td></tr>
-      <tr><td><span class="btn-tag btn-orange">🚨 COMPARTILHAR ALERTA AGORA</span></td><td>Abre o compartilhamento do celular (WhatsApp, SMS, Telegram, e-mail...) com uma mensagem pronta: data e hora, sua posição, focos, localização triangulada, meteorologia e link do Google Maps.</td></tr>
+      <tr><td><span class="btn-tag btn-orange">🚨 COMPARTILHAR ALERTA AGORA</span></td><td>Abre o compartilhamento do celular (WhatsApp, SMS, Telegram, e-mail...) com uma mensagem pronta: posição do fogo (triangulado ou marcado no mapa) com a precisão e o link do Google Maps, cada visada com azimute e hora, outros focos marcados, meteorologia e de onde a mensagem foi enviada.</td></tr>
       <tr><td><span class="btn-tag btn-orange">📋 Enviar às Autoridades</span> (🏛️ Registro Oficial)</td><td>Envia um registro formal às autoridades. Exige confirmar seu e-mail com um <strong>código de 6 dígitos</strong> (Enviar código → Confirmar e enviar). O e-mail verificado fica associado ao registro permanentemente.</td></tr>
-      <tr><td>🚨 Enviar para autoridades</td><td>Cartões de Bombeiros, Defesa Civil, ICMBio e Proprietário, cada um com WhatsApp, ligar e e-mail.</td></tr>
+      <tr><td>🚨 Enviar para autoridades</td><td>Cartões de Bombeiros, Defesa Civil, ICMBio e Proprietário, cada um com <strong>WhatsApp</strong> (abre a conversa com a mensagem pronta), <strong>Ligar</strong> e <strong>E-mail</strong> (abre o e-mail já preenchido).</td></tr>
       <tr><td><span class="btn-tag btn-blue">📋 Exportar dados como JSON</span></td><td>Gera um arquivo com todos os dados técnicos (focos, triangulação, meteorologia) para análise.</td></tr>
       <tr><td><span class="btn-tag btn-gray">← Voltar ao Mapa</span></td><td>Volta ao mapa.</td></tr>
     </table></div>
@@ -895,7 +900,7 @@ footer{
       <tr><td>📱 Informações do App</td><td>Versão instalada e a atualização em uso.</td></tr>
       <tr><td>📍 Atualização de GPS</td><td><span class="btn-tag btn-green">🔋 Eco</span> menos bateria (~5 s / 10 m) · <span class="btn-tag btn-green">⚖️ Normal</span> equilibrado (~2 s / 3 m) · <span class="btn-tag btn-green">🎯 Preciso</span> máximo (~1 s / 1 m), gasta mais bateria.</td></tr>
       <tr><td>📵 Cobertura de Rede</td><td><span class="btn-tag btn-blue">📵 Limpar Rede (N)</span> remove os círculos azuis de sinal <strong>só deste celular</strong>.</td></tr>
-      <tr><td>💧 Fontes de Água</td><td><span class="btn-tag btn-red">🗑️ Limpar Fontes de Água</span> apaga as fontes de água marcadas <strong>para todos os usuários</strong>, com confirmação. Use com muito cuidado: equipes em campo dependem delas.</td></tr>
+      <tr><td>💧 Fontes de Água</td><td><strong>Só administradores.</strong> <span class="btn-tag btn-red">🗑️ Limpar Fontes de Água</span> apaga as fontes de água marcadas <strong>para todos os usuários</strong>, com confirmação.</td></tr>
       <tr><td>🧭 Diagnóstico da bússola e 🔄 das atualizações</td><td>Informações técnicas para suporte (leituras da bússola, declinação magnética, versão e registros de atualização).</td></tr>
       <tr><td>ℹ️ Sobre</td><td>Resumo das tecnologias do app.</td></tr>
     </table></div>
