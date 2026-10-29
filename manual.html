@@ -73,7 +73,7 @@ nav{
   margin-bottom:1rem;
 }
 .cover h1 em{font-style:normal;color:var(--fire);}
-.cover-sub{font-size:1.1rem;font-weight:300;color:rgba(245,237,216,0.6);max-width:500px;margin:0 auto 2rem;}
+.cover-sub{font-size:1.1rem;font-weight:300;color:rgba(245,237,216,0.6);max-width:520px;margin:0 auto 2rem;}
 .cover-meta{
   display:flex;gap:2rem;justify-content:center;flex-wrap:wrap;
   font-family:'Space Grotesk',sans-serif;
@@ -111,7 +111,7 @@ nav{
 .toc a:hover{color:var(--gold-light)}
 
 /* SEÇÕES */
-.section{margin-bottom:5rem;padding-top:1rem;}
+.section{margin-bottom:5rem;padding-top:1rem;scroll-margin-top:5rem;}
 .section-label{
   font-family:'Space Grotesk',sans-serif;
   font-size:0.7rem;font-weight:600;
@@ -139,6 +139,9 @@ nav{
   line-height:1.8;margin-bottom:1rem;
 }
 .section strong{color:var(--cream);font-weight:600;}
+.section ul.lista{list-style:none;display:flex;flex-direction:column;gap:0.45rem;margin:0.5rem 0 1.2rem;}
+.section ul.lista li{padding-left:1.5rem;position:relative;font-size:0.97rem;font-weight:300;color:rgba(245,237,216,0.75);}
+.section ul.lista li::before{content:'→';position:absolute;left:0;color:var(--fire);}
 
 /* STEPS */
 .steps{display:flex;flex-direction:column;gap:0;margin:1.5rem 0;border:1px solid var(--border);border-radius:4px;overflow:hidden;}
@@ -158,7 +161,6 @@ nav{
   min-width:3rem;line-height:1;
   padding-top:0.1rem;
 }
-.step-content{}
 .step-content strong{
   display:block;
   font-family:'Space Grotesk',sans-serif;
@@ -174,14 +176,16 @@ nav{
   display:inline-block;
   font-family:'Space Grotesk',sans-serif;
   font-size:0.78rem;font-weight:600;
-  padding:0.25rem 0.7rem;border-radius:3px;
-  margin:0 0.2rem;vertical-align:middle;
+  padding:0.25rem 0.7rem;border-radius:999px;
+  margin:0.1rem 0.2rem;vertical-align:middle;
+  white-space:nowrap;
 }
 .btn-green{background:rgba(46,125,50,0.3);color:#81C784;border:1px solid rgba(46,125,50,0.5);}
 .btn-blue{background:rgba(21,101,192,0.3);color:#90CAF9;border:1px solid rgba(21,101,192,0.5);}
 .btn-orange{background:rgba(230,81,0,0.3);color:#FFCC02;border:1px solid rgba(230,81,0,0.5);}
 .btn-red{background:rgba(183,28,28,0.3);color:#EF9A9A;border:1px solid rgba(183,28,28,0.5);}
 .btn-gray{background:rgba(80,80,80,0.3);color:#BDBDBD;border:1px solid rgba(80,80,80,0.5);}
+.btn-purple{background:rgba(106,27,154,0.3);color:#CE93D8;border:1px solid rgba(106,27,154,0.5);}
 
 /* ALERTA */
 .alert{
@@ -205,7 +209,7 @@ nav{
 .alert-blue .alert-title{color:#90CAF9;}
 
 /* GRID */
-.grid-2{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1rem;margin:1.5rem 0;}
+.grid-2{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:1rem;margin:1.5rem 0;}
 .card{
   background:var(--card);
   border:1px solid var(--border);
@@ -228,7 +232,8 @@ nav{
 .card ul li::before{content:'→';position:absolute;left:0;color:var(--fire);font-size:0.8rem;}
 
 /* TABLE */
-table{width:100%;border-collapse:collapse;margin:1.5rem 0;font-size:0.88rem;}
+.tabela{overflow-x:auto;margin:1.5rem 0;}
+table{width:100%;border-collapse:collapse;font-size:0.88rem;}
 th{
   font-family:'Space Grotesk',sans-serif;
   font-size:0.72rem;font-weight:600;
@@ -243,7 +248,9 @@ td{
   border-bottom:1px solid rgba(42,21,0,0.5);
   color:rgba(245,237,216,0.7);
   font-weight:300;
+  vertical-align:top;
 }
+td:first-child{min-width:150px;}
 tr:hover td{background:rgba(255,101,0,0.04);}
 
 /* DIVIDER */
@@ -260,10 +267,12 @@ footer{
 }
 
 @media(max-width:600px){
-  nav{padding:1rem 1.5rem}
-  .container{padding:6rem 1.2rem 3rem}
+  nav{padding:1rem 1.2rem}
+  .container{padding:6rem 1rem 3rem}
   .toc{padding:1.5rem}
   .step-item{flex-direction:column;gap:0.5rem}
+  td,th{padding:0.6rem 0.6rem}
+  td:first-child{min-width:110px;}
 }
 </style>
 </head>
@@ -280,10 +289,10 @@ footer{
   <div class="cover">
     <span class="cover-badge">Documentação Oficial</span>
     <h1>Manual do<br><em>Usuário</em></h1>
-    <p class="cover-sub">Guia completo de operação do SmokeDistance — detecção e localização colaborativa de incêndios florestais.</p>
+    <p class="cover-sub">Todas as telas, botões e funções do SmokeDistance — observação, triangulação e monitoramento de focos de incêndio em campo.</p>
     <div class="cover-meta">
-      <span>Versão 1.4.0</span>
-      <span>Junho de 2026</span>
+      <span>Versão 1.6</span>
+      <span>Outubro de 2026</span>
       <span>iOS e Android</span>
     </div>
   </div>
@@ -292,511 +301,677 @@ footer{
   <div class="toc">
     <h2>Índice</h2>
     <ol>
-      <li><a href="#visao-geral">Visão Geral do App</a></li>
-      <li><a href="#primeira-vez">Primeiro Acesso</a></li>
-      <li><a href="#camera">Câmera de Campo — Travar e Enviar Foco</a></li>
-      <li><a href="#mapa">Mapa Tático</a></li>
-      <li><a href="#triangulacao">Triangulação Geodésica</a></li>
-      <li><a href="#satelites">Satélites (FIRMS / GOES / MSG)</a></li>
-      <li><a href="#propagacao">Propagação — Modelo Rothermel</a></li>
-      <li><a href="#compartilhar">Compartilhar e Alertas</a></li>
-      <li><a href="#fotos">Fototeca de Campo</a></li>
-      <li><a href="#agua">Marcadores de Água</a></li>
-      <li><a href="#offline">Modo Offline</a></li>
+      <li><a href="#visao-geral">Visão Geral</a></li>
+      <li><a href="#primeiro-acesso">Entrada e Primeiro Acesso</a></li>
+      <li><a href="#inicio">Tela Inicial</a></li>
+      <li><a href="#camera">Câmera de Campo — Travar e Enviar a Visada</a></li>
+      <li><a href="#mapa">Mapa</a></li>
+      <li><a href="#triangulacao">Triangulação do Foco</a></li>
+      <li><a href="#drone">Observação por Drone</a></li>
+      <li><a href="#rota">Rota a Pé até o Foco</a></li>
+      <li><a href="#fotos">Fotos de Campo</a></li>
+      <li><a href="#agua">Água e Cobertura de Rede</a></li>
+      <li><a href="#trilhas">Trilhas — Gravar e Explorar</a></li>
+      <li><a href="#satelites">Satélites</a></li>
+      <li><a href="#propagacao">Propagação do Fogo</a></li>
+      <li><a href="#compartilhar">Compartilhar e Registro Oficial</a></li>
       <li><a href="#configuracoes">Configurações</a></li>
-      <li><a href="#glossario">Glossário Técnico</a></li>
+      <li><a href="#offline">Sem Internet, Notificações e Atualizações</a></li>
+      <li><a href="#privacidade">Privacidade e Segurança</a></li>
+      <li><a href="#glossario">Glossário</a></li>
     </ol>
   </div>
 
   <!-- 1. VISÃO GERAL -->
   <div class="section" id="visao-geral">
     <span class="section-label">01</span>
-    <h2>Visão Geral do App</h2>
-    <p>O SmokeDistance transforma qualquer smartphone em um sensor de campo para detecção e localização de incêndios florestais. O princípio central é a <strong>triangulação geodésica colaborativa</strong>: dois ou mais usuários em posições distintas apontam seus dispositivos para a mesma fumaça e o sistema calcula matematicamente a coordenada exata do foco.</p>
-    <p>O app combina dados de sensores embarcados do celular (GPS, bússola, barômetro, giroscópio) com imagens de satélite em tempo real (NASA FIRMS, GOES-16 e MSG) e o modelo matemático de propagação de fogo de Rothermel para fornecer uma visão completa da situação de campo.</p>
+    <h2>Visão Geral</h2>
+    <p>O SmokeDistance transforma o celular em um instrumento de campo para localizar focos de incêndio. O observador mira a câmera na fumaça, <strong>trava a direção (azimute)</strong> e a posição GPS, e envia a <strong>visada</strong> ao mapa. Com duas ou mais visadas feitas de pontos diferentes, o app <strong>triangula</strong>: calcula onde as linhas se cruzam e marca ali o foco.</p>
+    <p>O fluxo principal — câmera, bússola, GPS, visadas e triangulação — <strong>funciona sem internet</strong>. Com conexão, entram as camadas complementares: mapa colaborativo em tempo real entre todos os usuários, focos de satélite, meteorologia, modelo de propagação do fogo, trilhas da comunidade e alertas.</p>
+    <p>A identificação do foco é sempre feita por pessoas (observadores) ou por satélite. O app não usa detecção automática por imagem.</p>
 
-    <h3>As 6 abas principais</h3>
+    <h3>As telas do app</h3>
     <div class="grid-2">
       <div class="card">
-        <h4>🗺️ Mapa Tático</h4>
+        <h4>📷 Câmera</h4>
         <ul>
-          <li>Focos marcados em tempo real</li>
-          <li>Linhas de visada de todos os dispositivos</li>
-          <li>Pino de triangulação automática</li>
-          <li>Fontes d'água, picos, rotas</li>
+          <li>Mira, bússola e azimute ao vivo</li>
+          <li>Travar a visada com foto automática</li>
+          <li>Enviar a visada ao mapa</li>
+          <li>Identificar montanhas na mira</li>
         </ul>
       </div>
       <div class="card">
-        <h4>📷 Câmera de Campo</h4>
+        <h4>🗺️ Mapa</h4>
         <ul>
-          <li>Overlay de bússola em tempo real</li>
-          <li>Travar azimute com foto automática</li>
-          <li>Envio direto ao mapa</li>
-          <li>Identificação de picos na mira</li>
+          <li>Visadas de todos os usuários em tempo real</li>
+          <li>Foco triangulado com informações completas</li>
+          <li>Rota a pé, água, fotos, trilhas, satélites</li>
+          <li>Importar foto de drone</li>
         </ul>
       </div>
       <div class="card">
-        <h4>🛰️ Satélites</h4>
+        <h4>🥾 Trilhas</h4>
         <ul>
-          <li>Focos NASA FIRMS (MODIS + VIIRS)</li>
-          <li>Imagens GOES-16 e MSG</li>
-          <li>Sobreposição no mapa</li>
-          <li>Confirmação independente</li>
+          <li>Gravar trilhas com a tela bloqueada</li>
+          <li>Altimetria e tempo de caminhada</li>
+          <li>Trilhas mapeadas pela comunidade</li>
+          <li>Rota até o início de uma trilha</li>
         </ul>
       </div>
       <div class="card">
         <h4>🔥 Propagação</h4>
         <ul>
-          <li>Modelo Rothermel ROS</li>
-          <li>Direção e velocidade do fogo</li>
-          <li>Baseado em vento e vegetação</li>
-          <li>Polígono de propagação no mapa</li>
+          <li>Modelo de Rothermel (velocidade do fogo)</li>
+          <li>Vento, relevo, umidade, temperatura, chuva</li>
+          <li>Áreas atingidas por intervalo de tempo</li>
+          <li>Posicionamento de brigadas</li>
         </ul>
       </div>
       <div class="card">
-        <h4>📡 Compartilhar</h4>
+        <h4>🛰️ Satélites</h4>
         <ul>
-          <li>Link de emergência com coordenadas</li>
-          <li>QR code para distribuição rápida</li>
-          <li>Envio via WhatsApp ou e-mail</li>
-          <li>Contatos de emergência pré-configurados</li>
+          <li>Focos de calor FIRMS, GOES e NOAA-20</li>
+          <li>Raio de 150 km em volta de você</li>
+          <li>Pinos laranja no mapa</li>
         </ul>
       </div>
       <div class="card">
-        <h4>⚙️ Configurações</h4>
+        <h4>📤 Compartilhar · ⚙️ Configurações</h4>
         <ul>
-          <li>Modo escuro / claro</li>
-          <li>Calibração da bússola</li>
-          <li>ID do dispositivo</li>
-          <li>Versão do app</li>
+          <li>Alerta pronto para WhatsApp, SMS, e-mail</li>
+          <li>Registro oficial para autoridades</li>
+          <li>Modo de GPS, rede, água, diagnóstico</li>
         </ul>
       </div>
     </div>
   </div>
 
   <!-- 2. PRIMEIRO ACESSO -->
-  <div class="section" id="primeira-vez">
+  <div class="section" id="primeiro-acesso">
     <span class="section-label">02</span>
-    <h2>Primeiro Acesso</h2>
-    <p>Ao abrir o app pela primeira vez, o SmokeDistance solicita as permissões necessárias para funcionar. Todas são obrigatórias para o funcionamento completo.</p>
+    <h2>Entrada e Primeiro Acesso</h2>
 
+    <h3>Tela de entrada (águia)</h3>
+    <p>Toda vez que o app abre aparece o medalhão da águia, como a tela de bloqueio do celular. Para entrar, <strong>toque na águia</strong> ou <strong>passe o dedo para cima</strong>. Enquanto isso o GPS, a bússola e a sincronização já começam a funcionar por trás.</p>
+
+    <h3>Conta automática</h3>
+    <p>Não existe cadastro nem senha. Na primeira abertura o app cria sozinho uma <strong>conta anônima</strong> e a guarda no celular. Ela é usada para proteger o banco de dados: só quem está dentro do app consegue ler e gravar focos, fotos e trilhas.</p>
+
+    <h3>Permissões</h3>
     <div class="steps">
       <div class="step-item">
         <div class="step-num">01</div>
         <div class="step-content">
-          <strong>Permissão de Localização</strong>
-          <p>Selecione <strong>"Permitir enquanto o app estiver em uso"</strong>. O GPS é o sensor mais crítico — sem ele nenhuma linha de observação pode ser calculada.</p>
+          <strong>Localização</strong>
+          <p>Escolha <strong>"Permitir enquanto o app estiver em uso"</strong>. Sem GPS nenhuma visada pode ser registrada. Para <strong>gravar trilhas com a tela bloqueada</strong>, o app pede depois a opção <strong>"Sempre"</strong> (iPhone) ou <strong>"Permitir o tempo todo"</strong> (Android) — usada somente durante a gravação.</p>
         </div>
       </div>
       <div class="step-item">
         <div class="step-num">02</div>
         <div class="step-content">
-          <strong>Permissão de Câmera</strong>
-          <p>Necessária para a câmera de campo e captura de fotos geolocalizadas. Selecione <strong>"Permitir"</strong>.</p>
+          <strong>Câmera</strong>
+          <p>Necessária para a câmera de campo e para as fotos geolocalizadas.</p>
         </div>
       </div>
       <div class="step-item">
         <div class="step-num">03</div>
         <div class="step-content">
-          <strong>Permissão de Notificações</strong>
-          <p>Permite receber alertas quando outros usuários marcarem focos próximos. Selecione <strong>"Permitir"</strong>.</p>
+          <strong>Notificações</strong>
+          <p>Para receber alerta quando outro usuário reportar um foco.</p>
         </div>
       </div>
       <div class="step-item">
         <div class="step-num">04</div>
         <div class="step-content">
-          <strong>Aguardar GPS</strong>
-          <p>No mapa, seu ícone de posição aparece assim que o GPS do celular adquire sinal. O marcador <span class="btn-tag btn-green">📶</span> indica o status da <strong>rede celular</strong> (internet), não do GPS — os dois são independentes. Em campo aberto o GPS adquire sinal em 5 a 30 segundos.</p>
+          <strong>Galeria de fotos (opcional)</strong>
+          <p>Pedida só quando você usa <span class="btn-tag btn-gray">Drone</span> no mapa, para importar a foto original do drone.</p>
         </div>
       </div>
     </div>
 
     <div class="alert alert-blue">
-      <div class="alert-title">💡 Dica — GPS vs Rede</div>
-      O GPS funciona por satélite e <strong>não precisa de internet</strong> para localizar você. A rede celular (📶) é necessária para sincronizar focos com outros dispositivos, carregar satélites e enviar alertas. Em áreas sem sinal de celular o app continua localizando você via GPS e salva os dados offline.
+      <div class="alert-title">💡 GPS não é internet</div>
+      O GPS funciona por satélite e não precisa de sinal de celular. A internet só é necessária para sincronizar com outros usuários, baixar satélites e meteorologia, e enviar alertas. Sem rede, o app continua localizando você e guarda tudo para enviar depois.
     </div>
   </div>
 
-  <!-- 3. CÂMERA -->
-  <div class="section" id="camera">
+  <!-- 3. INÍCIO -->
+  <div class="section" id="inicio">
     <span class="section-label">03</span>
-    <h2>Câmera de Campo — Travar e Enviar Foco</h2>
-    <p>A câmera é o coração do app. É aqui que você captura a direção exata da fumaça e envia a observação para o mapa colaborativo. O fluxo tem 3 etapas simples.</p>
+    <h2>Tela Inicial</h2>
+    <p>É o painel de partida. De cima para baixo:</p>
+    <div class="tabela"><table>
+      <tr><th>Elemento</th><th>O que faz / mostra</th></tr>
+      <tr><td>Selos <span class="btn-tag btn-green">GPS ok</span> <span class="btn-tag btn-green">Online</span></td><td>Estado do GPS e da internet. Ficam amarelos como "Sem GPS" / "Offline".</td></tr>
+      <tr><td><span class="btn-tag btn-orange">📷 Abrir câmera e mirar o foco</span></td><td>Botão principal: abre a câmera de campo.</td></tr>
+      <tr><td>Cartão <strong>FOCO TRIANGULADO</strong></td><td>Aparece quando há triangulação: mostra as coordenadas do foco. O link <em>"Ver no mapa e informações completas →"</em> abre o mapa.</td></tr>
+      <tr><td>Cartão <strong>TRIANGULAÇÃO PENDENTE</strong></td><td>Aparece com uma única visada: lembra de ir para outro ponto (100 m ou mais) e fazer a segunda.</td></tr>
+      <tr><td>Ícone <strong>ⓘ</strong> nos cartões</td><td>Abre uma explicação rápida: o que é, quando usar, requisitos e cuidados.</td></tr>
+      <tr><td><strong>LOCALIZAÇÃO</strong></td><td>Latitude, longitude e altitude. A altitude vem do modelo de relevo; sem internet, vem do GPS e aparece como "Altitude (GPS)".</td></tr>
+      <tr><td><strong>METEOROLOGIA</strong></td><td>Temperatura, umidade, vento, de onde o vento vem e para onde o fogo tende a ir. Sem internet, avisa que não há dados (o app nunca mostra valores inventados).</td></tr>
+      <tr><td>Grade de atalhos</td><td><span class="btn-tag btn-green">Mapa</span> <span class="btn-tag btn-orange">Gravar trilha</span> <span class="btn-tag btn-red">Propagação</span> <span class="btn-tag btn-blue">Satélites</span> <span class="btn-tag btn-purple">Compartilhar</span> <span class="btn-tag btn-gray">Configurações</span></td></tr>
+    </table></div>
+  </div>
 
-    <h3>Interface da câmera</h3>
-    <table>
-      <tr><th>Elemento</th><th>Descrição</th></tr>
-      <tr><td>🧭 Botão Bússola ON/OFF (topo)</td><td>Toque para ativar ou desativar o overlay de bússola visual sobreposto à câmera. <strong>O azimute em graus fica no HUD inferior esquerdo</strong>, não no topo.</td></tr>
-      <tr><td>✛ Mira verde (centro)</td><td>Crosshair de pontaria. Toque nela para identificar o pico montanhoso na direção apontada.</td></tr>
-      <tr><td>📍 HUD de dados (esquerda inferior)</td><td>Exibe GPS atual, altitude em metros e <strong>azimute em graus</strong> — este é o valor principal a observar ao apontar para a fumaça. Atualiza em tempo real conforme o celular se move.</td></tr>
-      <tr><td>+ / - (direita)</td><td>Controle de zoom digital. Alterna entre 0x e 10x.</td></tr>
-      <tr><td>🔒 Travar Foco (verde)</td><td>Trava o azimute e captura foto automaticamente. Toque novamente para destravar.</td></tr>
-      <tr><td>🗺️ Enviar ao Mapa (azul)</td><td>Ativo somente após travar. Envia a observação e a foto ao Firebase.</td></tr>
-      <tr><td>📸 Foto (laranja)</td><td>Tira foto independente e oferece publicação no mapa sem travar foco.</td></tr>
-      <tr><td>❌ (marrom)</td><td>Fecha a câmera e volta ao menu.</td></tr>
-    </table>
+  <!-- 4. CÂMERA -->
+  <div class="section" id="camera">
+    <span class="section-label">04</span>
+    <h2>Câmera de Campo — Travar e Enviar a Visada</h2>
+    <p>É aqui que você registra a direção exata da fumaça. Uma <strong>visada</strong> é: sua posição GPS + o azimute (direção em graus a partir do Norte) + uma foto.</p>
 
-    <h3>Passo a passo completo</h3>
+    <h3>Botões e elementos</h3>
+    <div class="tabela"><table>
+      <tr><th>Elemento</th><th>Função</th></tr>
+      <tr><td><span class="btn-tag btn-green">🧭 Bússola ligada/desligada</span> (topo)</td><td>Liga ou desliga a rosa dos ventos desenhada sobre a imagem. Quando a visada está travada, mostra também <strong>TRAVADO</strong>.</td></tr>
+      <tr><td>✛ Mira verde (centro)</td><td>Ponto de pontaria. <strong>Tocar nela identifica a montanha</strong> na direção apontada.</td></tr>
+      <tr><td>Painel de dados (canto inferior esquerdo)</td><td>Coordenadas, altitude e o <strong>azimute em graus</strong> em verde, atualizado ao vivo. Travado, mostra "Azimute travado: X°".</td></tr>
+      <tr><td><span class="btn-tag btn-gray">+</span> <span class="btn-tag btn-gray">−</span> e indicador (direita)</td><td>Zoom de 0x a 10x. Também funciona com pinça de dois dedos na imagem.</td></tr>
+      <tr><td><span class="btn-tag btn-green">🔒 Travar foco</span></td><td>Congela o azimute e a posição <strong>e tira a foto no mesmo instante</strong>. Depois disso você pode mexer o celular à vontade.</td></tr>
+      <tr><td><span class="btn-tag btn-red">🔓 Destravar</span></td><td>O mesmo botão, depois de travar: descarta foto e azimute para tentar de novo.</td></tr>
+      <tr><td><span class="btn-tag btn-blue">✈ Enviar ao mapa</span></td><td>Só funciona com a visada travada. Publica a foto e envia a visada ao mapa de todos. Mostra "Enviando..." durante o envio.</td></tr>
+      <tr><td><span class="btn-tag btn-orange">📷</span> (botão redondo amarelo)</td><td>Foto avulsa: tira uma foto sem travar visada e pergunta se você quer publicá-la no mapa.</td></tr>
+      <tr><td><span class="btn-tag btn-gray">✕</span> (botão redondo)</td><td>Fecha a câmera.</td></tr>
+    </table></div>
+
+    <h3>Passo a passo</h3>
     <div class="steps">
       <div class="step-item">
         <div class="step-num">01</div>
         <div class="step-content">
-          <strong>Apontar para a fumaça</strong>
-          <p>Abra a aba Câmera. Aponte o celular para a fumaça ou foco visível. Observe o azimute no HUD — ele atualiza em tempo real conforme você move o dispositivo. Aguarde estabilizar.</p>
+          <strong>Mirar</strong>
+          <p>Aponte a mira verde para a base da fumaça. Espere o azimute parar de variar.</p>
         </div>
       </div>
       <div class="step-item">
         <div class="step-num">02</div>
         <div class="step-content">
-          <strong>Pressionar 🔒 Travar Foco</strong>
-          <p>Quando a mira estiver alinhada com a fumaça, pressione <span class="btn-tag btn-green">🔒 Travar Foco</span>. Neste exato momento o app: (a) congela o azimute, (b) salva a posição GPS atual, (c) captura uma foto automaticamente. Uma mensagem confirma o travamento com o azimute registrado. Após travar, você pode mover o celular livremente — os dados já estão salvos.</p>
+          <strong>Travar foco</strong>
+          <p>Toque em <span class="btn-tag btn-green">🔒 Travar foco</span>. Aparece "🔒 Foco Travado!" com o azimute e a confirmação da foto.</p>
         </div>
       </div>
       <div class="step-item">
         <div class="step-num">03</div>
         <div class="step-content">
-          <strong>Pressionar 🗺️ Enviar ao Mapa</strong>
-          <p>Com o foco travado, pressione <span class="btn-tag btn-blue">🗺️ Enviar ao Mapa</span>. O app envia para o Firebase: azimute, coordenadas GPS, altitude e a foto capturada. Em seguida, uma linha de observação colorida aparece no mapa de todos os usuários conectados, partindo da sua posição na direção do foco.</p>
+          <strong>Enviar ao mapa</strong>
+          <p>Toque em <span class="btn-tag btn-blue">✈ Enviar ao mapa</span>. Aparece "✅ Observação Enviada!" com azimute e coordenadas. Ao tocar em OK a câmera fica pronta para a próxima visada.</p>
         </div>
       </div>
       <div class="step-item">
         <div class="step-num">04</div>
         <div class="step-content">
-          <strong>Confirmação do envio</strong>
-          <p>Uma mensagem exibe o azimute registrado, as coordenadas e confirma se a foto foi publicada no mapa. O botão se redefine automaticamente para uma nova observação.</p>
+          <strong>Segunda visada</strong>
+          <p>Vá para outro ponto, a <strong>pelo menos 100 m</strong> do primeiro (quanto mais longe, melhor), e repita. Pode ser outra pessoa, em outro celular.</p>
         </div>
       </div>
     </div>
 
+    <h3>Identificar montanhas (⛰️)</h3>
+    <p>Quando há picos conhecidos na região, aparece a dica <em>"Toque na mira para identificar a montanha"</em>. Ao tocar na mira, o app procura o pico na direção apontada (até 30 km, tolerância de 12°) e mostra nome, altitude e distância. Com o celular apontado para o chão, a busca é ignorada.</p>
+
     <div class="alert">
-      <div class="alert-title">⚠️ Importante</div>
-      O botão <strong>Enviar ao Mapa</strong> fica bloqueado (cinza) enquanto o foco não estiver travado. Você deve sempre <strong>Travar primeiro</strong> e depois Enviar. Isso garante que o azimute registrado é o exato no momento em que você estava apontado para a fumaça.<br><br>
-      Para <strong>cancelar e destravar</strong>, pressione novamente o botão <span class="btn-tag btn-red">🔓 Destravar</span> — o botão muda de cor e texto quando travado. Destravar descarta a foto e o azimute capturados, permitindo uma nova tentativa.
+      <div class="alert-title">⚠️ Precisão da bússola</div>
+      Mantenha o celular longe de metal, ímãs e capas magnéticas. Se o azimute parecer errado, faça o movimento de "8" no ar para recalibrar. Um erro de poucos graus vira centenas de metros a quilômetros de distância.
     </div>
-
-    <h3>Identificação de picos (⛰️)</h3>
-    <p>Quando há picos cadastrados na região, uma dica aparece na tela: <em>"Toque na mira ✛ para identificar montanha"</em>. Ao tocar na mira verde, o app identifica o pico mais próximo na direção apontada (dentro de 30km e tolerância de 12°) e exibe nome, altitude e distância.</p>
-
-    <h3>Zoom</h3>
-    <p>Use os botões <strong>+</strong> e <strong>−</strong> na lateral direita para aproximar a imagem. O zoom vai de 0x a 10x. Também é possível usar o gesto de pinça (dois dedos) diretamente na tela da câmera.</p>
   </div>
 
-  <!-- 4. MAPA -->
+  <!-- 5. MAPA -->
   <div class="section" id="mapa">
-    <span class="section-label">04</span>
-    <h2>Mapa Tático</h2>
-    <p>O mapa é a tela central de coordenação. Exibe em tempo real todas as observações enviadas por todos os dispositivos conectados, além de fontes d'água, picos, rotas e dados satelitais.</p>
+    <span class="section-label">05</span>
+    <h2>Mapa</h2>
+    <p>Tela central de coordenação. Abre já centralizada em você. Mostra em tempo real as visadas e marcações de todos os usuários.</p>
 
-    <h3>Controles superiores (barra horizontal)</h3>
-    <table>
+    <h3>Barra de botões superior (deslize para os lados)</h3>
+    <div class="tabela"><table>
       <tr><th>Botão</th><th>Função</th></tr>
-      <tr><td><span class="btn-tag btn-green">🎯 Seguir</span></td><td>Centraliza o mapa na sua posição e mantém o rastreamento enquanto você se move.</td></tr>
-      <tr><td><span class="btn-tag btn-gray">🧭 Bús ON/OFF</span></td><td>Exibe ou oculta o overlay de bússola sobreposto ao mapa.</td></tr>
-      <tr><td><span class="btn-tag btn-gray">🧭 Norte / Rot. Mapa</span></td><td>Alterna entre mapa fixo no Norte e mapa que rotaciona conforme a orientação do dispositivo.</td></tr>
-      <tr><td><span class="btn-tag btn-red">🔥 Focos ON/OFF</span></td><td>Ativa ou desativa a camada WMS de focos de calor da NASA FIRMS sobre o mapa.</td></tr>
-      <tr><td><span class="btn-tag btn-orange">🔥 Satélite</span></td><td>Muda o tipo de mapa para visão satelital.</td></tr>
-      <tr><td><span class="btn-tag btn-gray">🏔️ Relevo</span></td><td>Exibe o mapa com camada de relevo e curvas de nível.</td></tr>
-      <tr><td><span class="btn-tag btn-blue">🛰️ Híbrido</span></td><td>Combina imagem satelital com rótulos de ruas e localidades.</td></tr>
-      <tr><td><span class="btn-tag btn-orange">🛣️ Rota</span></td><td>Calcula a rota até o ponto de triangulação (aparece apenas quando há triangulação ativa).</td></tr>
-    </table>
+      <tr><td><span class="btn-tag btn-orange">➤ Traçar rota</span></td><td>Calcula a rota a pé até o destino mais recente (foco triangulado, foco marcado ou último foco salvo). Sem destino, abre um formulário para digitar latitude e longitude. Com a rota ativa vira <span class="btn-tag btn-red">✕ Rota</span>, que apaga a rota. Veja a seção <a href="#rota" style="color:var(--gold-light)">Rota a Pé</a>.</td></tr>
+      <tr><td><span class="btn-tag btn-green">Seguir / Seguindo</span></td><td>Mantém o mapa acompanhando você. Arrastar o mapa desliga.</td></tr>
+      <tr><td><span class="btn-tag btn-blue">Bússola</span></td><td>Mostra ou esconde a rosa dos ventos sobre o mapa.</td></tr>
+      <tr><td><span class="btn-tag btn-purple">Norte / Girando</span></td><td><strong>Norte</strong>: mapa fixo com o Norte para cima. <strong>Girando</strong>: o mapa gira acompanhando a direção do celular.</td></tr>
+      <tr><td><span class="btn-tag btn-red">Focos satélite</span></td><td>Mostra ou esconde os focos de calor de satélite (pinos laranja). Veja <a href="#satelites" style="color:var(--gold-light)">Satélites</a>.</td></tr>
+      <tr><td><span class="btn-tag btn-orange">Satélite</span> <span class="btn-tag btn-orange">Relevo</span> <span class="btn-tag btn-orange">Híbrido</span></td><td>Tipo de mapa: imagem de satélite, relevo do terreno, ou imagem com nomes de ruas e lugares.</td></tr>
+      <tr><td><span class="btn-tag btn-gray">Drone</span></td><td>Importa uma foto original de drone DJI e cria uma visada a partir dela. Veja <a href="#drone" style="color:var(--gold-light)">Drone</a>.</td></tr>
+      <tr><td><span class="btn-tag btn-gray">Fotos (N)</span></td><td>Abre a biblioteca com todas as fotos de campo. Veja <a href="#fotos" style="color:var(--gold-light)">Fotos</a>.</td></tr>
+      <tr><td><span class="btn-tag btn-green">Trilhas (N)</span></td><td>Mostra ou esconde as trilhas da comunidade. Tocar numa trilha abre a ficha dela.</td></tr>
+    </table></div>
 
-    <h3>Controles inferiores</h3>
-    <table>
+    <h3>Botões inferiores</h3>
+    <div class="tabela"><table>
       <tr><th>Botão</th><th>Função</th></tr>
-      <tr><td><span class="btn-tag btn-orange">🎯 Marcar Foco</span></td><td>Ativa o modo de marcação manual. Toque em qualquer ponto do mapa para marcar um foco naquela coordenada.</td></tr>
-      <tr><td><span class="btn-tag btn-blue">💧 Água</span></td><td>Ativa o modo de marcação de fontes d'água. Toque no mapa para adicionar um marcador azul.</td></tr>
-      <tr><td><span class="btn-tag btn-red">🗑️ Limpar</span></td><td>Exibe menu com opções: remover último foco, remover meus focos, ou limpar tudo.</td></tr>
-    </table>
+      <tr><td><span class="btn-tag btn-red">🔥 Marcar foco</span></td><td>Liga o modo de marcação (vira "Toque no mapa"). Toque onde está o fogo: aparece um painel com as coordenadas e a distância até você, com <span class="btn-tag btn-green">💾 Salvar Foco</span> e <span class="btn-tag btn-gray">✕</span>. Salvar envia o foco a todos (e notifica os outros usuários). O foco marcado à mão não entra na triangulação — é a posição do fogo, não uma visada.</td></tr>
+      <tr><td><span class="btn-tag btn-blue">💧 Água</span></td><td>Liga o modo de marcação de água (vira "Toque no mapa"). Toque na fonte d'água para criar o marcador 💧, compartilhado com todos.</td></tr>
+      <tr><td><span class="btn-tag btn-gray">🗑 Limpar</span></td><td>Abre o menu de limpeza (abaixo).</td></tr>
+      <tr><td><span class="btn-tag btn-gray">‹ Voltar</span></td><td>Volta à tela inicial.</td></tr>
+    </table></div>
 
-    <h3>Elementos visuais no mapa</h3>
+    <h3>Menu Limpar</h3>
+    <div class="tabela"><table>
+      <tr><th>Opção</th><th>O que acontece</th></tr>
+      <tr><td>🧹 Limpar meu mapa (só neste celular)</td><td>Esconde, <strong>só no seu celular</strong>, tudo o que foi criado até agora (visadas, focos, fotos). Nada é apagado para os outros. Ótimo para começar uma nova ocorrência.</td></tr>
+      <tr><td>↩️ Mostrar tudo de novo</td><td>Aparece depois de limpar o mapa: desfaz a limpeza visual.</td></tr>
+      <tr><td>❌ Último Foco</td><td>Apaga a sua visada/foco mais recente.</td></tr>
+      <tr><td>🗑️ Meus Focos</td><td>Apaga todas as visadas e focos enviados por este celular.</td></tr>
+      <tr><td>🚨 Limpar Tudo</td><td><strong>Só administradores.</strong> Apaga de verdade os focos e fotos de todos os aparelhos.</td></tr>
+    </table></div>
+
+    <h3>O que aparece no mapa</h3>
     <div class="grid-2">
       <div class="card">
-        <h4>👁️ Marcador de observação</h4>
+        <h4>📶 Você</h4>
         <ul>
-          <li>Círculo colorido com olho</li>
-          <li>Cada dispositivo tem uma cor única</li>
-          <li>Linha tracejada indica a direção do olhar</li>
-          <li>A linha some automaticamente após 2 horas para evitar dados desatualizados no mapa</li>
+          <li>Círculo verde com internet, cinza sem</li>
+          <li>Indica a rede, não o GPS</li>
         </ul>
       </div>
       <div class="card">
-        <h4>🔥 Marcador de foco</h4>
+        <h4>👁️ Visada</h4>
         <ul>
-          <li>Emoji de chamas no ponto marcado</li>
-          <li>Aparece quando enviado via câmera ou marcação manual</li>
+          <li>Olho na posição do observador</li>
+          <li>Linha tracejada de 20 km na direção mirada</li>
+          <li>Uma cor por aparelho</li>
+          <li>Toque: azimute, hora e "Remover esta linha"</li>
+          <li>Fica até ser removida</li>
         </ul>
       </div>
       <div class="card">
-        <h4>📍 Pino de triangulação</h4>
+        <h4>🔥 Foco triangulado</h4>
         <ul>
-          <li>Aparece automaticamente quando há 2+ observações</li>
-          <li>Posição calculada pelo cruzamento das linhas</li>
-          <li>Mostrado na barra inferior com coordenadas</li>
+          <li>Círculo vermelho com borda amarela</li>
+          <li>"FOCO · toque p/ info"</li>
+          <li>Toque abre as informações completas</li>
         </ul>
       </div>
       <div class="card">
-        <h4>💧 Fontes d'água</h4>
+        <h4>🔥 Foco marcado à mão</h4>
         <ul>
-          <li>Emoji de gota azul</li>
-          <li>Toque para ver coordenadas ou remover</li>
-          <li>Compartilhado entre todos os dispositivos</li>
+          <li>Chama no ponto marcado</li>
+          <li>Toque: distância e "Traçar rota até aqui"</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h4>📸 Foto de campo</h4>
+        <ul>
+          <li>Balão acima e à direita da visada</li>
+          <li>Toque abre a foto</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h4>Outros marcadores</h4>
+        <ul>
+          <li>💧 Água (toque: coordenadas e remover)</li>
+          <li>⛰️ Picos (toque: nome, altitude, distância)</li>
+          <li>📍 Pinos laranja: focos de satélite</li>
+          <li>Círculos azuis: onde havia sinal de rede</li>
+          <li>Linhas coloridas: rota a pé</li>
+          <li>Trilhas: verde contínua = verificada; amarela tracejada = comunidade</li>
         </ul>
       </div>
     </div>
 
-    <h3>Barra de informações</h3>
-    <p>Na parte inferior do mapa, uma barra exibe em tempo real: suas coordenadas GPS atuais, o número de observações ativas e — quando disponível — as coordenadas calculadas pela triangulação ou a mensagem <em>"Aguardando triangulação..."</em>.</p>
+    <h3>Barra de informações (rodapé do mapa)</h3>
+    <p>Mostra suas coordenadas, a altitude e o número de visadas válidas (👁️). Na segunda linha: as coordenadas do foco triangulado, ou o motivo de ainda não haver foco — <em>"Aguardando triangulação..."</em> ou <em>"Sem foco: visadas precisam ser de pontos a 100 m+ e se cruzar à frente"</em>. Com rota ativa, mostra nome, distância, tempo e desnível da rota.</p>
   </div>
 
-  <!-- 5. TRIANGULAÇÃO -->
+  <!-- 6. TRIANGULAÇÃO -->
   <div class="section" id="triangulacao">
-    <span class="section-label">05</span>
-    <h2>Triangulação Geodésica</h2>
-    <p>A triangulação é o mecanismo central de localização do SmokeDistance. Ela calcula matematicamente a coordenada de um foco a partir do cruzamento de <strong>duas ou mais linhas de visada</strong> enviadas por observadores em posições distintas.</p>
-
-    <h3>Como funciona matematicamente</h3>
-    <p>Cada observação é uma semirreta que parte das coordenadas GPS do observador na direção definida pelo azimute registrado. Quando dois observadores enviam suas observações, o sistema calcula o ponto de interseção das duas semirretas usando trigonometria esférica (fórmula de Haversine para distâncias geodésicas).</p>
-
-    <div class="steps">
-      <div class="step-item">
-        <div class="step-num">A</div>
-        <div class="step-content">
-          <strong>Observador 1 envia</strong>
-          <p>Posição: Lat/Lon A. Azimute: 127°. O sistema cria a linha de visada partindo de A na direção 127°.</p>
-        </div>
-      </div>
-      <div class="step-item">
-        <div class="step-num">B</div>
-        <div class="step-content">
-          <strong>Observador 2 envia</strong>
-          <p>Posição: Lat/Lon B (diferente de A). Azimute: 063°. O sistema cria a segunda linha de visada.</p>
-        </div>
-      </div>
-      <div class="step-item">
-        <div class="step-num">C</div>
-        <div class="step-content">
-          <strong>Interseção calculada</strong>
-          <p>O algoritmo encontra o ponto mais próximo do cruzamento das duas linhas. Este ponto é exibido no mapa como o pino de triangulação com as coordenadas do foco.</p>
-        </div>
-      </div>
-    </div>
-
-    <div class="alert alert-green">
-      <div class="alert-title">✅ Boas práticas de triangulação</div>
-      Para maior precisão, os dois observadores devem estar a <strong>pelo menos 500 metros de distância um do outro</strong> e o ângulo entre as duas linhas de visada deve ser entre 30° e 150°. Ângulos muito pequenos ou muito grandes reduzem a precisão do cruzamento.
-    </div>
-
-    <h3>Apenas o último foco por dispositivo</h3>
-    <p>O sistema considera apenas a <strong>observação mais recente de cada dispositivo</strong>. Se você enviar uma segunda observação, ela substitui a anterior. Isso evita acúmulo de dados desatualizados e garante que o cálculo use as informações mais atuais de cada usuário.</p>
-  </div>
-
-  <!-- 6. SATÉLITES -->
-  <div class="section" id="satelites">
     <span class="section-label">06</span>
-    <h2>Satélites — FIRMS / GOES / MSG</h2>
-    <p>O SmokeDistance integra dados de três sistemas de satélite para confirmação independente de focos de calor. Esses dados funcionam como uma segunda camada de validação das observações de campo.</p>
+    <h2>Triangulação do Foco</h2>
+    <p>Cada visada é uma linha que sai do observador na direção mirada. O app calcula o ponto onde as linhas se cruzam e marca ali o <strong>🔥 foco triangulado</strong>. O cálculo é feito no próprio celular — funciona sem internet.</p>
 
-    <h3>NASA FIRMS (Fire Information for Resource Management System)</h3>
-    <p>O FIRMS processa imagens dos satélites <strong>MODIS</strong> (Terra e Aqua) e <strong>VIIRS</strong> (Suomi NPP e NOAA-20) para detectar anomalias térmicas na superfície. No SmokeDistance, os focos FIRMS são exibidos como camada WMS diretamente sobre o mapa ao ativar o botão <span class="btn-tag btn-red">🔥 Focos ON</span>. A camada mostra focos detectados nas últimas 24 horas.</p>
-
-    <h3>GOES-16 (NOAA)</h3>
-    <p>O satélite geoestacionário GOES-16 cobre toda a América do Sul com imagens atualizadas a cada 5–15 minutos. Disponível na aba Satélites do app para visualização de nuvens, fumaça e focos de calor em tempo quase real.</p>
-
-    <h3>MSG (Meteosat Second Generation — EUMETSAT)</h3>
-    <p>O MSG complementa a cobertura com dados adicionais de infravermelho, especialmente úteis para detecção noturna de focos quando a fumaça não é visível.</p>
-
-    <div class="alert alert-blue">
-      <div class="alert-title">💡 Latência dos dados</div>
-      Os dados FIRMS têm latência de 3 a 6 horas após a passagem do satélite. Focos muito recentes (menos de 3h) podem não aparecer na camada ainda. Para incêndios ativos em tempo real, a triangulação por câmera é sempre mais atual que os dados satelitais.
+    <div class="grid-2">
+      <div class="card">
+        <h4>Com 2 visadas</h4>
+        <ul>
+          <li>O foco fica exatamente no cruzamento</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h4>Com 3 ou mais</h4>
+        <ul>
+          <li>O app busca o ponto mais próximo de todas as linhas ao mesmo tempo</li>
+          <li>Visadas que discordam "puxam" o resultado</li>
+          <li>Remova a visada errada (toque no 👁️ → Remover)</li>
+        </ul>
+      </div>
     </div>
-  </div>
 
-  <!-- 7. PROPAGAÇÃO -->
-  <div class="section" id="propagacao">
-    <span class="section-label">07</span>
-    <h2>Propagação — Modelo Rothermel</h2>
-    <p>A aba Propagação usa o <strong>Modelo de Rothermel</strong> (desenvolvido pelo USDA Forest Service) para calcular a velocidade e direção de espalhamento do fogo a partir do ponto de triangulação.</p>
-
-    <h3>Variáveis do modelo</h3>
-    <table>
-      <tr><th>Variável</th><th>Fonte no App</th></tr>
-      <tr><td>Velocidade do vento</td><td>API meteorológica (Open-Meteo) ou entrada manual</td></tr>
-      <tr><td>Direção do vento</td><td>API meteorológica ou bússola do dispositivo</td></tr>
-      <tr><td>Declividade do terreno</td><td>Serviço de elevação digital (DEM)</td></tr>
-      <tr><td>Tipo de vegetação</td><td>Seleção manual ou detecção por vegetação local</td></tr>
-      <tr><td>Umidade do combustível</td><td>Calculada a partir de dados de umidade relativa do ar</td></tr>
-    </table>
-
-    <h3>O que o modelo entrega</h3>
-    <p>O resultado é expresso em <strong>metros por minuto (m/min)</strong> e indica a velocidade de avanço da frente de fogo na direção predominante. O app exibe também um <strong>polígono de propagação</strong> no mapa, estimando a área atingida em diferentes intervalos de tempo (30min, 1h, 2h).</p>
-
-    <div class="alert">
-      <div class="alert-title">⚠️ Limitação</div>
-      O modelo Rothermel é uma estimativa matemática baseada em condições médias. Mudanças repentinas de vento, variações locais de vegetação ou topografia complexa podem alterar significativamente o comportamento real do fogo. Use como referência, não como previsão absoluta.
-    </div>
-  </div>
-
-  <!-- 8. COMPARTILHAR -->
-  <div class="section" id="compartilhar">
-    <span class="section-label">08</span>
-    <h2>Compartilhar e Alertas de Emergência</h2>
-    <p>A aba Compartilhar permite gerar e enviar alertas de emergência com as informações do foco detectado para contatos e autoridades.</p>
-
-    <h3>O que é incluído no alerta</h3>
-    <ul style="list-style:none;display:flex;flex-direction:column;gap:0.5rem;margin:1rem 0;">
-      <li style="padding-left:1.5rem;position:relative;font-size:0.95rem;color:rgba(245,237,216,0.75);"><span style="position:absolute;left:0;color:var(--fire);">→</span> Coordenadas GPS do foco (latitude e longitude)</li>
-      <li style="padding-left:1.5rem;position:relative;font-size:0.95rem;color:rgba(245,237,216,0.75);"><span style="position:absolute;left:0;color:var(--fire);">→</span> Link para o Google Maps com o pino exato</li>
-      <li style="padding-left:1.5rem;position:relative;font-size:0.95rem;color:rgba(245,237,216,0.75);"><span style="position:absolute;left:0;color:var(--fire);">→</span> Horário de detecção</li>
-      <li style="padding-left:1.5rem;position:relative;font-size:0.95rem;color:rgba(245,237,216,0.75);"><span style="position:absolute;left:0;color:var(--fire);">→</span> Dados meteorológicos no momento (temperatura, umidade, vento)</li>
-      <li style="padding-left:1.5rem;position:relative;font-size:0.95rem;color:rgba(245,237,216,0.75);"><span style="position:absolute;left:0;color:var(--fire);">→</span> QR Code para abertura direta no mapa</li>
+    <h3>Quando não há triangulação</h3>
+    <ul class="lista">
+      <li>As visadas foram feitas a menos de <strong>100 m</strong> uma da outra.</li>
+      <li>As linhas são quase paralelas (observadores mirando na mesma direção).</li>
+      <li>O cruzamento fica atrás de todos os observadores (azimutes inconsistentes).</li>
+      <li>Focos marcados à mão e visadas sem direção não entram no cálculo.</li>
     </ul>
 
-    <h3>Contatos pré-configurados</h3>
-    <p>O app possui contatos de emergência configurados diretamente no código (Rafa — bombeiro, e Jubi — polícia ambiental), acessíveis com um toque para envio rápido via WhatsApp ou e-mail.</p>
-
-    <h3>Envio via WhatsApp</h3>
-    <p>O botão de WhatsApp abre o aplicativo diretamente com a mensagem de alerta pré-preenchida, incluindo as coordenadas e o link do mapa. Basta confirmar o envio.</p>
-  </div>
-
-  <!-- 9. FOTOTECA -->
-  <div class="section" id="fotos">
-    <span class="section-label">09</span>
-    <h2>Fototeca de Campo</h2>
-    <p>Todas as fotos capturadas pela câmera do SmokeDistance são armazenadas no Firebase Storage e aparecem como pinos no mapa, criando uma biblioteca visual geolocada de campo.</p>
-
-    <h3>Como as fotos são organizadas</h3>
-    <p>Cada foto é associada a um pino no mapa na posição exata onde foi tirada. Ao tocar em um pino de foto no mapa (ícone 📸), o app abre a <strong>Biblioteca de Campo</strong> exibindo a imagem em tela cheia com os metadados completos:</p>
-    <div class="grid-2">
-      <div class="card">
-        <h4>Metadados salvos em cada foto</h4>
-        <ul>
-          <li>Latitude e longitude (5 casas decimais)</li>
-          <li>Azimute no momento da captura (graus)</li>
-          <li>Altitude em metros</li>
-          <li>Data e hora do registro</li>
-          <li>ID do dispositivo que capturou</li>
-        </ul>
-      </div>
-      <div class="card">
-        <h4>Tipos de foto no mapa</h4>
-        <ul>
-          <li>Foto automática ao travar foco</li>
-          <li>Foto manual via botão 📸 da câmera</li>
-          <li>Ambas publicadas automaticamente</li>
-          <li>Visíveis por todos os usuários conectados</li>
-        </ul>
-      </div>
-    </div>
-  </div>
-
-  <!-- 10. ÁGUA -->
-  <div class="section" id="agua">
-    <span class="section-label">10</span>
-    <h2>Marcadores de Água</h2>
-    <p>O mapa permite marcar fontes d'água (rios, açudes, tanques, represas, hidrantes rurais) como referência para combate ao incêndio. Os marcadores são compartilhados em tempo real com todos os usuários.</p>
-    <div class="alert alert-blue">
-      <div class="alert-title">💧 Por que mapear água?</div>
-      Em um incêndio florestal, o acesso rápido a fontes d'água é crítico para o combate. Brigadistas e bombeiros precisam saber <strong>onde encher tanques e caminhões-pipa</strong> sem perder tempo em campo. Ao marcar rios, açudes e pontos de captação no mapa compartilhado, qualquer usuário conectado enxerga imediatamente as fontes disponíveis — especialmente importante quando equipes de diferentes origens chegam ao local sem conhecer a região.
+    <div class="alert alert-green">
+      <div class="alert-title">✅ Boas práticas</div>
+      Afaste-se o máximo possível entre uma visada e outra e procure que as linhas se cruzem em ângulo aberto (perto de 90°). Linhas quase paralelas multiplicam qualquer erro de bússola. Use "Limpar meu mapa" ao começar uma nova ocorrência, para visadas antigas não entrarem no cálculo.
     </div>
 
+    <h3>Janela de informações do foco</h3>
+    <p>Abre sozinha quando surge uma triangulação nova, e sempre que você toca no 🔥. Mostra:</p>
+    <ul class="lista">
+      <li><strong>Selo</strong>: "🔒 Registro gravado — visível para autoridades" ou "⏳ Ainda não gravado" (sem rede).</li>
+      <li><strong>Posição</strong>: coordenadas, precisão estimada (± metros), altitude do terreno, distância e rumo a partir de você, data e hora do cálculo.</li>
+      <li><strong>Visadas</strong>: cada uma com coordenadas, azimute e distância até o foco.</li>
+      <li><strong>Meteorologia no foco</strong>: temperatura, umidade, vento e rajadas, de onde o vento vem, para onde o fogo tende a avançar, chuva, condição do tempo e risco de incêndio.</li>
+      <li>Botões <span class="btn-tag btn-gray">Fechar</span> e <span class="btn-tag btn-orange">➤ Traçar rota</span>.</li>
+    </ul>
+    <p>Cada triangulação com conexão fica <strong>registrada</strong> com a meteorologia do momento — um retrato igual para todos os usuários e para consulta das autoridades.</p>
+  </div>
+
+  <!-- 7. DRONE -->
+  <div class="section" id="drone">
+    <span class="section-label">07</span>
+    <h2>Observação por Drone</h2>
+    <p>Fotos de drones DJI guardam a posição, a altitude e a direção da câmera. O botão <span class="btn-tag btn-gray">Drone</span> do mapa transforma uma dessas fotos em uma visada.</p>
     <div class="steps">
       <div class="step-item">
         <div class="step-num">01</div>
         <div class="step-content">
-          <strong>Ativar modo água</strong>
-          <p>Pressione <span class="btn-tag btn-blue">💧 Água</span> na barra inferior do mapa. O botão fica azul escuro indicando modo ativo.</p>
+          <strong>Escolher a foto</strong>
+          <p>Toque em Drone e escolha a foto <strong>original</strong> (transferida pelo app do drone ou cartão SD). Fotos enviadas pelo WhatsApp ou editadas perdem os dados e o app avisa "Sem metadados DJI".</p>
         </div>
       </div>
       <div class="step-item">
         <div class="step-num">02</div>
         <div class="step-content">
-          <strong>Tocar no mapa</strong>
-          <p>Toque no ponto exato onde está a fonte d'água. Um marcador 💧 azul aparece imediatamente no mapa e é sincronizado com todos os dispositivos.</p>
+          <strong>Visada criada</strong>
+          <p>O app cria a visada "Drone-N" com a linha na direção da câmera, publica a foto e notifica os outros usuários.</p>
         </div>
       </div>
       <div class="step-item">
         <div class="step-num">03</div>
         <div class="step-content">
-          <strong>Remover marcador</strong>
-          <p>Toque sobre o marcador 💧 no mapa. Um popup exibe as coordenadas e oferece o botão <span class="btn-tag btn-red">🗑️ Remover</span>.</p>
+          <strong>Estimativa de distância</strong>
+          <p>Se a câmera estava inclinada para baixo, o app estima onde ela mirava (pela altura e inclinação) e oferece <span class="btn-tag btn-orange">🎯 Marcar foco estimado</span>. Com a câmera quase horizontal, fica só a linha — combine com outra visada para triangular.</p>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- 11. OFFLINE -->
-  <div class="section" id="offline">
-    <span class="section-label">11</span>
-    <h2>Modo Offline</h2>
-    <p>O SmokeDistance funciona em áreas sem cobertura de internet. Quando não há conexão, os focos marcados são salvos localmente e sincronizados automaticamente ao reconectar.</p>
+  <!-- 8. ROTA -->
+  <div class="section" id="rota">
+    <span class="section-label">08</span>
+    <h2>Rota a Pé até o Foco</h2>
+    <p>O app calcula o caminho a pé de onde você está até o destino, priorizando trilhas e caminhos (perfil de caminhada em trilha). A rota aparece como linha colorida e o resumo — nome, distância, tempo e desnível — fica na barra de informações.</p>
+    <ul class="lista">
+      <li><strong>Destino automático</strong>: o mais recente entre o foco triangulado, um foco marcado agora no mapa e o último foco marcado e salvo.</li>
+      <li><strong>Destino manual</strong>: sem nenhum destino, abre "🛣️ Destino da Rota" para digitar latitude e longitude (use ponto como separador decimal) e tocar em <span class="btn-tag btn-orange">🛣️ Calcular Rota</span>.</li>
+      <li>Também dá para traçar rota a partir da janela do foco triangulado, do toque num foco marcado à mão e da ficha de uma trilha (até o início dela).</li>
+      <li>Toque de novo no botão <span class="btn-tag btn-red">✕ Rota</span> para apagar a rota.</li>
+    </ul>
+    <div class="alert">
+      <div class="alert-title">⚠️ Requer internet</div>
+      O cálculo da rota usa serviços online. Em área sem sinal, trace a rota antes de sair do ponto com cobertura.
+    </div>
+  </div>
 
-    <h3>Comportamento offline</h3>
+  <!-- 9. FOTOS -->
+  <div class="section" id="fotos">
+    <span class="section-label">09</span>
+    <h2>Fotos de Campo</h2>
+    <p>Fotos tiradas ao travar uma visada, fotos avulsas da câmera e fotos de drone ficam numa biblioteca compartilhada e aparecem no mapa como 📸.</p>
+    <div class="tabela"><table>
+      <tr><th>Onde</th><th>O que dá para fazer</th></tr>
+      <tr><td>Botão <span class="btn-tag btn-gray">Fotos (N)</span></td><td>Abre a grade com todas as fotos. As suas têm o selo "minha". Toque numa foto para abrir.</td></tr>
+      <tr><td>Foto aberta</td><td><strong>Pinça</strong> para ampliar (até 5x), arraste para mover a foto ampliada, <strong>toque duplo</strong> desfaz o zoom. Mostra coordenadas, azimute, altitude, data e hora.</td></tr>
+      <tr><td><span class="btn-tag btn-red">🗑️ Apagar esta foto</span></td><td>Só aparece nas fotos tiradas por você. Remove a foto do mapa e da biblioteca de todos.</td></tr>
+      <tr><td><span class="btn-tag btn-gray">← Voltar</span></td><td>Seta no topo ou botão embaixo: volta às fotos ou ao mapa.</td></tr>
+      <tr><td>🔒 Identificação</td><td>Quem tirou a foto (e-mail verificado, modelo do aparelho) é visível <strong>somente para autoridades e administradores</strong>.</td></tr>
+    </table></div>
+  </div>
+
+  <!-- 10. ÁGUA E REDE -->
+  <div class="section" id="agua">
+    <span class="section-label">10</span>
+    <h2>Água e Cobertura de Rede</h2>
+
+    <h3>💧 Fontes de água</h3>
+    <p>Rios, açudes, tanques e represas são críticos para encher tanques e caminhões-pipa. Marque com <span class="btn-tag btn-blue">💧 Água</span> e toque no ponto do mapa. O marcador aparece para todos. Tocar num 💧 mostra as coordenadas e a opção <span class="btn-tag btn-red">🗑️ Remover</span>.</p>
+
+    <h3>📶 Círculos de cobertura</h3>
+    <p>Quando o celular perde o sinal em área rural, o app marca no mapa um <strong>círculo azul</strong> centrado no último ponto onde ainda havia conexão. Assim as equipes sabem para onde voltar quando precisam de sinal. Os círculos podem ser limpos do seu celular em Configurações.</p>
+  </div>
+
+  <!-- 11. TRILHAS -->
+  <div class="section" id="trilhas">
+    <span class="section-label">11</span>
+    <h2>Trilhas — Gravar e Explorar</h2>
+    <p>Trilhas, aceiros e caminhos mapeados pela comunidade ajudam no combate ao fogo e no resgate de vítimas. A tela Trilhas abre em mapa cheio, centrada em você.</p>
+
+    <h3>Botões da tela</h3>
+    <div class="tabela"><table>
+      <tr><th>Botão</th><th>Função</th></tr>
+      <tr><td><span class="btn-tag btn-gray">‹ Voltar</span></td><td>Volta à tela inicial.</td></tr>
+      <tr><td>Painel "Trilhas"</td><td>Mostra quantas trilhas a comunidade já mapeou.</td></tr>
+      <tr><td><span class="btn-tag btn-gray">☰</span> Menu</td><td><strong>Camada do mapa</strong>: Híbrido, Satélite, Relevo, Padrão. <strong>Minha posição</strong>: Centralizar em mim, Seguir. <strong>Mostrar</strong>: Todas, Verificadas, Minhas. <strong>Lista</strong> de trilhas, da mais perto para a mais longe, com distância, subida e distância até o início — toque para ver no mapa e abrir a ficha.</td></tr>
+      <tr><td><span class="btn-tag btn-green">● Gravar trilha</span></td><td>Começa a gravação (pede a localização "Sempre"). Vira <span class="btn-tag btn-red">⏹ Parar e publicar</span>.</td></tr>
+      <tr><td>Linha da trilha no mapa</td><td>Toque para abrir a ficha.</td></tr>
+    </table></div>
+
+    <h3>Gravação</h3>
+    <ul class="lista">
+      <li><strong>Pode bloquear a tela</strong> ou trocar de app: a gravação continua (no Android aparece uma notificação fixa "🥾 Gravando trilha").</li>
+      <li>Painel ao vivo: estado (● GRAVANDO / ⏸ PAUSADO), tempo total, distância, tempo em movimento, tempo parado, velocidade média, subida acumulada e altitude.</li>
+      <li><strong>Pausa automática</strong> após 5 minutos parado; volta sozinha quando você anda 20 m.</li>
+      <li>A linha vermelha mostra o caminho gravado até agora.</li>
+    </ul>
+
+    <h3>Publicar</h3>
+    <div class="steps">
+      <div class="step-item">
+        <div class="step-num">01</div>
+        <div class="step-content">
+          <strong>Parar</strong>
+          <p>Toque em Parar e publicar → confirme "Parar". É preciso ter gravado pelo menos <strong>700 m</strong>.</p>
+        </div>
+      </div>
+      <div class="step-item">
+        <div class="step-num">02</div>
+        <div class="step-content">
+          <strong>Preencher</strong>
+          <p>Nome da trilha, seu <strong>apelido</strong> para o crédito, tipo (<strong>Trilha</strong>, <strong>Aceiro</strong> ou <strong>Caminho</strong>) e, se quiser, autorização para enviar ao <strong>OpenStreetMap</strong> (desligado por padrão).</p>
+        </div>
+      </div>
+      <div class="step-item">
+        <div class="step-num">03</div>
+        <div class="step-content">
+          <strong>Publicar ou Descartar</strong>
+          <p>A trilha aparece para todos com "Mapeada por (apelido)". Se ela já existia no mapa, sua gravação conta como <strong>confirmação</strong>. Sem rede, fica guardada e é publicada sozinha quando a conexão voltar.</p>
+        </div>
+      </div>
+    </div>
+    <div class="alert alert-blue">
+      <div class="alert-title">🔒 Privacidade</div>
+      Os primeiros e os últimos 200 m da gravação são cortados antes de publicar, para não revelar de onde você saiu ou onde mora.
+    </div>
+
+    <h3>Ficha da trilha</h3>
+    <ul class="lista">
+      <li>Nome, tipo, selo <strong>✅ verificada</strong> (gravada por brigadista ou autoridade) ou "mapeada pela comunidade".</li>
+      <li>Crédito do autor, data, duração e número de confirmações.</li>
+      <li>Distância, subida, descida, altitude mínima e máxima, <strong>gráfico de altimetria</strong> (pelo relevo).</li>
+      <li><strong>Tempo de caminhada estimado</strong> só ida e ida e volta, pela inclinação (fórmula de Tobler).</li>
+      <li>Tempos da gravação e meteorologia no momento da gravação.</li>
+      <li>Botões <span class="btn-tag btn-gray">Fechar</span> <span class="btn-tag btn-green">Ver</span> (enquadra a trilha) <span class="btn-tag btn-orange">➤ Ir até</span> (rota a pé até o início) e <span class="btn-tag btn-red">🗑 Apagar trilha</span> (só o autor ou administrador).</li>
+    </ul>
+  </div>
+
+  <!-- 12. SATÉLITES -->
+  <div class="section" id="satelites">
+    <span class="section-label">12</span>
+    <h2>Satélites</h2>
+    <p>Focos de calor detectados do espaço num raio de <strong>150 km</strong> de você. Servem como confirmação independente e para enxergar focos que ninguém viu.</p>
+    <div class="tabela"><table>
+      <tr><th>Fonte</th><th>Detalhes</th></tr>
+      <tr><td><strong>FIRMS (MODIS/VIIRS)</strong> — NASA</td><td>Atualização de ~15 min a 6 h. Resolução de 375 m a 1 km.</td></tr>
+      <tr><td><strong>GOES-16</strong></td><td>Satélite geoestacionário, ~10 min.</td></tr>
+      <tr><td><strong>NOAA-20 (VIIRS)</strong></td><td>Alta resolução (375 m), nas passagens do satélite (~12 h).</td></tr>
+    </table></div>
+    <div class="tabela"><table>
+      <tr><th>Botão</th><th>Função</th></tr>
+      <tr><td><span class="btn-tag btn-blue">⟳ Atualizar focos próximos</span></td><td>Baixa os focos atuais em volta de você.</td></tr>
+      <tr><td><span class="btn-tag btn-red">🔥 Ligar camada no mapa</span></td><td>Liga/desliga os pinos de satélite no mapa (o mesmo que "Focos satélite" no mapa).</td></tr>
+      <tr><td><span class="btn-tag btn-green">FIRMS</span> <span class="btn-tag btn-green">GOES</span> <span class="btn-tag btn-green">NOAA-20</span></td><td>Liga ou desliga cada fonte. Cada cartão mostra se está ATIVA e quantos focos foram carregados.</td></tr>
+    </table></div>
+    <p>No mapa, cada foco é um <strong>pino laranja</strong>; ao tocar aparece a fonte e a hora da detecção (UTC).</p>
+    <div class="alert alert-blue">
+      <div class="alert-title">💡 Atraso dos dados</div>
+      Satélites têm atraso de minutos a horas. Para um incêndio que acabou de começar, a visada por câmera é sempre mais atual.
+    </div>
+  </div>
+
+  <!-- 13. PROPAGAÇÃO -->
+  <div class="section" id="propagacao">
+    <span class="section-label">13</span>
+    <h2>Propagação do Fogo</h2>
+    <p>Estima <strong>para onde e com que velocidade o fogo avança</strong>, usando o modelo de Rothermel (USDA Forest Service). O resultado é a <strong>ROS</strong> (velocidade de avanço) e manchas coloridas no mapa com a área atingida em cada intervalo de tempo.</p>
+
+    <h3>Definir o foco</h3>
+    <p>O ponto de partida é o <strong>foco triangulado</strong>. Para usar outro ponto, faça um <strong>toque longo</strong> no mapa. O topo da tela mostra ROS, direção e altitude do foco; o botão à direita alterna a unidade entre <strong>km/h</strong> e <strong>m/min</strong>.</p>
+
+    <h3>Barra de botões do mapa</h3>
+    <div class="tabela"><table>
+      <tr><th>Botão</th><th>Função</th></tr>
+      <tr><td><span class="btn-tag btn-blue">🎯 Seguir</span></td><td>Aparece quando o mapa não está te seguindo: volta a acompanhar você.</td></tr>
+      <tr><td><span class="btn-tag btn-green">🧭 Rot. Mapa / Rot. Bússola</span></td><td>Mapa fixo ou girando com o celular (no modo girando, um cone azul mostra para onde você aponta).</td></tr>
+      <tr><td><span class="btn-tag btn-purple">🏔️ 3D / 🏞️ 2D</span></td><td>Inclina o mapa para ver o relevo em 3D.</td></tr>
+      <tr><td><span class="btn-tag btn-gray">🧭 Norte</span></td><td>Aparece com o mapa girado: volta o Norte para cima.</td></tr>
+      <tr><td><span class="btn-tag btn-gray">🔼 Mapa / 🔽 Menos</span></td><td>Aumenta ou diminui o tamanho do mapa na tela.</td></tr>
+      <tr><td><span class="btn-tag btn-orange">🚒 + Brigada</span></td><td>Modo de posicionar brigadas: toque no mapa para colocar 🚒. Tocar numa brigada a remove.</td></tr>
+      <tr><td><span class="btn-tag btn-green">🎯 Direcionar</span></td><td>Arraste ou toque no mapa para definir à mão a direção e o alcance do fogo (o alcance vira velocidade, dividido pelo maior intervalo ligado).</td></tr>
+      <tr><td><span class="btn-tag btn-orange">🔓 Modo Livre</span></td><td>Segure no mapa para definir direção e alcance. Mostra <span class="btn-tag btn-purple">◀ Largo</span> / <span class="btn-tag btn-purple">Estreito ►</span> para ajustar a largura da mancha (0,25x a 4x).</td></tr>
+      <tr><td><span class="btn-tag btn-red">🗑️ Reset Foco</span></td><td>Apaga o foco escolhido, manchas, brigadas e ajustes manuais.</td></tr>
+      <tr><td><span class="btn-tag btn-red">🚒 Limpar Brigadas (N)</span></td><td>Remove todas as brigadas.</td></tr>
+    </table></div>
+
+    <h3>Parâmetros</h3>
+    <p>Cada parâmetro tem a chave <strong>Auto</strong>: ligada, o valor vem dos dados online; desligada, você digita.</p>
+    <div class="tabela"><table>
+      <tr><th>Parâmetro</th><th>Detalhes</th></tr>
+      <tr><td>⏱️ Intervalos de tempo</td><td>15 min, 30 min, 1 h, 2 h, 4 h, 6 h, 8 h — cada intervalo ligado vira uma mancha.</td></tr>
+      <tr><td>🌿 Tipo de vegetação</td><td>Cerrado, Pastagem, Caatinga, Mata Atlântica, Campo/Estepe.</td></tr>
+      <tr><td>💨 Vento</td><td>Velocidade (km/h) e direção.</td></tr>
+      <tr><td>⛰️ Inclinação do terreno</td><td>Grau e direção da encosta (automático pelo modelo de relevo). Fogo sobe morro mais rápido.</td></tr>
+      <tr><td>💧 Umidade do combustível</td><td>Umidade (%) e carga (kg/m²). 5–10% = extremo; 10–15% = alto. Carga típica: Cerrado 1,5–3,0; Pastagem 0,5–2,0 kg/m².</td></tr>
+      <tr><td>🌡️ Temperatura</td><td>Temperatura do ar.</td></tr>
+      <tr><td>🌧️ Chuva prevista (4 h)</td><td>0–1 mm sem impacto; 1–5 mm reduz a velocidade em 30%; 5–10 mm em 60%; 10 mm ou mais em 90%. Chuva relevante gera um aviso no topo.</td></tr>
+    </table></div>
+    <p>A seção <strong>📊 Análise</strong> mostra a contribuição do vento e da inclinação, os fatores de umidade e temperatura, a direção resultante, a redução pela chuva e a <strong>ROS final</strong>.</p>
+
+    <div class="alert">
+      <div class="alert-title">⚠️ É uma estimativa</div>
+      O modelo usa condições médias. Rajadas, mudanças de vento, vegetação irregular e relevo complexo podem mudar muito o comportamento real do fogo. Use como apoio à decisão, nunca como previsão garantida.
+    </div>
+  </div>
+
+  <!-- 14. COMPARTILHAR -->
+  <div class="section" id="compartilhar">
+    <span class="section-label">14</span>
+    <h2>Compartilhar e Registro Oficial</h2>
+    <p>Disponível depois que houver focos no mapa. Sem focos, a tela avisa "Marque focos no mapa antes de compartilhar!".</p>
+    <div class="tabela"><table>
+      <tr><th>Elemento</th><th>Função</th></tr>
+      <tr><td>📊 Resumo</td><td>Número de focos, sua posição, data e hora, e o foco triangulado.</td></tr>
+      <tr><td><span class="btn-tag btn-orange">🚨 COMPARTILHAR ALERTA AGORA</span></td><td>Abre o compartilhamento do celular (WhatsApp, SMS, Telegram, e-mail...) com uma mensagem pronta: data e hora, sua posição, focos, localização triangulada, meteorologia e link do Google Maps.</td></tr>
+      <tr><td><span class="btn-tag btn-orange">📋 Enviar às Autoridades</span> (🏛️ Registro Oficial)</td><td>Envia um registro formal às autoridades. Exige confirmar seu e-mail com um <strong>código de 6 dígitos</strong> (Enviar código → Confirmar e enviar). O e-mail verificado fica associado ao registro permanentemente.</td></tr>
+      <tr><td>🚨 Enviar para autoridades</td><td>Cartões de Bombeiros, Defesa Civil, ICMBio e Proprietário, cada um com WhatsApp, ligar e e-mail.</td></tr>
+      <tr><td><span class="btn-tag btn-blue">📋 Exportar dados como JSON</span></td><td>Gera um arquivo com todos os dados técnicos (focos, triangulação, meteorologia) para análise.</td></tr>
+      <tr><td><span class="btn-tag btn-gray">← Voltar ao Mapa</span></td><td>Volta ao mapa.</td></tr>
+    </table></div>
+    <div class="alert">
+      <div class="alert-title">⚠️ Responsabilidade</div>
+      Envie às autoridades apenas informações que você confirma serem verdadeiras. Relatos falsos enviados a autoridades podem ter consequências legais.
+    </div>
+  </div>
+
+  <!-- 15. CONFIGURAÇÕES -->
+  <div class="section" id="configuracoes">
+    <span class="section-label">15</span>
+    <h2>Configurações</h2>
+    <div class="tabela"><table>
+      <tr><th>Item</th><th>Função</th></tr>
+      <tr><td>📱 Informações do App</td><td>Versão instalada e a atualização em uso.</td></tr>
+      <tr><td>📍 Atualização de GPS</td><td><span class="btn-tag btn-green">🔋 Eco</span> menos bateria (~5 s / 10 m) · <span class="btn-tag btn-green">⚖️ Normal</span> equilibrado (~2 s / 3 m) · <span class="btn-tag btn-green">🎯 Preciso</span> máximo (~1 s / 1 m), gasta mais bateria.</td></tr>
+      <tr><td>📵 Cobertura de Rede</td><td><span class="btn-tag btn-blue">📵 Limpar Rede (N)</span> remove os círculos azuis de sinal <strong>só deste celular</strong>.</td></tr>
+      <tr><td>💧 Fontes de Água</td><td><span class="btn-tag btn-red">🗑️ Limpar Fontes de Água</span> apaga as fontes de água marcadas <strong>para todos os usuários</strong>, com confirmação. Use com muito cuidado: equipes em campo dependem delas.</td></tr>
+      <tr><td>🧭 Diagnóstico da bússola e 🔄 das atualizações</td><td>Informações técnicas para suporte (leituras da bússola, declinação magnética, versão e registros de atualização).</td></tr>
+      <tr><td>ℹ️ Sobre</td><td>Resumo das tecnologias do app.</td></tr>
+    </table></div>
+  </div>
+
+  <!-- 16. OFFLINE -->
+  <div class="section" id="offline">
+    <span class="section-label">16</span>
+    <h2>Sem Internet, Notificações e Atualizações</h2>
     <div class="grid-2">
       <div class="card">
-        <h4>O que funciona offline</h4>
+        <h4>Funciona sem internet</h4>
         <ul>
-          <li>GPS e bússola (sensores locais)</li>
-          <li>Câmera e travamento de foco</li>
-          <li>Marcação de focos (salvo localmente)</li>
-          <li>Cálculo de triangulação local</li>
-          <li>Visualização do mapa em cache</li>
+          <li>GPS, bússola e câmera</li>
+          <li>Travar e registrar visadas</li>
+          <li>Triangulação (calculada no celular)</li>
+          <li>Marcar focos (guardados no celular)</li>
+          <li>Gravar trilhas</li>
+          <li>Mapa das áreas já carregadas</li>
         </ul>
       </div>
       <div class="card">
-        <h4>O que requer conexão</h4>
+        <h4>Precisa de internet</h4>
         <ul>
-          <li>Sync de focos entre dispositivos</li>
-          <li>Upload de fotos</li>
-          <li>Dados satelitais FIRMS/GOES</li>
-          <li>Push notifications</li>
-          <li>Dados meteorológicos em tempo real</li>
+          <li>Sincronizar com outros usuários</li>
+          <li>Enviar fotos</li>
+          <li>Satélites e meteorologia</li>
+          <li>Rota a pé</li>
+          <li>Altitude pelo relevo (sem rede usa o GPS)</li>
+          <li>Notificações e registro oficial</li>
         </ul>
       </div>
     </div>
-
     <h3>Sincronização automática</h3>
-    <p>Ao detectar reconexão à internet, o app exibe automaticamente a mensagem <em>"📡 Sync Automático"</em> e envia todos os focos salvos offline. Nenhuma ação manual é necessária.</p>
-
-    <h3>Círculos de cobertura</h3>
-    <p>Quando o dispositivo perde sinal em área rural e depois reconecta, o app cria automaticamente no mapa um <strong>círculo azul</strong> indicando a área onde houve sinal, útil para mapear zonas sem cobertura para futuras operações.</p>
+    <p>O que foi feito sem rede fica numa fila no celular e é enviado sozinho quando a conexão volta — focos, visadas e trilhas. O app avisa com "📡 Sync Automático" quantos itens enviou. Exceção: a foto de uma observação de drone feita offline se perde se o app for fechado antes de reconectar.</p>
+    <h3>Notificações</h3>
+    <p>Quando alguém reporta um foco ou uma observação de drone, os outros usuários recebem um alerta com coordenadas e horário.</p>
+    <h3>Atualizações automáticas</h3>
+    <p>Correções e melhorias chegam sem passar pela loja. Ao abrir o app com internet, se houver novidade, aparece "🔄 Atualização Disponível" e o app recarrega sozinho. Se não aparecer, feche o app por completo e abra de novo.</p>
   </div>
 
-  <!-- 12. CONFIGURAÇÕES -->
-  <div class="section" id="configuracoes">
-    <span class="section-label">12</span>
-    <h2>Configurações</h2>
-    <p>A aba de configurações permite personalizar o comportamento do app e consultar informações do sistema.</p>
-
-    <table>
-      <tr><th>Opção</th><th>Descrição</th></tr>
-      <tr><td>Modo Escuro</td><td>Alterna entre tema claro e escuro no mapa e nas telas do app.</td></tr>
-      <tr><td>Calibrar Bússola</td><td>Inicia o processo de calibração com movimento em 8. Recomendado antes de cada uso em campo.</td></tr>
-      <tr><td>ID do Dispositivo</td><td>Exibe o identificador único do aparelho usado para sincronização. Útil para identificar observações no mapa.</td></tr>
-      <tr><td>Versão do App</td><td>Exibe a versão atual instalada.</td></tr>
-    </table>
+  <!-- 17. PRIVACIDADE -->
+  <div class="section" id="privacidade">
+    <span class="section-label">17</span>
+    <h2>Privacidade e Segurança</h2>
+    <ul class="lista">
+      <li><strong>Sem cadastro</strong>: conta anônima automática; nenhum nome ou senha é pedido.</li>
+      <li><strong>Banco de dados protegido</strong>: só o app consegue ler e gravar os dados.</li>
+      <li><strong>Fotos</strong>: quem tirou cada foto é visível só para autoridades e administradores; só o autor apaga a própria foto.</li>
+      <li><strong>Trilhas</strong>: 200 m de cada ponta cortados; crédito por apelido; envio ao OpenStreetMap só com sua autorização.</li>
+      <li><strong>Registro oficial</strong>: único momento em que um e-mail é pedido — e ele fica associado ao registro enviado às autoridades.</li>
+      <li><strong>Localização em segundo plano</strong>: usada somente enquanto você grava uma trilha.</li>
+    </ul>
   </div>
 
-  <!-- 13. GLOSSÁRIO -->
+  <!-- 18. GLOSSÁRIO -->
   <div class="section" id="glossario">
-    <span class="section-label">13</span>
-    <h2>Glossário Técnico</h2>
-
-    <table>
+    <span class="section-label">18</span>
+    <h2>Glossário</h2>
+    <div class="tabela"><table>
       <tr><th>Termo</th><th>Definição</th></tr>
-      <tr><td><strong>Azimute</strong></td><td>Ângulo horizontal medido em graus (0° a 360°) a partir do Norte geográfico no sentido horário. 0° = Norte, 90° = Leste, 180° = Sul, 270° = Oeste.</td></tr>
-      <tr><td><strong>Triangulação geodésica</strong></td><td>Técnica matemática de localização usando o cruzamento de linhas de visada de múltiplos observadores sobre a superfície curva da Terra.</td></tr>
-      <tr><td><strong>FIRMS</strong></td><td>Fire Information for Resource Management System. Sistema da NASA que processa imagens satelitais para detectar anomalias térmicas (focos de calor).</td></tr>
-      <tr><td><strong>MODIS</strong></td><td>Moderate Resolution Imaging Spectroradiometer. Sensor a bordo dos satélites Terra e Aqua da NASA. Passagem a cada 1–2 dias.</td></tr>
-      <tr><td><strong>VIIRS</strong></td><td>Visible Infrared Imaging Radiometer Suite. Sensor dos satélites Suomi NPP e NOAA-20. Resolução melhor que o MODIS para detecção de focos pequenos.</td></tr>
-      <tr><td><strong>GOES-16</strong></td><td>Satélite geoestacionário da NOAA posicionado sobre o Equador. Cobre as Américas com imagens a cada 5–15 minutos.</td></tr>
-      <tr><td><strong>Modelo Rothermel</strong></td><td>Modelo matemático desenvolvido por Richard Rothermel (USDA, 1972) para prever a velocidade de propagação do fogo em vegetação seca. Base de praticamente todos os sistemas modernos de previsão de comportamento do fogo.</td></tr>
-      <tr><td><strong>ROS</strong></td><td>Rate of Spread. Taxa de propagação do fogo em metros por minuto, calculada pelo modelo Rothermel.</td></tr>
-      <tr><td><strong>Haversine</strong></td><td>Fórmula trigonométrica que calcula a distância entre dois pontos na superfície esférica da Terra a partir de suas coordenadas de latitude e longitude.</td></tr>
-      <tr><td><strong>WMS</strong></td><td>Web Map Service. Padrão OGC para servir imagens de mapas georreferenciadas via HTTP. Usado para exibir a camada de focos FIRMS sobre o mapa.</td></tr>
-      <tr><td><strong>Firebase Firestore</strong></td><td>Banco de dados NoSQL em nuvem da Google que permite sincronização de dados em tempo real entre múltiplos dispositivos.</td></tr>
-      <tr><td><strong>Declinação magnética</strong></td><td>Diferença angular entre o Norte Magnético (apontado pela bússola) e o Norte Geográfico (eixo de rotação da Terra). Varia conforme a localização geográfica.</td></tr>
-      <tr><td><strong>DEM</strong></td><td>Digital Elevation Model. Modelo digital de elevação do terreno usado para calcular declividade na propagação do fogo.</td></tr>
-    </table>
+      <tr><td><strong>Azimute</strong></td><td>Direção horizontal em graus (0° a 360°) a partir do Norte, no sentido horário. 0° = Norte, 90° = Leste, 180° = Sul, 270° = Oeste.</td></tr>
+      <tr><td><strong>Visada</strong></td><td>Registro de um observador: posição GPS + azimute para a fumaça (+ foto).</td></tr>
+      <tr><td><strong>Triangulação</strong></td><td>Localização do foco pelo cruzamento das linhas de visada de pontos diferentes.</td></tr>
+      <tr><td><strong>Declinação magnética</strong></td><td>Diferença entre o Norte da bússola (magnético) e o Norte geográfico. O app corrige automaticamente.</td></tr>
+      <tr><td><strong>FIRMS</strong></td><td>Sistema da NASA que detecta focos de calor por satélite (sensores MODIS e VIIRS).</td></tr>
+      <tr><td><strong>GOES-16</strong></td><td>Satélite geoestacionário da NOAA sobre as Américas, com imagens a cada ~10 minutos.</td></tr>
+      <tr><td><strong>NOAA-20 (VIIRS)</strong></td><td>Satélite de órbita polar com sensor de alta resolução para focos pequenos.</td></tr>
+      <tr><td><strong>Modelo de Rothermel</strong></td><td>Modelo matemático (USDA, 1972) que estima a velocidade de propagação do fogo na vegetação.</td></tr>
+      <tr><td><strong>ROS</strong></td><td>Rate of Spread — velocidade de avanço da frente de fogo.</td></tr>
+      <tr><td><strong>Aceiro</strong></td><td>Faixa sem vegetação aberta para conter o avanço do fogo.</td></tr>
+      <tr><td><strong>Fórmula de Tobler</strong></td><td>Estimativa da velocidade de caminhada conforme a inclinação do terreno.</td></tr>
+      <tr><td><strong>Altimetria</strong></td><td>Perfil de altitude ao longo da trilha (subidas e descidas).</td></tr>
+      <tr><td><strong>OpenStreetMap (ODbL)</strong></td><td>Mapa livre e colaborativo do mundo, sob a licença aberta ODbL.</td></tr>
+      <tr><td><strong>UTC</strong></td><td>Horário universal; no Brasil (Brasília) são 3 horas a menos.</td></tr>
+    </table></div>
   </div>
 
   <hr>
