@@ -298,16 +298,24 @@ body{font-size:calc(17px * var(--escala,1))}
 .btn-ouvir{display:inline-flex;align-items:center;gap:.4rem;font-family:'Space Grotesk',sans-serif;font-size:.78rem;font-weight:600;color:var(--gold-light);background:rgba(200,134,10,.12);border:1px solid rgba(200,134,10,.45);border-radius:999px;padding:.35rem .9rem;cursor:pointer;margin:-.6rem 0 1.2rem;transition:background .2s}
 .btn-ouvir:hover{background:rgba(200,134,10,.28)}
 .lendo{outline:2px solid var(--gold-light);outline-offset:6px;border-radius:6px;background:rgba(200,134,10,.08)}
-#leitor{position:fixed;left:50%;bottom:14px;transform:translateX(-50%);z-index:200;display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;justify-content:center;
-  max-width:calc(100vw - 20px);padding:.55rem .7rem;border-radius:22px;background:rgba(26,9,0,.82);border:1px solid rgba(232,168,50,.4);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);box-shadow:0 12px 40px rgba(0,0,0,.6);font-family:'Space Grotesk',sans-serif;font-size:.8rem}
-#leitor button,#leitor select{font-family:inherit;font-size:.8rem;color:var(--cream);background:rgba(255,255,255,.07);border:1px solid rgba(232,168,50,.35);border-radius:999px;padding:.45rem .8rem;cursor:pointer}
-#leitor button:hover{background:rgba(232,168,50,.2)}
-#leitor .principal{background:var(--fire);border-color:var(--fire);color:#fff;font-weight:700}
-#leitor select{max-width:190px}
-#leitor select option{background:#1A0900}
-#leitor .rotulo{color:var(--muted)}
-body{padding-bottom:90px}
-@media(max-width:600px){#leitor{bottom:8px;gap:.35rem;padding:.45rem}#leitor select{max-width:140px}#leitor .rotulo{display:none}}
+/* Um botão só no canto (vidro claro, igual aos da Central); abre a janelinha */
+#leitor{position:fixed;right:16px;bottom:16px;z-index:200;font-family:'Space Grotesk',sans-serif}
+.vidro-claro{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.34);backdrop-filter:blur(18px) saturate(170%);-webkit-backdrop-filter:blur(18px) saturate(170%);box-shadow:inset 0 1px 0 rgba(255,255,255,.35),0 10px 30px rgba(0,0,0,.45)}
+#leitorBtn{width:60px;height:60px;border-radius:20px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-size:22px;color:var(--cream);cursor:pointer;text-shadow:0 1px 2px rgba(0,0,0,.6);position:relative}
+#leitorBtn small{font-size:9.5px;font-weight:700;letter-spacing:.3px}
+#leitorBtn:hover,#leitorBtn.aberto{border-color:rgba(255,255,255,.7)}
+#leitorBtn.tocando::after{content:"";position:absolute;inset:-5px;border-radius:24px;border:2px solid var(--gold-light);animation:pulso 1.4s ease-out infinite}
+@keyframes pulso{0%{opacity:1;transform:scale(1)}100%{opacity:0;transform:scale(1.18)}}
+#leitorPop{position:absolute;right:0;bottom:calc(100% + 10px);width:min(250px,calc(100vw - 32px));padding:10px;border-radius:20px;display:flex;flex-direction:column;gap:7px}
+#leitorPop[hidden]{display:none}
+#leitorPop .fila{display:flex;gap:6px}
+#leitorPop .fila>*{flex:1}
+#leitorPop button,#leitorPop select{font-family:inherit;font-size:.8rem;color:var(--cream);background:rgba(0,0,0,.25);border:1px solid rgba(255,255,255,.35);border-radius:999px;padding:.5rem .7rem;cursor:pointer;text-shadow:0 1px 2px rgba(0,0,0,.5);width:100%}
+#leitorPop button:hover{border-color:rgba(255,255,255,.75)}
+#leitorPop .principal{background:var(--fire);border-color:rgba(255,255,255,.4);color:#fff;font-weight:700}
+#leitorPop select option{background:#1A0900}
+#leitorPop label{font-size:.68rem;color:var(--cream);opacity:.75;margin-bottom:-3px;padding-left:4px}
+@media (prefers-reduced-motion:reduce){#leitorBtn.tocando::after{animation:none}}
 </style>
 </head>
 <body>
@@ -1077,14 +1085,23 @@ body{padding-bottom:90px}
 
 <!-- Barra do leitor em voz alta + tamanho da letra -->
 <div id="leitor" role="region" aria-label="Leitor em voz alta">
-  <button class="principal" id="lerTudo" title="Ouvir o manual inteiro">🔊 Ouvir o manual</button>
-  <button id="lerPausa" title="Pausar / continuar" hidden>⏸ Pausar</button>
-  <button id="lerParar" title="Parar" hidden>⏹ Parar</button>
-  <span class="rotulo">Voz</span><select id="lerVoz" aria-label="Voz"></select>
-  <span class="rotulo">Velocidade</span>
-  <select id="lerVel" aria-label="Velocidade"><option value="0.8">Devagar</option><option value="1" selected>Normal</option><option value="1.25">Rápida</option></select>
-  <button id="letraMenos" title="Letra menor" aria-label="Diminuir letra">A−</button>
-  <button id="letraMais" title="Letra maior" aria-label="Aumentar letra">A+</button>
+  <div id="leitorPop" class="vidro-claro" hidden>
+    <button class="principal" id="lerTudo" title="Ouvir o manual inteiro">🔊 Ouvir o manual</button>
+    <div class="fila">
+      <button id="lerPausa" title="Pausar / continuar" hidden>⏸ Pausar</button>
+      <button id="lerParar" title="Parar" hidden>⏹ Parar</button>
+    </div>
+    <label class="rotulo" for="lerVoz">Voz</label>
+    <select id="lerVoz"></select>
+    <label class="rotulo" for="lerVel">Velocidade</label>
+    <select id="lerVel"><option value="0.8">Devagar</option><option value="1" selected>Normal</option><option value="1.25">Rápida</option></select>
+    <label>Tamanho da letra</label>
+    <div class="fila">
+      <button id="letraMenos" aria-label="Diminuir letra">A−</button>
+      <button id="letraMais" aria-label="Aumentar letra">A+</button>
+    </div>
+  </div>
+  <button id="leitorBtn" class="vidro-claro" aria-expanded="false" title="Ouvir e tamanho da letra">🔊<small>Ouvir</small></button>
 </div>
 
 <script>
@@ -1096,6 +1113,12 @@ body{padding-bottom:90px}
   const fala = window.speechSynthesis;
   const guardar = (k, v) => { try { localStorage.setItem(k, v); } catch {} };
   const ler = (k) => { try { return localStorage.getItem(k); } catch { return null; } };
+
+  // ── Botão do canto: abre/fecha a janelinha; tocar fora fecha (a leitura continua) ──
+  const pop = $('leitorPop'), btn = $('leitorBtn');
+  const abrirPop = (abrir) => { pop.hidden = !abrir; btn.classList.toggle('aberto', abrir); btn.setAttribute('aria-expanded', abrir); };
+  btn.onclick = () => abrirPop(pop.hidden);
+  document.addEventListener('pointerdown', (e) => { if (!pop.hidden && !e.target.closest('#leitor')) abrirPop(false); });
 
   // ── Tamanho da letra (A− / A+) ──
   let escala = parseFloat(ler('manual_escala')) || 1;
@@ -1149,7 +1172,10 @@ body{padding-bottom:90px}
   // número: fala cancelada (pausa, parar, nova seção) não puxa a próxima.
   let fila = [], atual = null, pausado = false, numero = 0;
   const limpar = () => { document.querySelectorAll('.lendo').forEach(e => e.classList.remove('lendo')); };
-  const mostrarControles = (lendo) => { $('lerPausa').hidden = !lendo; $('lerParar').hidden = !lendo; $('lerPausa').textContent = '⏸ Pausar'; };
+  const mostrarControles = (lendo) => {
+    $('lerPausa').hidden = !lendo; $('lerParar').hidden = !lendo; $('lerPausa').textContent = '⏸ Pausar';
+    btn.classList.toggle('tocando', lendo); // anel pulsando enquanto lê
+  };
   const falar = (trecho) => {
     const meu = ++numero;
     const u = new SpeechSynthesisUtterance(trecho.t);
