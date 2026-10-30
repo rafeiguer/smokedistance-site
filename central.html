@@ -125,6 +125,11 @@ main{flex:1;display:grid;grid-template-columns:330px minmax(0,1fr) 390px;grid-te
 .marcador{display:flex;align-items:center;justify-content:center;border-radius:50%;border:2px solid #fff;font-size:15px}
 .btn-pop{margin:8px 6px 0 0;border-radius:999px;border:1px solid rgba(255,255,255,.25);background:rgba(255,255,255,.1);color:#fff;padding:6px 12px;cursor:pointer;font-weight:700;font-size:12px}
 .btn-pop.perigo{background:rgba(229,57,53,.85)}
+.rotulo-mapa{display:inline-block;transform:translate(-50%,-50%);background:rgba(12,20,17,.88);border:1.5px solid var(--alerta);color:var(--alerta);font-weight:800;font-size:13px;letter-spacing:.5px;padding:3px 9px;border-radius:8px;white-space:nowrap;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.5)}
+.rotulo-mapa.movel{cursor:grab}
+#caixaTexto input{background:rgba(255,255,255,.08);border:1px solid var(--borda);border-radius:999px;padding:7px 12px;outline:none;min-width:180px}
+#caixaTexto input:focus{border-color:var(--alerta)}
+.sigma{width:72px;background:rgba(255,255,255,.06);border:1px solid var(--borda);border-radius:10px;padding:5px 8px;font-family:var(--mono);text-align:right;outline:none}
 
 /* ── VISOR DE FOTO (arrastável) ── */
 #visor{position:fixed;z-index:1500;left:50%;top:90px;transform:translateX(-50%);width:min(560px,94vw);display:none;box-shadow:0 18px 50px rgba(0,0,0,.55)}
@@ -225,6 +230,8 @@ nav.abas{display:none}
       <section class="vidro secao" id="secCamadas" style="--c:var(--verde)">
         <h2>🗂️ Camadas do mapa</h2>
         <div id="listaCamadas"></div>
+        <div class="kv" style="margin-top:10px;align-items:center"><span>🎯 Erro da bússola (graus)</span><input type="number" id="inpSigma" class="sigma" min="0.5" max="20" step="0.5"></div>
+        <p class="dica">Define a margem de erro dos focos (círculo amarelo, 95%). Calibre triangulando um ponto conhecido (torre, antena).</p>
       </section>
       <section class="vidro secao" id="secRegistro" style="--c:var(--alerta)">
         <h2>📜 Registro da operação</h2>
@@ -241,12 +248,19 @@ nav.abas{display:none}
         <div class="vidro barra">
           <button class="pil destaque" id="btnDesenhar" style="--c:var(--azul)">✏️ Desenhar</button>
           <button class="pil" id="btnDesfazer" disabled title="Desfaz sua última ação nesta tela">↶ Desfazer</button>
-          <button class="pil" id="btnLimpar" title="Esconde os traços só neste navegador">🧹 Limpar</button>
+          <button class="pil" id="btnLimpar" title="Esconde traços e textos só neste navegador">🧹 Limpar</button>
+          <button class="pil" id="btnTexto" style="--c:var(--alerta)" title="Escrever um texto no mapa e arrastar para o lugar">🏷️ Texto</button>
           <select class="pil" id="selBase" title="Camada base">
             <option value="sat">Satélite</option>
             <option value="relevo">Relevo</option>
             <option value="mapa">Mapa</option>
           </select>
+        </div>
+        <div class="vidro barra" id="caixaTexto" hidden>
+          <input type="text" id="txtRotulo" maxlength="60" placeholder="Ex.: ACEIRO, PONTO DE ÁGUA…">
+          <button class="pil destaque" id="btnColocarTexto" style="--c:var(--alerta);color:#111">Colocar no mapa</button>
+          <button class="pil" id="btnFecharTexto">✕</button>
+          <span class="dica" style="width:100%">Aparece no centro do mapa — depois arraste para o lugar.</span>
         </div>
       </div>
       <details class="vidro legenda" open>
@@ -418,6 +432,7 @@ let baseAtual;
 
 const CAMADAS = [
   { id: 'rota', nome: '🧭 Rota de serviço', cor: 'var(--azul)' },
+  { id: 'rotulos', nome: '🏷️ Textos no mapa', cor: 'var(--alerta)' },
   { id: 'brigadas', nome: '🚒 Brigadas', cor: 'var(--alerta)' },
   { id: 'tri', nome: '🔥 Focos triangulados', cor: 'var(--fogo-forte)' },
   { id: 'visadas', nome: '👁️ Visadas', cor: 'var(--fogo)' },
@@ -440,6 +455,7 @@ function iniciar() {
   desenharListaCamadas();
   montarTipos();
   montarDesenho();
+  montarTextos();
   montarAbas();
   montarVisor();
   montarMensagens();
@@ -495,18 +511,17 @@ function escutarDados() {
   }, erro('rotaServico'));
 
   onSnapshot(query(collection(db, 'triangulacoes'), orderBy('calculadaEm', 'desc'), limit(30)), (snap) => {
-    const g = grupos.tri; g.clearLayers();
-    const lista = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-    eventos.tri = lista.map(t => {
-      const m = L.marker([t.latitude, t.longitude], { icon: icone('🔥', 'rgba(183,28,28,.92)', 38, '#FFEB3B'), zIndexOffset: 900 }).addTo(g).bindPopup(popupTri(t));
-      if (Number.isFinite(t.erroM)) L.circle([t.latitude, t.longitude], { radius: t.erroM, color: '#FFEB3B', weight: 1.5, fillOpacity: .06, dashArray: '4 4', interactive: false }).addTo(g);
-      return { d: quando(t.calculadaEm), txt: `🔥 Foco triangulado · ± ${t.erroM ?? '?'} m`, cls: 'fogo', lat: t.latitude, lon: t.longitude, abrir: () => m.openPopup() };
-    });
-    atualizarQtd('tri', lista.length);
-    ultimaTri = lista[0] || null;
-    enquadrar(lista.map(t => [t.latitude, t.longitude]));
+    trisCache = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    desenharTris();
+    ultimaTri = trisCache[0] || null;
+    enquadrar(trisCache.map(t => [t.latitude, t.longitude]));
     carregarTempo();
   }, erro('triangulacoes'));
+
+  onSnapshot(query(collection(db, 'rotulosMapa'), orderBy('criadoEm', 'desc'), limit(200)), (snap) => {
+    rotulos = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    desenharRotulos();
+  }, erro('rotulosMapa'));
 
   onSnapshot(query(collection(db, 'focos'), orderBy('createdAt', 'desc'), limit(300)), (snap) => {
     const focos = snap.docs.map(d => ({ id: d.id, ...d.data() }));
@@ -590,10 +605,44 @@ function desenharBrigadas() {
   atualizarQtd('brigadas', brigadas.length);
 }
 
-function popupTri(t) {
+/* ── Margem de erro pela bússola — CÓPIA de raioIncerteza() em
+   src/utils/calculations.js (app). Mudou lá, mude aqui. Cada visada erra ±σ
+   graus → a linha desloca d·tan σ no foco; covariância do ponto = (Σ w n nᵀ)⁻¹,
+   w = 1/(d·tan σ)²; raio 95% = 2,45·√λmáx. A posição do foco não muda. */
+let trisCache = [];
+let sigmaBussola = lerLocal('central_sigma', 3);
+function raioTri(t) {
+  const vis = (t.visadas || []).filter(v => Number.isFinite(v.latitude) && Number.isFinite(v.azimute));
+  if (vis.length < 2) return Number.isFinite(t.erroM) ? t.erroM : null;
+  const tg = Math.tan(sigmaBussola * Math.PI / 180), kx = 111320 * Math.cos(t.latitude * Math.PI / 180);
+  let m11 = 0, m12 = 0, m22 = 0;
+  vis.forEach(v => {
+    const px = (v.longitude - t.longitude) * kx, py = (v.latitude - t.latitude) * 111320; // observador → metros a partir do foco
+    const a = v.azimute * Math.PI / 180, dx = Math.sin(a), dy = Math.cos(a);
+    const w = 1 / (Math.max(50, Math.hypot(px, py)) * tg) ** 2;
+    m11 += w * dy * dy; m12 += w * dy * -dx; m22 += w * dx * dx;
+  });
+  const det = m11 * m22 - m12 * m12;
+  if (!(det > 0)) return null;
+  const c11 = m22 / det, c22 = m11 / det, c12 = -m12 / det, meio = (c11 + c22) / 2;
+  return Math.round(2.45 * Math.sqrt(meio + Math.sqrt(((c11 - c22) / 2) ** 2 + c12 * c12)));
+}
+
+function desenharTris() {
+  const g = grupos.tri; g.clearLayers();
+  eventos.tri = trisCache.map(t => {
+    const raio = raioTri(t);
+    const m = L.marker([t.latitude, t.longitude], { icon: icone('🔥', 'rgba(183,28,28,.92)', 38, '#FFEB3B'), zIndexOffset: 900 }).addTo(g).bindPopup(() => popupTri(t, raio));
+    if (raio) L.circle([t.latitude, t.longitude], { radius: raio, color: '#FFEB3B', weight: 1.5, fillOpacity: .06, dashArray: '4 4', interactive: false }).addTo(g);
+    return { d: quando(t.calculadaEm), txt: `🔥 Foco triangulado · ± ${raio ?? '?'} m`, cls: 'fogo', lat: t.latitude, lon: t.longitude, abrir: () => m.openPopup() };
+  });
+  atualizarQtd('tri', trisCache.length);
+}
+
+function popupTri(t, raio) {
   const c = t.clima;
   return `<b>🔥 Foco triangulado</b><br>${t.latitude.toFixed(5)}, ${t.longitude.toFixed(5)}`
-    + `${Number.isFinite(t.erroM) ? `<br>🎯 Precisão ± ${t.erroM} m <span class="dica">(círculo amarelo tracejado)</span>` : ''}`
+    + `${raio ? `<br>🎯 Margem de erro ± ${raio} m <span class="dica">(95%, bússola ±${sigmaBussola}° — círculo amarelo)</span>` : ''}`
     + `${t.altitudeTerrenoM != null ? `<br>⛰️ Terreno ${t.altitudeTerrenoM} m` : ''}`
     + `<br>👁️ ${(t.visadas || []).length} visadas · ${esc(hhmm(quando(t.calculadaEm)))}`
     + (c ? `<br><br>🌡️ ${esc(c.temp)}°C · 💧 ${esc(c.umidade)}% · 💨 ${esc(c.ventoKmh)} km/h de ${cardeal(c.ventoDirecao)}<br><b style="color:var(--alerta)">Fogo tende a ir para ${cardeal(c.ventoDirecao + 180)}</b>` : '');
@@ -650,7 +699,7 @@ function montarVisor() {
 let tipoSel = 'rota', desenhando = false;
 let escondidos = lerLocal('central_escondidos', []);
 const historico = []; // ações desta tela p/ Desfazer: {acao:'desenho', id} | {acao:'esconder', ids}
-const mudarEscondidos = (ids) => { escondidos = ids; gravarLocal('central_escondidos', ids.slice(-1000)); desenharTracos(); };
+const mudarEscondidos = (ids) => { escondidos = ids; gravarLocal('central_escondidos', ids.slice(-1000)); desenharTracos(); desenharRotulos(); };
 
 function desenharTracos() {
   const g = grupos.rota; g.clearLayers();
@@ -684,6 +733,73 @@ function popupTraco(t) {
     div.appendChild(b);
   }
   return div;
+}
+
+/* ── 🏷️ Textos no mapa (rotulosMapa) — mesmo do app: nasce no centro, arrasta.
+   Move/apaga quem escreveu (ou admin/coordenador); os outros escondem só aqui. */
+let rotulos = [];
+const podeMexer = (r) => r.autorUid === usuario?.uid || ehChefe();
+function desenharRotulos() {
+  const g = grupos.rotulos; g.clearLayers();
+  const visiveis = rotulos.filter(r => !escondidos.includes(r.id) && Number.isFinite(r.latitude));
+  visiveis.forEach(r => {
+    const movel = podeMexer(r);
+    const m = L.marker([r.latitude, r.longitude], {
+      draggable: movel, zIndexOffset: 950, autoPan: true,
+      icon: L.divIcon({ className: '', iconSize: [0, 0], html: `<span class="rotulo-mapa${movel ? ' movel' : ''}">${esc(r.texto)}</span>` }),
+    }).addTo(g);
+    m.on('dragend', () => {
+      const p = m.getLatLng();
+      updateDoc(doc(db, 'rotulosMapa', r.id), { latitude: p.lat, longitude: p.lng, movidoEm: serverTimestamp() }).catch(e => alert('Não foi possível mover: ' + e.message));
+    });
+    m.bindPopup(() => {
+      const div = document.createElement('div');
+      div.innerHTML = `<b>🏷️ ${esc(r.texto)}</b><br>✏️ ${esc(r.autorNome || 'Anônimo')}${r.origem === 'site' ? ' (Central)' : ' (app)'} · ${esc(hhmm(quando(r.criadoEm)))}${movel ? '<br><span class="dica">Arraste o texto para mudar de lugar.</span>' : ''}<br>`;
+      const esc1 = document.createElement('button');
+      esc1.className = 'btn-pop'; esc1.textContent = '🙈 Esconder (só aqui)';
+      esc1.onclick = () => { mapa.closePopup(); historico.push({ acao: 'esconder', ids: [r.id] }); mudarEscondidos([...escondidos, r.id]); };
+      div.appendChild(esc1);
+      if (movel) {
+        const b = document.createElement('button');
+        b.className = 'btn-pop perigo'; b.textContent = '🗑️ Apagar para todos';
+        b.onclick = () => { mapa.closePopup(); deleteDoc(doc(db, 'rotulosMapa', r.id)).catch(e => alert('Não foi possível apagar: ' + e.message)); };
+        div.appendChild(b);
+      }
+      return div;
+    });
+  });
+  atualizarQtd('rotulos', visiveis.length);
+}
+
+function montarTextos() {
+  const caixa = $('caixaTexto');
+  $('btnTexto').onclick = () => { caixa.hidden = !caixa.hidden; if (!caixa.hidden) $('txtRotulo').focus(); };
+  $('btnFecharTexto').onclick = () => { caixa.hidden = true; $('txtRotulo').value = ''; };
+  const colocar = async () => {
+    const t = $('txtRotulo').value.trim().slice(0, 60);
+    if (!t) return;
+    const c = mapa.getCenter();
+    try {
+      const ref = await addDoc(collection(db, 'rotulosMapa'), {
+        texto: t, latitude: c.lat, longitude: c.lng,
+        autorUid: usuario.uid, autorNome: usuario.displayName || 'Central', origem: 'site',
+        criadoEm: serverTimestamp(),
+      });
+      historico.push({ acao: 'texto', id: ref.id });
+      $('btnDesfazer').disabled = false;
+      $('txtRotulo').value = ''; caixa.hidden = true;
+    } catch (e) { alert('Não foi possível colocar o texto: ' + e.message); }
+  };
+  $('btnColocarTexto').onclick = colocar;
+  $('txtRotulo').addEventListener('keydown', (e) => { if (e.key === 'Enter') colocar(); });
+
+  // Erro da bússola (margem dos focos): só neste navegador
+  $('inpSigma').value = sigmaBussola;
+  $('inpSigma').onchange = () => {
+    const v = n($('inpSigma').value);
+    if (v < 0.5 || v > 20) { $('inpSigma').value = sigmaBussola; return; }
+    sigmaBussola = v; gravarLocal('central_sigma', v); desenharTris();
+  };
 }
 
 function montarTipos() {
@@ -750,14 +866,16 @@ function montarDesenho() {
     const ult = historico.pop();
     if (!ult) return;
     if (ult.acao === 'desenho') deleteDoc(doc(db, 'rotaServico', ult.id)).catch(e => alert('Não foi possível desfazer: ' + e.message));
+    else if (ult.acao === 'texto') deleteDoc(doc(db, 'rotulosMapa', ult.id)).catch(e => alert('Não foi possível desfazer: ' + e.message));
     else mudarEscondidos(escondidos.filter(id => !ult.ids.includes(id)));
     $('btnDesfazer').disabled = !historico.length;
   };
 
   $('btnLimpar').onclick = () => {
-    const visiveis = tracos.filter(t => !escondidos.includes(t.id)).map(t => t.id);
-    const temEscondidos = escondidos.some(id => tracos.some(t => t.id === id));
-    if (visiveis.length && confirm(`Esconder os ${visiveis.length} traços SÓ neste navegador?\nO app e os outros continuam vendo. Dá para desfazer.`)) {
+    const todos = [...tracos, ...rotulos];
+    const visiveis = todos.filter(t => !escondidos.includes(t.id)).map(t => t.id);
+    const temEscondidos = escondidos.some(id => todos.some(t => t.id === id));
+    if (visiveis.length && confirm(`Esconder ${visiveis.length} traços/textos SÓ neste navegador?\nO app e os outros continuam vendo. Dá para desfazer.`)) {
       historico.push({ acao: 'esconder', ids: visiveis });
       mudarEscondidos([...escondidos, ...visiveis]);
     } else if (!visiveis.length && temEscondidos && confirm('Mostrar de novo todos os traços escondidos?')) {

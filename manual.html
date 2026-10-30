@@ -653,11 +653,14 @@ footer{
       Afaste-se o máximo possível entre uma visada e outra e procure que as linhas se cruzem em ângulo aberto (perto de 90°). Linhas quase paralelas multiplicam qualquer erro de bússola. Use "Limpar meu mapa" ao começar uma nova ocorrência, para visadas antigas não entrarem no cálculo.
     </div>
 
+    <h3>Margem de erro (círculo amarelo)</h3>
+    <p>O círculo amarelo tracejado em volta do foco é a área onde o fogo está com <strong>~95% de chance</strong>. Ele vem do erro da bússola do celular (começa em ±3°, ajustável na Central de Controle), da <strong>distância</strong> de cada observador até o foco e do <strong>ângulo</strong> entre as visadas: observadores longe ou visadas quase paralelas deixam o círculo grande; visadas cruzando perto de 90° e mais próximas deixam pequeno. Exemplo: 2 visadas a 3 km cruzando em 90° → ± 385 m; a 1 km → ± 128 m.</p>
+
     <h3>Janela de informações do foco</h3>
     <p>Abre sozinha quando surge uma triangulação nova, e sempre que você toca no 🔥. Mostra:</p>
     <ul class="lista">
       <li><strong>Selo</strong>: "🔒 Registro gravado — visível para autoridades" ou "⏳ Ainda não gravado" (sem rede).</li>
-      <li><strong>Posição</strong>: coordenadas, precisão estimada (± metros), altitude do terreno, distância e rumo a partir de você, data e hora do cálculo.</li>
+      <li><strong>Posição</strong>: coordenadas, <strong>margem de erro</strong> (± metros), altitude do terreno, distância e rumo a partir de você, data e hora do cálculo.</li>
       <li><strong>Visadas</strong>: cada uma com coordenadas, azimute e distância até o foco.</li>
       <li><strong>Meteorologia no foco</strong>: temperatura, umidade, vento e rajadas, de onde o vento vem, para onde o fogo tende a avançar, chuva, condição do tempo e risco de incêndio.</li>
       <li>Botões <span class="btn-tag btn-gray">Fechar</span> e <span class="btn-tag btn-orange">➤ Traçar rota</span>.</li>
@@ -724,6 +727,7 @@ footer{
       <tr><td><span class="btn-tag btn-gray">↶ Desfazer</span></td><td>Desfaz a sua última ação nesta tela: apaga o traço que você acabou de fazer ou mostra de novo o que você escondeu/limpou.</td></tr>
       <tr><td><span class="btn-tag btn-gray">🗑 Limpar</span></td><td>Esconde todos os traços <strong>só no seu celular</strong> — quem atrapalha a sua visão some do seu mapa, e o mapa dos outros não muda. "Mostrar tudo de novo" traz de volta.</td></tr>
       <tr><td>Tocar num traço</td><td>Mostra o tipo, quem desenhou (ou "Central de Controle") e quando. <strong>🙈 Esconder (só aqui)</strong> para qualquer um; <strong>🗑️ Apagar para todos</strong> só para quem desenhou (ou coordenador/admin).</td></tr>
+      <tr><td><span class="btn-tag btn-orange">🏷️ Escrever no mapa</span></td><td>Abre uma caixinha para digitar (ex.: <strong>ACEIRO</strong>, "PONTO DE ÁGUA"). O texto aparece no centro do mapa; <strong>segure e arraste</strong> com o dedo (ou o mouse, na Central) até o lugar. Todos veem ao vivo. Move e apaga quem escreveu (ou coordenador/admin); os outros podem esconder só no próprio aparelho.</td></tr>
       <tr><td><span class="btn-tag btn-gray">💬</span> (canto superior direito)</td><td><strong>Mensagens e tarefas</strong> com a Central de Controle. Botões rápidos ("Chegamos", "Precisamos de água", "Combustível acabando", "Ferido", "Recuar"), texto livre e <strong>tarefas</strong> — toque numa tarefa para marcar como feita. Cada mensagem leva a sua posição. O número vermelho mostra mensagens novas.</td></tr>
       <tr><td><span class="btn-tag btn-orange">📍 Compartilhar minha posição</span></td><td>Envia a sua posição para a Central (e para os outros celulares) na hora e a cada 2 minutos, <strong>só enquanto a tela estiver aberta e o botão ligado</strong> — para poupar bateria. As outras brigadas aparecem no seu mapa como pino amarelo.</td></tr>
     </table></div>
