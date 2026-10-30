@@ -109,17 +109,24 @@ main{flex:1;display:grid;grid-template-columns:330px minmax(0,1fr) 390px;grid-te
 .mapa-area{position:relative;min-height:0}
 #mapa{position:absolute;inset:0;background:#0a0f0d}
 #mapa.desenhando{cursor:crosshair;touch-action:none}
-.ferramentas{position:absolute;z-index:500;left:12px;right:12px;top:12px;display:flex;gap:8px;flex-wrap:wrap;align-items:flex-start;pointer-events:none}
-.ferramentas>*{pointer-events:auto}
-.barra{padding:6px;display:flex;gap:6px;flex-wrap:wrap;align-items:center}
-/* Vidro claro sobre o mapa (liquid glass): translúcido, desfoque forte e
-   reflexo no topo — o mapa aparece por trás em vez de uma caixa escura */
-.ferramentas .vidro,.legenda,.aviso-mapa{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.34);backdrop-filter:blur(18px) saturate(170%);-webkit-backdrop-filter:blur(18px) saturate(170%);box-shadow:inset 0 1px 0 rgba(255,255,255,.35),0 8px 24px rgba(0,0,0,.25);border-radius:20px}
-.ferramentas .vidro::before,.legenda::before,.aviso-mapa::before{background:linear-gradient(180deg,rgba(255,255,255,.22),transparent);border-radius:20px 20px 0 0}
-.ferramentas .pil{background:rgba(0,0,0,.18);border-color:rgba(255,255,255,.38);padding:6px 11px;font-size:12px;text-shadow:0 1px 2px rgba(0,0,0,.5)}
-.ferramentas .pil.ativo{background:color-mix(in srgb,var(--c,var(--verde)) 45%,rgba(0,0,0,.15))}
-.ferramentas .pil.destaque{background:var(--c,var(--fogo))}
-.ferramentas select.pil option{background:#16201c}
+/* Coluna lateral de ferramentas: botões quadrados; cada um abre suas funções
+   numa janelinha ao lado (uma por vez). Vidro claro (liquid glass) sobre o mapa. */
+.trilho{position:absolute;z-index:500;right:10px;top:10px;display:flex;flex-direction:column;gap:8px}
+.grupo{position:relative}
+.btn-trilho,.pop,.legenda,.aviso-mapa{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.34);backdrop-filter:blur(18px) saturate(170%);-webkit-backdrop-filter:blur(18px) saturate(170%);box-shadow:inset 0 1px 0 rgba(255,255,255,.35),0 8px 24px rgba(0,0,0,.25)}
+.btn-trilho{width:58px;height:58px;border-radius:18px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-size:20px;cursor:pointer;color:var(--texto);text-shadow:0 1px 2px rgba(0,0,0,.6)}
+.btn-trilho small{font-size:9.5px;font-weight:800;letter-spacing:.2px}
+.btn-trilho:hover,.btn-trilho.aberto{border-color:rgba(255,255,255,.7)}
+.btn-trilho.ligado{background:color-mix(in srgb,var(--fogo-forte) 70%,transparent);border-color:#fff}
+.ponto.grande{width:18px;height:18px;border:2px solid #fff}
+.pop{position:absolute;right:calc(100% + 8px);top:0;display:flex;gap:6px;padding:7px;border-radius:18px;align-items:center;white-space:nowrap}
+.pop[hidden]{display:none}
+.coluna{flex-direction:column;align-items:stretch;display:flex;gap:6px}
+.legenda::before,.aviso-mapa::before{background:linear-gradient(180deg,rgba(255,255,255,.22),transparent);border-radius:20px 20px 0 0}
+.legenda,.aviso-mapa{border-radius:20px}
+.trilho .pil{background:rgba(0,0,0,.2);border-color:rgba(255,255,255,.38);padding:7px 12px;font-size:12.5px;text-shadow:0 1px 2px rgba(0,0,0,.5)}
+.trilho .pil.ativo{background:color-mix(in srgb,var(--c,var(--verde)) 50%,rgba(0,0,0,.15))}
+.trilho .pil.destaque{background:var(--c,var(--fogo))}
 .legenda,.legenda summary{color:var(--texto);text-shadow:0 1px 2px rgba(0,0,0,.6)}
 .aviso-mapa{position:absolute;z-index:500;left:50%;bottom:18px;transform:translateX(-50%);padding:8px 14px;font-size:12.5px;display:none;white-space:nowrap}
 .aviso-mapa.on{display:block}
@@ -140,8 +147,7 @@ main{flex:1;display:grid;grid-template-columns:330px minmax(0,1fr) 390px;grid-te
 .btn-pop.perigo{background:rgba(229,57,53,.85)}
 .rotulo-mapa{display:inline-block;transform:translate(-50%,-50%);background:rgba(12,20,17,.88);border:1.5px solid var(--alerta);color:var(--alerta);font-weight:800;font-size:13px;letter-spacing:.5px;padding:3px 9px;border-radius:8px;white-space:nowrap;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.5)}
 .rotulo-mapa.movel{cursor:grab}
-#caixaTexto input{background:rgba(0,0,0,.25);border:1px solid rgba(255,255,255,.38);border-radius:999px;padding:6px 12px;outline:none;min-width:0;flex:1 1 160px}
-#caixaTexto{max-width:520px}
+#caixaTexto input{background:rgba(0,0,0,.25);border:1px solid rgba(255,255,255,.38);border-radius:999px;padding:7px 12px;outline:none;min-width:0;flex:1 1 170px}
 #caixaTexto input:focus{border-color:var(--alerta)}
 .sigma{width:72px;background:rgba(255,255,255,.06);border:1px solid var(--borda);border-radius:10px;padding:5px 8px;font-family:var(--mono);text-align:right;outline:none}
 
@@ -199,13 +205,10 @@ nav.abas{display:none}
   nav.abas button span{font-size:19px}
   nav.abas button.on{color:var(--verde)}
   nav.abas .badge{position:absolute;top:0;right:8px;background:var(--fogo-forte);color:#fff;border-radius:999px;font-size:9.5px;padding:0 5px}
-  /* Celular: cada barra numa linha só, rolando para o lado — sobra mapa */
-  .ferramentas{left:6px;right:6px;top:6px;flex-direction:column;gap:5px}
-  .ferramentas>.barra{flex-wrap:nowrap;overflow-x:auto;max-width:100%;padding:5px;scrollbar-width:none}
-  .ferramentas>.barra::-webkit-scrollbar{display:none}
-  .ferramentas .pil{padding:5px 10px;font-size:11.5px;flex-shrink:0}
-  #caixaTexto{flex-wrap:nowrap}
-  #caixaTexto .dica{display:none}
+  .trilho{right:6px;top:6px;gap:6px}
+  .btn-trilho{width:50px;height:50px;border-radius:16px;font-size:18px}
+  .pop{max-width:calc(100vw - 80px)}
+  #caixaTexto input{flex:1 1 110px}
   .legenda{display:none}
   .aviso-mapa{white-space:normal;width:86%;text-align:center}
   #visor{top:70px}
@@ -263,24 +266,34 @@ nav.abas{display:none}
     <!-- CENTRO: mapa -->
     <div class="mapa-area">
       <div id="mapa"></div>
-      <div class="ferramentas">
-        <div class="vidro barra" id="barraTipos"></div>
-        <div class="vidro barra">
-          <button class="pil destaque" id="btnDesenhar" style="--c:var(--azul)">✏️ Desenhar</button>
-          <button class="pil" id="btnDesfazer" disabled title="Desfaz sua última ação nesta tela">↶ Desfazer</button>
-          <button class="pil" id="btnLimpar" title="Esconde traços e textos só neste navegador">🧹 Limpar</button>
-          <button class="pil" id="btnTexto" style="--c:var(--alerta)" title="Escrever um texto no mapa e arrastar para o lugar">🏷️ Texto</button>
-          <select class="pil" id="selBase" title="Camada base">
-            <option value="sat">Satélite</option>
-            <option value="relevo">Relevo</option>
-            <option value="mapa">Mapa</option>
-          </select>
+      <!-- Coluna lateral: cada botão abre as funções dele ao lado; o mapa fica livre -->
+      <div class="trilho" id="trilho">
+        <div class="grupo">
+          <button class="btn-trilho" data-pop="popTipos" title="Tipo de traço"><span class="ponto grande" id="corTipo"></span><small id="nomeTipo">Rota</small></button>
+          <div class="pop coluna" id="popTipos" hidden><div id="barraTipos" class="coluna"></div></div>
         </div>
-        <div class="vidro barra" id="caixaTexto" hidden>
-          <input type="text" id="txtRotulo" maxlength="60" placeholder="Ex.: ACEIRO, PONTO DE ÁGUA…">
-          <button class="pil destaque" id="btnColocarTexto" style="--c:var(--alerta);color:#111">Colocar no mapa</button>
-          <button class="pil" id="btnFecharTexto">✕</button>
-          <span class="dica" style="width:100%">Aparece no centro do mapa — depois arraste para o lugar.</span>
+        <div class="grupo">
+          <button class="btn-trilho" id="btnDesenhar" title="Desenhar no mapa">✏️<small>Desenhar</small></button>
+          <div class="pop" id="popDesenho" hidden>
+            <button class="pil" id="btnDesfazer" disabled title="Desfaz sua última ação nesta tela">↶ Desfazer</button>
+            <button class="pil" id="btnLimpar" title="Esconde traços e textos só neste navegador">🧹 Limpar</button>
+          </div>
+        </div>
+        <div class="grupo">
+          <button class="btn-trilho" data-pop="caixaTexto" id="btnTexto" title="Escrever um texto no mapa">🏷️<small>Texto</small></button>
+          <div class="pop" id="caixaTexto" hidden>
+            <input type="text" id="txtRotulo" maxlength="60" placeholder="Ex.: ACEIRO">
+            <button class="pil destaque" id="btnColocarTexto" style="--c:var(--alerta);color:#111">Colocar</button>
+            <button class="pil" id="btnFecharTexto">✕</button>
+          </div>
+        </div>
+        <div class="grupo">
+          <button class="btn-trilho" data-pop="popBase" title="Tipo de mapa">🗺️<small id="nomeBase">Satélite</small></button>
+          <div class="pop" id="popBase" hidden>
+            <button class="pil ativo" data-base="sat" style="--c:var(--azul)">Satélite</button>
+            <button class="pil" data-base="relevo" style="--c:var(--azul)">Relevo</button>
+            <button class="pil" data-base="mapa" style="--c:var(--azul)">Mapa</button>
+          </div>
         </div>
       </div>
       <details class="vidro legenda" open>
@@ -293,7 +306,7 @@ nav.abas{display:none}
           <li>📸 Foto · 💧 Água · 🚒 Brigada</li>
           <li><span class="amostra" style="--c:#60A5FA"></span>Rota</li>
           <li><span class="amostra" style="--c:#E53935"></span>Aceiro / linha de controle</li>
-          <li><span class="amostra tracejada" style="--c:#4ADE80"></span>Rota de fuga</li>
+          <li><span class="amostra tracejada" style="--c:#4ADE80"></span>Rota de saída</li>
           <li><span class="amostra" style="--c:#FBBF24"></span>Anotação</li>
           <li><span class="amostra" style="--c:#2E7D32"></span>Trilha verificada · <span class="amostra tracejada" style="--c:#FFB300"></span>comunidade</li>
         </ul>
@@ -400,7 +413,7 @@ const gravarLocal = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v))
 const TIPOS = [
   { id: 'rota', nome: 'Rota', cor: '#60A5FA' },
   { id: 'aceiro', nome: 'Aceiro', cor: '#E53935' },
-  { id: 'fuga', nome: 'Rota de fuga', cor: '#4ADE80' },
+  { id: 'fuga', nome: 'Rota de saída', cor: '#4ADE80' },
   { id: 'anotacao', nome: 'Anotação', cor: '#FBBF24' },
 ];
 const tipoDe = (id) => TIPOS.find(t => t.id === id) || TIPOS[3];
@@ -469,7 +482,13 @@ function iniciar() {
   mapa = L.map('mapa', { zoomControl: false, preferCanvas: true }).setView([-12.6, -41.5], 11);
   L.control.zoom({ position: 'bottomright' }).addTo(mapa);
   baseAtual = bases.sat().addTo(mapa);
-  $('selBase').onchange = (e) => { mapa.removeLayer(baseAtual); baseAtual = bases[e.target.value]().addTo(mapa); };
+  document.querySelectorAll('[data-base]').forEach(b => b.onclick = () => {
+    mapa.removeLayer(baseAtual); baseAtual = bases[b.dataset.base]().addTo(mapa);
+    document.querySelectorAll('[data-base]').forEach(x => x.classList.toggle('ativo', x === b));
+    $('nomeBase').textContent = b.textContent;
+    fecharPops();
+  });
+  montarTrilho();
 
   CAMADAS.forEach(c => { grupos[c.id] = L.layerGroup().addTo(mapa); });
   desenharListaCamadas();
@@ -791,10 +810,25 @@ function desenharRotulos() {
   atualizarQtd('rotulos', visiveis.length);
 }
 
+/* ── Coluna lateral: um botão abre sua janelinha e fecha as outras.
+   A de Desfazer/Limpar acompanha o modo desenho (não fecha com as outras). */
+function fecharPops() {
+  document.querySelectorAll('[data-pop]').forEach(b => { $(b.dataset.pop).hidden = true; b.classList.remove('aberto'); });
+}
+function montarTrilho() {
+  document.querySelectorAll('[data-pop]').forEach(b => b.onclick = () => {
+    const pop = $(b.dataset.pop), abrir = pop.hidden;
+    fecharPops();
+    pop.hidden = !abrir;
+    b.classList.toggle('aberto', abrir);
+    if (abrir && pop.id === 'caixaTexto') $('txtRotulo').focus();
+  });
+  // Clicar no mapa fecha as janelinhas
+  $('mapa').addEventListener('pointerdown', () => { if (!desenhando) fecharPops(); });
+}
+
 function montarTextos() {
-  const caixa = $('caixaTexto');
-  $('btnTexto').onclick = () => { caixa.hidden = !caixa.hidden; if (!caixa.hidden) $('txtRotulo').focus(); };
-  $('btnFecharTexto').onclick = () => { caixa.hidden = true; $('txtRotulo').value = ''; };
+  $('btnFecharTexto').onclick = () => { fecharPops(); $('txtRotulo').value = ''; };
   const colocar = async () => {
     const t = $('txtRotulo').value.trim().slice(0, 60);
     if (!t) return;
@@ -807,7 +841,7 @@ function montarTextos() {
       });
       historico.push({ acao: 'texto', id: ref.id });
       $('btnDesfazer').disabled = false;
-      $('txtRotulo').value = ''; caixa.hidden = true;
+      $('txtRotulo').value = ''; fecharPops();
     } catch (e) { alert('Não foi possível colocar o texto: ' + e.message); }
   };
   $('btnColocarTexto').onclick = colocar;
@@ -824,10 +858,13 @@ function montarTextos() {
 
 function montarTipos() {
   $('barraTipos').innerHTML = TIPOS.map(t => `<button class="pil${t.id === tipoSel ? ' ativo' : ''}" data-tipo="${t.id}" style="--c:${t.cor}"><span class="ponto" style="--c:${t.cor}"></span>${t.nome}</button>`).join('');
+  const mostrarTipo = () => { $('corTipo').style.setProperty('--c', tipoDe(tipoSel).cor); $('nomeTipo').textContent = tipoDe(tipoSel).nome.split(' ')[0]; };
+  mostrarTipo();
   document.querySelectorAll('[data-tipo]').forEach(b => b.onclick = () => {
     tipoSel = b.dataset.tipo;
     document.querySelectorAll('[data-tipo]').forEach(x => x.classList.toggle('ativo', x === b));
-    if (!desenhando) $('btnDesenhar').style.setProperty('--c', tipoDe(tipoSel).cor);
+    mostrarTipo();
+    fecharPops();
   });
 }
 
@@ -838,8 +875,10 @@ function montarDesenho() {
 
   $('btnDesenhar').onclick = () => {
     desenhando = !desenhando;
-    $('btnDesenhar').textContent = desenhando ? '✋ Mover mapa' : '✏️ Desenhar';
-    $('btnDesenhar').style.setProperty('--c', desenhando ? 'var(--fogo-forte)' : tipoDe(tipoSel).cor);
+    fecharPops();
+    $('btnDesenhar').innerHTML = desenhando ? '✋<small>Mover</small>' : '✏️<small>Desenhar</small>';
+    $('btnDesenhar').classList.toggle('ligado', desenhando);
+    $('popDesenho').hidden = !desenhando; // Desfazer/Limpar ao lado enquanto desenha
     $('avisoMapa').classList.toggle('on', desenhando);
     el.classList.toggle('desenhando', desenhando);
     const acao = desenhando ? 'disable' : 'enable';
@@ -847,7 +886,7 @@ function montarDesenho() {
   };
 
   el.addEventListener('pointerdown', (e) => {
-    if (!desenhando || e.target.closest('.ferramentas, .leaflet-control, .legenda')) return;
+    if (!desenhando || e.target.closest('.trilho, .leaflet-control, .legenda')) return;
     ativo = true; el.setPointerCapture(e.pointerId);
     pontos = [mapa.mouseEventToLatLng(e)]; ultimoPx = mapa.mouseEventToContainerPoint(e);
     linhaViva = L.polyline(pontos, { color: tipoDe(tipoSel).cor, weight: 5, lineCap: 'round', dashArray: tipoSel === 'fuga' ? '12 8' : null }).addTo(mapa);
@@ -1013,7 +1052,7 @@ async function carregarTempo() {
       <div class="kv"><span>🌅 Pôr do sol</span><b>${hhmm(por)}</b></div>
       <div class="kv"><span>⏳ Luz do dia restante</span><b style="color:${falta < 1.5 ? 'var(--fogo-forte)' : 'var(--texto)'}">${falta > 0 ? duracao(falta) : 'já escureceu'}</b></div>
       <div class="kv"><span>🔥 Fogo tende a ir para</span><b style="color:var(--alerta)">${cardeal(c.wind_direction_10m + 180)}</b></div>
-      ${virada ? '<div class="resultado ruim"><span class="nome">⚠️ Virada de vento prevista</span><span></span><span class="sub">A direção muda 45° ou mais nas próximas 6 h — revise a rota de fuga.</span></div>' : ''}
+      ${virada ? '<div class="resultado ruim"><span class="nome">⚠️ Virada de vento prevista</span><span></span><span class="sub">A direção muda 45° ou mais nas próximas 6 h — revise a rota de saída.</span></div>' : ''}
       <div class="vento-prev">${d.hourly.time.map((t, i) => `<div>${t.slice(11, 13)}h<b>${cardeal(dirs[i])}</b>${Math.round(d.hourly.wind_speed_10m[i])}</div>`).join('')}</div>
       <p class="dica" style="margin-top:6px">Vento nas próximas horas (de onde vem, km/h) · Open-Meteo</p>`;
   } catch (e) {
