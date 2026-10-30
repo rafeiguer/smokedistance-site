@@ -63,6 +63,7 @@ main{flex:1;display:grid;grid-template-columns:330px minmax(0,1fr) 390px;grid-te
 .col::-webkit-scrollbar-thumb,.rolagem::-webkit-scrollbar-thumb{background:var(--borda);border-radius:8px}
 
 /* Divisões coloridas (padrão do manual) */
+[hidden]{display:none!important} /* .secao/.pil/abas têm display próprio, que venceria o hidden */
 .secao{padding:14px;border-left:4px solid var(--c,var(--verde))}
 .secao h2{font-size:11px;font-weight:800;letter-spacing:1.4px;text-transform:uppercase;color:var(--c,var(--verde));margin-bottom:10px;display:flex;align-items:center;gap:7px}
 .dica{color:var(--suave);font-size:12px;line-height:1.45}
@@ -257,6 +258,15 @@ nav.abas{display:none}
         <p class="dica">Define a margem de erro dos focos (círculo amarelo, 95%). Calibre triangulando um ponto conhecido (torre, antena).</p>
         <button class="pil" id="btnApagarFocos" style="--c:var(--fogo-forte);margin-top:8px" hidden title="Apaga do servidor as visadas e focos marcados de todos os aparelhos">🗑️ Apagar todos os focos</button>
       </section>
+      <section class="vidro secao" id="secEquipe" style="--c:var(--azul)" hidden>
+        <h2>👥 Equipe com acesso à Central</h2>
+        <div id="listaEquipe" class="dica">Carregando…</div>
+        <div class="entrada">
+          <input type="text" inputmode="email" autocomplete="off" id="txtEquipe" placeholder="E-mail Google da pessoa">
+          <button class="pil destaque" id="btnEquipe" style="--c:var(--azul)">Dar acesso</button>
+        </div>
+        <p class="dica" style="margin-top:8px">Entra como <b>coordenador</b>: usa a Central, desenha, manda mensagens, edita a tabela de equipamentos e apaga traços, textos e mensagens de qualquer um. Só você (admin) vê esta seção.</p>
+      </section>
       <section class="vidro secao" id="secRegistro" style="--c:var(--alerta)">
         <h2>📜 Registro da operação</h2>
         <p class="dica" style="margin:-4px 0 6px">Clique num evento para ir até ele no mapa.</p>
@@ -364,6 +374,7 @@ nav.abas{display:none}
     <button data-aba="secMsg"><span>💬</span>Msgs<i class="badge" id="badgeMsg" hidden></i></button>
     <button data-aba="secRegistro"><span>📜</span>Registro</button>
     <button data-aba="secCamadas"><span>🗂️</span>Camadas</button>
+    <button data-aba="secEquipe" id="abaEquipe" hidden><span>👥</span>Equipe</button>
     <button data-aba="secTempo"><span>🌤️</span>Tempo</button>
     <button data-aba="secEquip"><span>🧰</span>Equip.</button>
     <button data-aba="secCalc"><span>🧮</span>Cálculo</button>
@@ -459,7 +470,11 @@ onAuthStateChanged(auth, async (u) => {
   // Sessão anônima não entra na Central: exige conta Google
   if (!u || u.isAnonymous) { usuario = null; $('login').style.display = 'flex'; $('app').classList.remove('on'); return; }
   papel = (await u.getIdTokenResult(true)).claims.role || null;
-  // Só admin/coordenador entram (papel dado por scripts/grant-role.js). Outra
+  // Sem papel no token: o admin pode ter liberado pela seção Equipe (equipe/{e-mail})
+  if (!ehChefe() && u.email) {
+    try { const e = await getDoc(doc(db, 'equipe', u.email.toLowerCase())); if (e.exists()) papel = e.data().papel; } catch {}
+  }
+  // Só admin/coordenador entram (scripts/grant-role.js ou seção Equipe). Outra
   // conta Google é desconectada — senão qualquer um desenharia rota e mandaria
   // mensagem às brigadas pela Central.
   if (!ehChefe()) {
@@ -528,6 +543,7 @@ function iniciar() {
   montarAbas();
   montarVisor();
   montarMensagens();
+  montarEquipe();
   escutarDados();
   montarEquipamentos();
   setInterval(() => { $('relogio').textContent = new Date().toLocaleTimeString('pt-BR'); }, 1000);
@@ -1201,6 +1217,34 @@ function desenharMensagens() {
   }).join('') : '<span class="dica">Nenhuma mensagem ainda. Mensagens do app aparecem aqui.</span>';
 
   eventos.msg = mensagens.slice(0, 30).map(m => ({ d: quando(m.criadoEm), txt: `${m.tipo === 'tarefa' ? '📋 Tarefa' : '💬'} ${m.autorNome || ''}: ${m.texto}`.slice(0, 120), lat: m.latitude, lon: m.longitude }));
+}
+
+/* ───────────── 👥 EQUIPE (só admin) ─────────────
+   Dá/tira acesso de coordenador por e-mail Google, sem terminal: grava
+   equipe/{e-mail} e as firestore.rules (ehChefe) passam a aceitar a pessoa. */
+function montarEquipe() {
+  if (papel !== 'admin') return;
+  $('secEquipe').hidden = false;
+  $('abaEquipe').hidden = false;
+  onSnapshot(collection(db, 'equipe'), (snap) => {
+    $('listaEquipe').innerHTML = snap.empty
+      ? 'Ninguém liberado por aqui ainda.'
+      : snap.docs.map(d => `<div class="kv" style="align-items:center"><span>${esc(d.id)}</span><button class="pil" data-tirar="${esc(d.id)}">Remover</button></div>`).join('');
+  }, (e) => console.warn('Central: equipe', e.message));
+  $('listaEquipe').onclick = (ev) => {
+    const b = ev.target.closest('[data-tirar]');
+    if (b && confirm(`Tirar o acesso de ${b.dataset.tirar} à Central?`)) deleteDoc(doc(db, 'equipe', b.dataset.tirar)).catch(e => alert('Não foi possível remover: ' + e.message));
+  };
+  const dar = async () => {
+    const email = $('txtEquipe').value.trim().toLowerCase();
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return alert('Digite um e-mail válido.');
+    try {
+      await setDoc(doc(db, 'equipe', email), { papel: 'coordinator', adicionadoPor: usuario.email, adicionadoEm: serverTimestamp() });
+      $('txtEquipe').value = '';
+    } catch (e) { alert('Não foi possível dar acesso: ' + e.message); }
+  };
+  $('btnEquipe').onclick = dar;
+  $('txtEquipe').addEventListener('keydown', (e) => { if (e.key === 'Enter') dar(); });
 }
 
 /* ───────────── ABAS (celular) ───────────── */
