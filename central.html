@@ -96,10 +96,14 @@ main{flex:1;display:grid;grid-template-columns:330px minmax(0,1fr) 390px;grid-te
 .msg .autor{font-size:11px;color:var(--suave);font-weight:700;margin-bottom:2px;display:flex;gap:6px;align-items:center}
 .msg .autor .x{margin-left:auto;background:none;border:none;color:var(--fraco);cursor:pointer}
 .msg .local{font-size:11px;color:var(--azul);cursor:pointer}
-.entrada{display:flex;gap:6px;margin-top:8px}
-.entrada input[type=text]{flex:1;min-width:0;background:rgba(255,255,255,.06);border:1px solid var(--borda);border-radius:999px;padding:8px 12px;outline:none}
+/* Campo de texto numa linha só; Tarefa/Enviar embaixo — antes o input ficava espremido */
+.entrada{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.entrada input[type=text]{flex:1 1 100%;min-width:0;background:rgba(255,255,255,.06);border:1px solid var(--borda);border-radius:999px;padding:9px 13px;outline:none}
 .entrada input[type=text]:focus{border-color:var(--azul)}
-.rapidas{display:flex;gap:6px;overflow-x:auto;padding:6px 0 2px}
+.entrada #btnEnviar{flex:1;justify-content:center}
+/* Botões rápidos quebram linha inteiros (antes encolhiam e cortavam o texto) */
+.rapidas{display:flex;flex-wrap:wrap;gap:6px;padding:8px 0 2px}
+.rapidas .pil{flex-shrink:0;padding:6px 11px;font-size:12px}
 
 /* ── MAPA ── */
 .mapa-area{position:relative;min-height:0}
@@ -107,7 +111,16 @@ main{flex:1;display:grid;grid-template-columns:330px minmax(0,1fr) 390px;grid-te
 #mapa.desenhando{cursor:crosshair;touch-action:none}
 .ferramentas{position:absolute;z-index:500;left:12px;right:12px;top:12px;display:flex;gap:8px;flex-wrap:wrap;align-items:flex-start;pointer-events:none}
 .ferramentas>*{pointer-events:auto}
-.barra{padding:8px;display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.barra{padding:6px;display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+/* Vidro claro sobre o mapa (liquid glass): translúcido, desfoque forte e
+   reflexo no topo — o mapa aparece por trás em vez de uma caixa escura */
+.ferramentas .vidro,.legenda,.aviso-mapa{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.34);backdrop-filter:blur(18px) saturate(170%);-webkit-backdrop-filter:blur(18px) saturate(170%);box-shadow:inset 0 1px 0 rgba(255,255,255,.35),0 8px 24px rgba(0,0,0,.25);border-radius:20px}
+.ferramentas .vidro::before,.legenda::before,.aviso-mapa::before{background:linear-gradient(180deg,rgba(255,255,255,.22),transparent);border-radius:20px 20px 0 0}
+.ferramentas .pil{background:rgba(0,0,0,.18);border-color:rgba(255,255,255,.38);padding:6px 11px;font-size:12px;text-shadow:0 1px 2px rgba(0,0,0,.5)}
+.ferramentas .pil.ativo{background:color-mix(in srgb,var(--c,var(--verde)) 45%,rgba(0,0,0,.15))}
+.ferramentas .pil.destaque{background:var(--c,var(--fogo))}
+.ferramentas select.pil option{background:#16201c}
+.legenda,.legenda summary{color:var(--texto);text-shadow:0 1px 2px rgba(0,0,0,.6)}
 .aviso-mapa{position:absolute;z-index:500;left:50%;bottom:18px;transform:translateX(-50%);padding:8px 14px;font-size:12.5px;display:none;white-space:nowrap}
 .aviso-mapa.on{display:block}
 .legenda{position:absolute;z-index:500;left:12px;bottom:12px;padding:10px 12px;font-size:11.5px;color:var(--suave);max-width:260px}
@@ -127,7 +140,8 @@ main{flex:1;display:grid;grid-template-columns:330px minmax(0,1fr) 390px;grid-te
 .btn-pop.perigo{background:rgba(229,57,53,.85)}
 .rotulo-mapa{display:inline-block;transform:translate(-50%,-50%);background:rgba(12,20,17,.88);border:1.5px solid var(--alerta);color:var(--alerta);font-weight:800;font-size:13px;letter-spacing:.5px;padding:3px 9px;border-radius:8px;white-space:nowrap;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.5)}
 .rotulo-mapa.movel{cursor:grab}
-#caixaTexto input{background:rgba(255,255,255,.08);border:1px solid var(--borda);border-radius:999px;padding:7px 12px;outline:none;min-width:180px}
+#caixaTexto input{background:rgba(0,0,0,.25);border:1px solid rgba(255,255,255,.38);border-radius:999px;padding:6px 12px;outline:none;min-width:0;flex:1 1 160px}
+#caixaTexto{max-width:520px}
 #caixaTexto input:focus{border-color:var(--alerta)}
 .sigma{width:72px;background:rgba(255,255,255,.06);border:1px solid var(--borda);border-radius:10px;padding:5px 8px;font-family:var(--mono);text-align:right;outline:none}
 
@@ -185,7 +199,13 @@ nav.abas{display:none}
   nav.abas button span{font-size:19px}
   nav.abas button.on{color:var(--verde)}
   nav.abas .badge{position:absolute;top:0;right:8px;background:var(--fogo-forte);color:#fff;border-radius:999px;font-size:9.5px;padding:0 5px}
-  .ferramentas{left:8px;right:8px;top:8px}
+  /* Celular: cada barra numa linha só, rolando para o lado — sobra mapa */
+  .ferramentas{left:6px;right:6px;top:6px;flex-direction:column;gap:5px}
+  .ferramentas>.barra{flex-wrap:nowrap;overflow-x:auto;max-width:100%;padding:5px;scrollbar-width:none}
+  .ferramentas>.barra::-webkit-scrollbar{display:none}
+  .ferramentas .pil{padding:5px 10px;font-size:11.5px;flex-shrink:0}
+  #caixaTexto{flex-wrap:nowrap}
+  #caixaTexto .dica{display:none}
   .legenda{display:none}
   .aviso-mapa{white-space:normal;width:86%;text-align:center}
   #visor{top:70px}
