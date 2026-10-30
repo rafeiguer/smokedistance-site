@@ -166,6 +166,7 @@ table.planilha{border-collapse:collapse;width:100%;min-width:640px;font-size:12.
 .planilha th{background:rgba(255,255,255,.06);color:var(--suave);font-size:10.5px;letter-spacing:.8px;text-transform:uppercase;text-align:left;padding:7px 8px;font-weight:700;white-space:nowrap;position:sticky;top:0}
 .planilha td{border-top:1px solid rgba(255,255,255,.07);padding:0}
 .planilha input,.planilha select{width:100%;background:transparent;border:none;padding:8px;outline:none;min-width:54px}
+.planilha td:first-child input{min-width:175px} /* o nome do equipamento não pode sumir cortado */
 .planilha input:focus,.planilha select:focus{background:rgba(96,165,250,.12)}
 .planilha select option{background:#16201c}
 .planilha input.num{text-align:right;font-family:var(--mono)}
@@ -346,7 +347,7 @@ nav.abas{display:none}
           <button class="pil ativo" id="btnSalvarEquip" style="--c:var(--verde)">💾 Salvar tabela</button>
           <span class="estado-salvo" id="estadoEquip"></span>
         </div>
-        <p class="dica" style="margin-top:8px">Consumo de fábrica (motor em carga): BR 600 1,21 L/h · BR 800 1,47 L/h, mistura 50:1. <br><b>Motobombas Guarany</b> (motor Honda <b>4 tempos = gasolina pura, nunca mistura</b>):<br>· Moskito (GX31): ~0,5 L/h · tanque 0,65 L (~1h20) · até 189 L/min<br>· Mini Striker (GXH50): 0,91 L/h · tanque 0,77 L (~50 min) · até 256 L/min<br>Vazão = máxima de fábrica, sem mangueira; com mangueira e esguicho é menor. "Em uso" = quantos estão ligados agora (vazio = todos).</p>
+        <p class="dica" style="margin-top:8px">Consumo de fábrica (motor em carga): BR 600 1,21 L/h · BR 800 1,47 L/h, mistura 50:1. <br><b>Motobombas</b> (motor Honda <b>4 tempos = gasolina pura, nunca mistura</b>):<br>· Moskito (GX31): ~0,5 L/h · tanque 0,65 L (~1h20) · até 189 L/min<br>· Mini Striker (GXH50): 0,91 L/h · tanque 0,77 L (~50 min) · até 256 L/min<br>Vazão = máxima de fábrica, sem mangueira; com mangueira e esguicho é menor. "Em uso" = quantos estão ligados agora (vazio = todos).</p>
       </section>
       <section class="vidro secao" id="secCalc" style="--c:var(--roxo)">
         <h2>🧮 Calculadora de autonomia</h2>
@@ -1345,9 +1346,9 @@ setInterval(() => { if (iniciado) carregarTempo(); }, 10 * 60000);
 const PADRAO = [
   { nome: 'Soprador STIHL BR 600', qtd: 9, uso: '', comb: 'mistura', prop: 50, tanque: 1.4, consumo: 1.21, vazao: '' },
   { nome: 'Soprador STIHL BR 800', qtd: 1, uso: '', comb: 'mistura', prop: 50, tanque: 2.0, consumo: 1.47, vazao: '' },
-  // Guarany com Honda 4T = gasolina pura; consumo da ficha Honda; vazão MÁXIMA informada (ver calculoEquipamentos.js)
-  { nome: 'Motobomba Guarany Moskito (Honda GX31)', qtd: 1, uso: '', comb: 'gasolina', prop: '', tanque: 0.65, consumo: 0.5, vazao: 189 },
-  { nome: 'Motobomba Guarany Mini Striker (Honda GXH50)', qtd: 1, uso: '', comb: 'gasolina', prop: '', tanque: 0.77, consumo: 0.91, vazao: 256 },
+  // Motobombas com Honda 4T = gasolina pura; consumo da ficha Honda; vazão MÁXIMA informada (ver calculoEquipamentos.js)
+  { nome: 'Motobomba Moskito', qtd: 1, uso: '', comb: 'gasolina', prop: '', tanque: 0.65, consumo: 0.5, vazao: 189 },
+  { nome: 'Motobomba Mini Striker', qtd: 1, uso: '', comb: 'gasolina', prop: '', tanque: 0.77, consumo: 0.91, vazao: 256 },
 ];
 const DOC_CATALOGO = doc(db, 'catalogoEquipamentos', 'padrao');
 let linhas = [];
