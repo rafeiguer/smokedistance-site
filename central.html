@@ -310,6 +310,7 @@ nav.abas{display:none}
           <li><span class="amostra" style="--c:#E53935"></span>Aceiro / linha de controle</li>
           <li><span class="amostra tracejada" style="--c:#4ADE80"></span>Rota de saída</li>
           <li><span class="amostra" style="--c:#FBBF24"></span>Anotação</li>
+          <li><span class="amostra" style="--c:#E879F9"></span>Trilha desenhada (ímã na imagem)</li>
           <li><span class="amostra" style="--c:#2E7D32"></span>Trilha verificada · <span class="amostra tracejada" style="--c:#FFB300"></span>comunidade</li>
         </ul>
       </details>
@@ -417,6 +418,7 @@ const TIPOS = [
   { id: 'aceiro', nome: 'Aceiro', cor: '#E53935' },
   { id: 'fuga', nome: 'Rota de saída', cor: '#4ADE80' },
   { id: 'anotacao', nome: 'Anotação', cor: '#FBBF24' },
+  { id: 'trilha', nome: 'Trilha', cor: '#E879F9' },
 ];
 const tipoDe = (id) => TIPOS.find(t => t.id === id) || TIPOS[3];
 const RAPIDAS = ['📍 Seguir a rota azul', '⚠️ Recuar para a zona de segurança', '⛽ Suprimento a caminho', '✅ Recebido', '🕓 Aguardar no ponto de encontro'];
@@ -903,10 +905,143 @@ function montarTipos() {
   });
 }
 
+/* ── 🧲 Ímã de trilha pela imagem de satélite (TESTE, só na Central) ──
+   Trilha aberta no mato aparece na imagem como faixa mais clara e menos verde
+   que a vegetação em volta. Ao soltar um traço do tipo Trilha: baixa os
+   ladrilhos da Esri em volta (zoom 17, ~1 m/px), marca o que "parece caminho"
+   (claro em relação à vizinhança, pouco verde) e escolhe, ponto a ponto, o
+   deslocamento lateral de até IMA.raioM que passa pelo mais claro — por
+   programação dinâmica, para o traço não ziguezaguear. Não é infalível (lajedo,
+   rio seco, estrada e sombra enganam): o resultado é mostrado e só vale se aceito.
+   Roda no navegador, uma vez por traço (sem custo, sem servidor). */
+// minContraste: no teste (trilha da Fumaça, Capão) trilha real deu 14–29 e
+// mato sem trilha 5–6 — 10 separa os dois.
+const IMA = { zoom: 17, raioM: 20, vizinhancaPx: 8, minContraste: 10, maxLadrilhos: 80 };
+const carregarImg = (src) => new Promise((ok, falha) => { const i = new Image(); i.crossOrigin = 'anonymous'; i.onload = () => ok(i); i.onerror = () => falha(new Error('imagem de satélite não carregou')); i.src = src; });
+
+async function imaTrilha(latlngs) {
+  const z = IMA.zoom;
+  const glob = latlngs.map(p => mapa.project(p, z)); // pixel global no zoom z
+  const mpp = 40075016.686 * Math.cos(latlngs[0].lat * Math.PI / 180) / (256 * 2 ** z);
+  const W = Math.round(IMA.raioM / mpp), M = W + IMA.vizinhancaPx + 4;
+  const tx0 = Math.floor((Math.min(...glob.map(p => p.x)) - M) / 256), tx1 = Math.floor((Math.max(...glob.map(p => p.x)) + M) / 256);
+  const ty0 = Math.floor((Math.min(...glob.map(p => p.y)) - M) / 256), ty1 = Math.floor((Math.max(...glob.map(p => p.y)) + M) / 256);
+  if ((tx1 - tx0 + 1) * (ty1 - ty0 + 1) > IMA.maxLadrilhos) throw new Error('traço grande demais para ajustar de uma vez — desenhe em trechos de até ~2 km');
+
+  // 1) Imagem em volta do traço
+  const w = (tx1 - tx0 + 1) * 256, h = (ty1 - ty0 + 1) * 256;
+  const cv = document.createElement('canvas'); cv.width = w; cv.height = h;
+  const cx = cv.getContext('2d', { willReadFrequently: true });
+  const lad = [];
+  for (let x = tx0; x <= tx1; x++) for (let y = ty0; y <= ty1; y++) lad.push([x, y]);
+  await Promise.all(lad.map(async ([x, y]) => cx.drawImage(await carregarImg(`https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/${z}/${y}/${x}`), (x - tx0) * 256, (y - ty0) * 256)));
+  const px = cx.getImageData(0, 0, w, h).data;
+
+  // 2) "Parece caminho" = brilho (descontado o verde) acima da média da vizinhança
+  const lum = new Float32Array(w * h);
+  for (let i = 0; i < w * h; i++) { const r = px[4 * i], g = px[4 * i + 1], b = px[4 * i + 2]; lum[i] = (r + g + b) / 3 - 0.8 * Math.max(0, g - (r + b) / 2); }
+  const media = (arr, raio) => { // média em caixa via imagem integral
+    const S = new Float64Array((w + 1) * (h + 1));
+    for (let y = 0; y < h; y++) { let lin = 0; for (let x = 0; x < w; x++) { lin += arr[y * w + x]; S[(y + 1) * (w + 1) + x + 1] = S[y * (w + 1) + x + 1] + lin; } }
+    const out = new Float32Array(w * h);
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+      const x0 = Math.max(0, x - raio), x1 = Math.min(w, x + raio + 1), y0 = Math.max(0, y - raio), y1 = Math.min(h, y + raio + 1);
+      out[y * w + x] = (S[y1 * (w + 1) + x1] - S[y0 * (w + 1) + x1] - S[y1 * (w + 1) + x0] + S[y0 * (w + 1) + x0]) / ((x1 - x0) * (y1 - y0));
+    }
+    return out;
+  };
+  const viz = media(lum, IMA.vizinhancaPx);
+  const dif = new Float32Array(w * h);
+  for (let i = 0; i < w * h; i++) dif[i] = lum[i] - viz[i];
+  const sc = media(dif, 1); // tira ruído de pixel isolado
+  const ox = tx0 * 256, oy = ty0 * 256;
+  const valor = (x, y) => { const xi = Math.round(x - ox), yi = Math.round(y - oy); return xi < 0 || yi < 0 || xi >= w || yi >= h ? -99 : sc[yi * w + xi]; };
+
+  // 3) Amostra o traço a cada 2 px e calcula a normal de cada amostra
+  const am = [glob[0]];
+  for (let i = 1; i < glob.length; i++) {
+    const a = glob[i - 1], b = glob[i], d = a.distanceTo(b);
+    for (let k = 2; k < d; k += 2) am.push(L.point(a.x + (b.x - a.x) * k / d, a.y + (b.y - a.y) * k / d));
+    am.push(b);
+  }
+  const n = am.length, nO = 2 * W + 1;
+  const normais = am.map((_, i) => {
+    const a = am[Math.max(0, i - 3)], b = am[Math.min(n - 1, i + 3)], d = a.distanceTo(b) || 1;
+    return { x: -(b.y - a.y) / d, y: (b.x - a.x) / d };
+  });
+
+  // 4) Programação dinâmica: maximiza "parece caminho" − leve atração ao risco,
+  //    andando no máximo 1 px de lado a cada 2 px (curva suave)
+  const custo = new Float32Array(n * nO), de = new Int8Array(n * nO);
+  const ganho = (i, o) => valor(am[i].x + normais[i].x * (o - W), am[i].y + normais[i].y * (o - W)) - 0.15 * Math.abs(o - W);
+  for (let o = 0; o < nO; o++) custo[o] = ganho(0, o);
+  for (let i = 1; i < n; i++) for (let o = 0; o < nO; o++) {
+    let melhor = -Infinity, passo = 0;
+    for (let d = -1; d <= 1; d++) { const p = o + d; if (p >= 0 && p < nO && custo[(i - 1) * nO + p] > melhor) { melhor = custo[(i - 1) * nO + p]; passo = d; } }
+    custo[i * nO + o] = melhor + ganho(i, o); de[i * nO + o] = passo;
+  }
+  let o = 0;
+  for (let k = 1; k < nO; k++) if (custo[(n - 1) * nO + k] > custo[(n - 1) * nO + o]) o = k;
+  const offs = new Array(n);
+  for (let i = n - 1; i >= 0; i--) { offs[i] = o; o += de[i * nO + o]; }
+
+  // 5) Achou caminho claro de verdade? (senão, mantém o desenho)
+  const contraste = offs.reduce((s, oi, i) => s + valor(am[i].x + normais[i].x * (oi - W), am[i].y + normais[i].y * (oi - W)), 0) / n;
+  if (contraste < IMA.minContraste) return { pontos: null, contraste };
+
+  // Média móvel do deslocamento: tira a tremida de 1–2 px da escolha pixel a pixel
+  const suave = offs.map((_, i) => { let s = 0, c = 0; for (let j = Math.max(0, i - 3); j <= Math.min(n - 1, i + 3); j++) { s += offs[j]; c++; } return s / c; });
+  const pts = am.map((p, i) => L.point(p.x + normais[i].x * (suave[i] - W), p.y + normais[i].y * (suave[i] - W)));
+  let simp = L.LineUtil.simplify(pts, 1);
+  for (let tol = 2; simp.length > 500; tol *= 2) simp = L.LineUtil.simplify(pts, tol);
+  return { pontos: simp.map(p => mapa.unproject(p, z)), contraste };
+}
+
 function montarDesenho() {
   const el = $('mapa');
   const PASSO_PX = 6, MAX = 500;
-  let pontos = [], ultimoPx = null, linhaViva = null, ativo = false;
+  let pontos = [], ultimoPx = null, linhaViva = null, ativo = false, imaPendente = false;
+
+  const salvarTraco = async (lista) => {
+    const ref = await addDoc(collection(db, 'rotaServico'), {
+      tipo: tipoSel,
+      pontos: lista.map(p => ({ latitude: p.lat, longitude: p.lng })),
+      autorUid: usuario.uid,
+      autorNome: usuario.displayName || 'Central',
+      origem: 'site',
+      criadoEm: serverTimestamp(),
+    });
+    historico.push({ acao: 'desenho', id: ref.id });
+    $('btnDesfazer').disabled = false;
+  };
+
+  // Trilha: mostra o desenho (tracejado) e a versão do ímã; a pessoa escolhe
+  const ajustarTrilha = async (lista, original) => {
+    const aviso = $('avisoMapa'), textoAviso = aviso.innerHTML;
+    imaPendente = true;
+    aviso.textContent = '🧲 Procurando a trilha na imagem de satélite…';
+    let corrigida = null;
+    const fim = async (usar) => {
+      aviso.innerHTML = textoAviso; imaPendente = false;
+      corrigida?.remove(); original.remove();
+      if (usar) try { await salvarTraco(usar); } catch (err) { alert('Não foi possível salvar o traço: ' + err.message); }
+    };
+    try {
+      const r = await imaTrilha(lista);
+      if (!r.pontos) {
+        aviso.innerHTML = `🧲 Não achei caminho claro na imagem perto do risco. <button class="btn-pop" id="imaManter">✏️ Salvar como desenhei</button><button class="btn-pop perigo" id="imaDescartar">✕ Descartar</button>`;
+      } else {
+        original.setStyle({ color: '#fff', dashArray: '6 8', weight: 3 });
+        corrigida = L.polyline(r.pontos, { color: tipoDe('trilha').cor, weight: 5, lineCap: 'round' }).addTo(mapa);
+        aviso.innerHTML = `🧲 Rosa = ajustada pela imagem · tracejado = seu desenho. <button class="btn-pop" id="imaUsar" style="background:${tipoDe('trilha').cor}">✅ Usar ajustada</button><button class="btn-pop" id="imaManter">✏️ Manter meu desenho</button><button class="btn-pop perigo" id="imaDescartar">✕</button>`;
+        $('imaUsar').onclick = () => fim(r.pontos);
+      }
+    } catch (err) {
+      aviso.innerHTML = `🧲 Não deu para ajustar (${esc(err.message)}). <button class="btn-pop" id="imaManter">✏️ Salvar como desenhei</button><button class="btn-pop perigo" id="imaDescartar">✕ Descartar</button>`;
+    }
+    $('imaManter').onclick = () => fim(lista);
+    $('imaDescartar').onclick = () => fim(null);
+  };
 
   $('btnDesenhar').onclick = () => {
     desenhando = !desenhando;
@@ -921,7 +1056,7 @@ function montarDesenho() {
   };
 
   el.addEventListener('pointerdown', (e) => {
-    if (!desenhando || e.target.closest('.trilho, .leaflet-control, .legenda')) return;
+    if (!desenhando || imaPendente || e.target.closest('.trilho, .leaflet-control, .legenda, .aviso-mapa')) return;
     ativo = true; el.setPointerCapture(e.pointerId);
     pontos = [mapa.mouseEventToLatLng(e)]; ultimoPx = mapa.mouseEventToContainerPoint(e);
     linhaViva = L.polyline(pontos, { color: tipoDe(tipoSel).cor, weight: 5, lineCap: 'round', dashArray: tipoSel === 'fuga' ? '12 8' : null }).addTo(mapa);
@@ -938,18 +1073,9 @@ function montarDesenho() {
     ativo = false;
     const lista = pontos; pontos = [];
     if (lista.length < 2) { linhaViva?.remove(); return; }
-    try {
-      const ref = await addDoc(collection(db, 'rotaServico'), {
-        tipo: tipoSel,
-        pontos: lista.map(p => ({ latitude: p.lat, longitude: p.lng })),
-        autorUid: usuario.uid,
-        autorNome: usuario.displayName || 'Central',
-        origem: 'site',
-        criadoEm: serverTimestamp(),
-      });
-      historico.push({ acao: 'desenho', id: ref.id });
-      $('btnDesfazer').disabled = false;
-    } catch (err) { alert('Não foi possível salvar o traço: ' + err.message); }
+    if (tipoSel === 'trilha') return ajustarTrilha(lista, linhaViva);
+    try { await salvarTraco(lista); }
+    catch (err) { alert('Não foi possível salvar o traço: ' + err.message); }
     finally { linhaViva?.remove(); } // a versão salva volta pelo onSnapshot
   };
   el.addEventListener('pointerup', soltar);
