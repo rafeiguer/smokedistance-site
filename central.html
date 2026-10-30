@@ -291,6 +291,7 @@ nav.abas{display:none}
           <button class="btn-trilho" data-pop="popBase" title="Tipo de mapa">🗺️<small id="nomeBase">Satélite</small></button>
           <div class="pop" id="popBase" hidden>
             <button class="pil ativo" data-base="sat" style="--c:var(--azul)">Satélite</button>
+            <button class="pil" data-base="hibrido" style="--c:var(--azul)">Híbrido</button>
             <button class="pil" data-base="relevo" style="--c:var(--azul)">Relevo</button>
             <button class="pil" data-base="mapa" style="--c:var(--azul)">Mapa</button>
           </div>
@@ -458,6 +459,12 @@ onAuthStateChanged(auth, async (u) => {
 let mapa, iniciado = false;
 const bases = {
   sat: () => L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19, attribution: 'Imagem © Esri' }),
+  // Híbrido = satélite + estradas + nomes de lugares/limites por cima (Esri, grátis)
+  hibrido: () => L.layerGroup([
+    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19, attribution: 'Imagem e rótulos © Esri' }),
+    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Transportation/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19 }),
+    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19 }),
+  ]),
   relevo: () => L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', { maxZoom: 17, attribution: '© OpenTopoMap · © OpenStreetMap' }),
   mapa: () => L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '© OpenStreetMap' }),
 };
