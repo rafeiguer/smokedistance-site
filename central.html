@@ -493,16 +493,21 @@ onAuthStateChanged(auth, async (u) => {
 
 /* ───────────── MAPA ───────────── */
 let mapa, iniciado = false;
+// Zoom: a Esri só tem foto até o nível 18 na Chapada (no 19 devolve a tela
+// cinza "Map data not yet available" — conferido 30/10 no Capão). Acima do nível
+// real (maxNativeZoom) o Leaflet amplia a última imagem, como o Google no app:
+// não fica mais nítida, mas fica maior para mirar o risco.
+const ZOOM_MAX = 21;
 const bases = {
-  sat: () => L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19, attribution: 'Imagem © Esri' }),
+  sat: () => L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: ZOOM_MAX, maxNativeZoom: 18, attribution: 'Imagem © Esri' }),
   // Híbrido = satélite + estradas + nomes de lugares/limites por cima (Esri, grátis)
   hibrido: () => L.layerGroup([
-    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19, attribution: 'Imagem e rótulos © Esri' }),
-    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Transportation/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19 }),
-    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19 }),
+    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: ZOOM_MAX, maxNativeZoom: 18, attribution: 'Imagem e rótulos © Esri' }),
+    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Transportation/MapServer/tile/{z}/{y}/{x}', { maxZoom: ZOOM_MAX, maxNativeZoom: 19 }),
+    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}', { maxZoom: ZOOM_MAX, maxNativeZoom: 19 }),
   ]),
-  relevo: () => L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', { maxZoom: 17, attribution: '© OpenTopoMap · © OpenStreetMap' }),
-  mapa: () => L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '© OpenStreetMap' }),
+  relevo: () => L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', { maxZoom: ZOOM_MAX, maxNativeZoom: 17, attribution: '© OpenTopoMap · © OpenStreetMap' }),
+  mapa: () => L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: ZOOM_MAX, maxNativeZoom: 19, attribution: '© OpenStreetMap' }),
 };
 let baseAtual;
 
