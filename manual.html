@@ -274,6 +274,40 @@ footer{
   td,th{padding:0.6rem 0.6rem}
   td:first-child{min-width:110px;}
 }
+/* ── ACESSIBILIDADE ──────────────────────────────────────────────
+   Lupa: ao passar o mouse (ou focar pelo teclado) a caixa cresce com
+   animação suave. A−/A+ muda a letra de tudo. Sem animação para quem
+   pediu "reduzir movimento" no sistema. */
+html{font-size:calc(16px * var(--escala,1))}
+body{font-size:calc(17px * var(--escala,1))}
+.card,.step-item,.alert,.lista li,.tabela tr,.toc li{transition:transform .22s ease,box-shadow .22s ease,background .22s ease}
+@media (hover:hover){
+  .card:hover,.step-item:hover,.alert:hover,
+  .card:focus-within,.step-item:focus-within{transform:scale(1.05);position:relative;z-index:5;box-shadow:0 14px 40px rgba(0,0,0,.6),0 0 0 1px rgba(232,168,50,.45)}
+  .lista li:hover{transform:scale(1.04) translateX(6px);color:var(--cream)}
+  .tabela tr:hover{transform:scale(1.025);transform-origin:left center;position:relative;z-index:5;box-shadow:0 10px 30px rgba(0,0,0,.55)}
+  .tabela tr:hover td{background:var(--card2);color:var(--cream)}
+  .toc li:hover{transform:translateX(8px) scale(1.03)}
+}
+@media (prefers-reduced-motion:reduce){
+  .card,.step-item,.alert,.lista li,.tabela tr,.toc li{transition:none}
+  .card:hover,.step-item:hover,.alert:hover,.lista li:hover,.tabela tr:hover,.toc li:hover{transform:none}
+}
+
+/* Leitor em voz alta */
+.btn-ouvir{display:inline-flex;align-items:center;gap:.4rem;font-family:'Space Grotesk',sans-serif;font-size:.78rem;font-weight:600;color:var(--gold-light);background:rgba(200,134,10,.12);border:1px solid rgba(200,134,10,.45);border-radius:999px;padding:.35rem .9rem;cursor:pointer;margin:-.6rem 0 1.2rem;transition:background .2s}
+.btn-ouvir:hover{background:rgba(200,134,10,.28)}
+.lendo{outline:2px solid var(--gold-light);outline-offset:6px;border-radius:6px;background:rgba(200,134,10,.08)}
+#leitor{position:fixed;left:50%;bottom:14px;transform:translateX(-50%);z-index:200;display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;justify-content:center;
+  max-width:calc(100vw - 20px);padding:.55rem .7rem;border-radius:22px;background:rgba(26,9,0,.82);border:1px solid rgba(232,168,50,.4);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);box-shadow:0 12px 40px rgba(0,0,0,.6);font-family:'Space Grotesk',sans-serif;font-size:.8rem}
+#leitor button,#leitor select{font-family:inherit;font-size:.8rem;color:var(--cream);background:rgba(255,255,255,.07);border:1px solid rgba(232,168,50,.35);border-radius:999px;padding:.45rem .8rem;cursor:pointer}
+#leitor button:hover{background:rgba(232,168,50,.2)}
+#leitor .principal{background:var(--fire);border-color:var(--fire);color:#fff;font-weight:700}
+#leitor select{max-width:190px}
+#leitor select option{background:#1A0900}
+#leitor .rotulo{color:var(--muted)}
+body{padding-bottom:90px}
+@media(max-width:600px){#leitor{bottom:8px;gap:.35rem;padding:.45rem}#leitor select{max-width:140px}#leitor .rotulo{display:none}}
 </style>
 </head>
 <body>
@@ -1041,5 +1075,115 @@ footer{
   © 2026 SmokeDistance — Todos os direitos reservados. Feito no Brasil 🇧🇷
 </footer>
 
+<!-- Barra do leitor em voz alta + tamanho da letra -->
+<div id="leitor" role="region" aria-label="Leitor em voz alta">
+  <button class="principal" id="lerTudo" title="Ouvir o manual inteiro">🔊 Ouvir o manual</button>
+  <button id="lerPausa" title="Pausar / continuar" hidden>⏸ Pausar</button>
+  <button id="lerParar" title="Parar" hidden>⏹ Parar</button>
+  <span class="rotulo">Voz</span><select id="lerVoz" aria-label="Voz"></select>
+  <span class="rotulo">Velocidade</span>
+  <select id="lerVel" aria-label="Velocidade"><option value="0.8">Devagar</option><option value="1" selected>Normal</option><option value="1.25">Rápida</option></select>
+  <button id="letraMenos" title="Letra menor" aria-label="Diminuir letra">A−</button>
+  <button id="letraMais" title="Letra maior" aria-label="Aumentar letra">A+</button>
+</div>
+
+<script>
+/* Leitor em voz alta: Web Speech API do próprio navegador (grátis, sem
+   servidor). O texto vai em pedaços (um parágrafo/linha por vez) porque
+   alguns navegadores cortam falas longas no meio. */
+(() => {
+  const $ = (id) => document.getElementById(id);
+  const fala = window.speechSynthesis;
+  const guardar = (k, v) => { try { localStorage.setItem(k, v); } catch {} };
+  const ler = (k) => { try { return localStorage.getItem(k); } catch { return null; } };
+
+  // ── Tamanho da letra (A− / A+) ──
+  let escala = parseFloat(ler('manual_escala')) || 1;
+  const aplicarEscala = () => document.documentElement.style.setProperty('--escala', escala);
+  aplicarEscala();
+  $('letraMais').onclick = () => { escala = Math.min(1.6, +(escala + 0.1).toFixed(2)); aplicarEscala(); guardar('manual_escala', escala); };
+  $('letraMenos').onclick = () => { escala = Math.max(0.8, +(escala - 0.1).toFixed(2)); aplicarEscala(); guardar('manual_escala', escala); };
+
+  if (!fala) { // navegador sem leitor de voz
+    ['lerTudo', 'lerVoz', 'lerVel'].forEach(id => $(id).remove());
+    document.querySelectorAll('#leitor .rotulo').forEach(r => r.remove());
+    return;
+  }
+
+  // ── Vozes em português (escolha salva) ──
+  let vozes = [];
+  const carregarVozes = () => {
+    const todas = fala.getVoices();
+    vozes = todas.filter(v => v.lang.toLowerCase().startsWith('pt'));
+    if (!vozes.length) vozes = todas;
+    vozes.sort((a, b) => (b.lang === 'pt-BR') - (a.lang === 'pt-BR'));
+    const salva = ler('manual_voz');
+    $('lerVoz').innerHTML = vozes.map((v, i) => `<option value="${i}"${v.name === salva ? ' selected' : ''}>${v.name.replace(/Microsoft |Google /, '')} (${v.lang})</option>`).join('');
+  };
+  carregarVozes();
+  fala.onvoiceschanged = carregarVozes;
+  $('lerVoz').onchange = () => guardar('manual_voz', vozes[$('lerVoz').value]?.name || '');
+
+  // ── Pedaços de texto de um elemento (títulos, parágrafos, itens, linhas) ──
+  const pedacos = (raiz) => {
+    const els = raiz.querySelectorAll('h1, h2, h3, h4, p, li, tr, .step-content, .alert');
+    const lista = [];
+    els.forEach(el => {
+      const passo = el.closest('.step-content');
+      if (passo && passo !== el) return;                       // o passo inteiro já é lido de uma vez
+      if (el.tagName === 'LI' && el.closest('.toc')) return;     // índice: não ler
+      if (el.tagName === 'TR' && el.querySelector('th')) return; // cabeçalho de tabela
+      // Células da linha separadas por pausa (vírgula), depois espaços normais
+      const t = (el.innerText || '').replace(/\t+/g, ', ').replace(/\s+/g, ' ').trim();
+      if (t && !el.closest('#leitor')) lista.push({ el, t });
+    });
+    return lista;
+  };
+
+  let fila = [], atual = null;
+  const limpar = () => { document.querySelectorAll('.lendo').forEach(e => e.classList.remove('lendo')); };
+  const mostrarControles = (lendo) => { $('lerPausa').hidden = !lendo; $('lerParar').hidden = !lendo; $('lerPausa').textContent = '⏸ Pausar'; };
+  const proximo = () => {
+    limpar();
+    atual = fila.shift();
+    if (!atual) { mostrarControles(false); return; }
+    atual.el.classList.add('lendo');
+    atual.el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    const u = new SpeechSynthesisUtterance(atual.t);
+    const v = vozes[$('lerVoz').value];
+    if (v) { u.voice = v; u.lang = v.lang; } else u.lang = 'pt-BR';
+    u.rate = parseFloat($('lerVel').value) || 1;
+    u.onend = proximo;
+    u.onerror = (e) => { if (e.error !== 'interrupted' && e.error !== 'canceled') proximo(); };
+    fala.speak(u);
+  };
+  const iniciar = (raiz) => {
+    fala.cancel();
+    fila = pedacos(raiz);
+    mostrarControles(true);
+    proximo();
+  };
+
+  $('lerTudo').onclick = () => iniciar(document.querySelector('.container'));
+  $('lerParar').onclick = () => { fila = []; fala.cancel(); limpar(); mostrarControles(false); };
+  $('lerPausa').onclick = () => {
+    if (fala.paused) { fala.resume(); $('lerPausa').textContent = '⏸ Pausar'; }
+    else { fala.pause(); $('lerPausa').textContent = '▶ Continuar'; }
+  };
+
+  // ── Botão "Ouvir esta parte" em cada seção ──
+  document.querySelectorAll('.section').forEach(sec => {
+    const h2 = sec.querySelector('h2');
+    if (!h2) return;
+    const b = document.createElement('button');
+    b.className = 'btn-ouvir';
+    b.textContent = '🔊 Ouvir esta parte';
+    b.onclick = () => iniciar(sec);
+    h2.insertAdjacentElement('afterend', b);
+  });
+
+  window.addEventListener('beforeunload', () => fala.cancel());
+})();
+</script>
 </body>
 </html>
