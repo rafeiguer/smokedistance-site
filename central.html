@@ -120,7 +120,7 @@ main{flex:1;display:grid;grid-template-columns:330px minmax(0,1fr) 390px;grid-te
 .btn-trilho.ligado{background:color-mix(in srgb,var(--fogo-forte) 70%,transparent);border-color:#fff}
 .ponto.grande{width:18px;height:18px;border:2px solid #fff}
 .pop{position:absolute;right:calc(100% + 8px);top:0;display:flex;gap:6px;padding:7px;border-radius:18px;align-items:center;white-space:nowrap}
-.pop[hidden]{display:none}
+.pop[hidden],.pil[hidden]{display:none}
 .coluna{flex-direction:column;align-items:stretch;display:flex;gap:6px}
 .legenda::before,.aviso-mapa::before{background:linear-gradient(180deg,rgba(255,255,255,.22),transparent);border-radius:20px 20px 0 0}
 .legenda,.aviso-mapa{border-radius:20px}
@@ -255,6 +255,7 @@ nav.abas{display:none}
         <div id="listaCamadas"></div>
         <div class="kv" style="margin-top:10px;align-items:center"><span>🎯 Erro da bússola (graus)</span><input type="number" id="inpSigma" class="sigma" min="0.5" max="20" step="0.5"></div>
         <p class="dica">Define a margem de erro dos focos (círculo amarelo, 95%). Calibre triangulando um ponto conhecido (torre, antena).</p>
+        <button class="pil" id="btnApagarFocos" style="--c:var(--fogo-forte);margin-top:8px" hidden title="Apaga do servidor as visadas e focos marcados de todos os aparelhos">🗑️ Apagar todos os focos</button>
       </section>
       <section class="vidro secao" id="secRegistro" style="--c:var(--alerta)">
         <h2>📜 Registro da operação</h2>
@@ -379,7 +380,7 @@ nav.abas{display:none}
 <script type="module">
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js';
 import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js';
-import { getFirestore, collection, query, orderBy, limit, onSnapshot, addDoc, deleteDoc, updateDoc, doc, getDoc, setDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js';
+import { getFirestore, collection, query, orderBy, limit, onSnapshot, addDoc, deleteDoc, updateDoc, doc, getDoc, getDocs, setDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js';
 
 // Config pública do app web (a mesma do app — a segurança vem das firestore.rules)
 const app = initializeApp({
@@ -443,6 +444,15 @@ $('btnEntrar').onclick = async () => {
 getRedirectResult(auth).catch(() => {});
 $('btnSair').onclick = () => signOut(auth);
 
+// Só admin (as firestore.rules também só deixam o admin apagar foco alheio)
+$('btnApagarFocos').onclick = async () => {
+  if (!confirm('Apagar do servidor TODAS as visadas e focos marcados, de todos os aparelhos? Não tem volta.')) return;
+  try {
+    const snap = await getDocs(collection(db, 'focos'));
+    await Promise.all(snap.docs.map(d => deleteDoc(d.ref)));
+  } catch (e) { alert('Não foi possível apagar: ' + e.message); }
+};
+
 onAuthStateChanged(auth, async (u) => {
   // Sessão anônima não entra na Central: exige conta Google
   if (!u || u.isAnonymous) { usuario = null; $('login').style.display = 'flex'; $('app').classList.remove('on'); return; }
@@ -451,6 +461,7 @@ onAuthStateChanged(auth, async (u) => {
   $('login').style.display = 'none';
   $('app').classList.add('on');
   $('nome').textContent = `${u.displayName || u.email}${papel ? ' · ' + papel : ''}`;
+  $('btnApagarFocos').hidden = papel !== 'admin';
   if (u.photoURL) $('foto').src = u.photoURL; else $('foto').remove();
   iniciar();
 });
