@@ -458,8 +458,16 @@ $('btnApagarFocos').onclick = async () => {
 onAuthStateChanged(auth, async (u) => {
   // Sessão anônima não entra na Central: exige conta Google
   if (!u || u.isAnonymous) { usuario = null; $('login').style.display = 'flex'; $('app').classList.remove('on'); return; }
-  usuario = u;
   papel = (await u.getIdTokenResult(true)).claims.role || null;
+  // Só admin/coordenador entram (papel dado por scripts/grant-role.js). Outra
+  // conta Google é desconectada — senão qualquer um desenharia rota e mandaria
+  // mensagem às brigadas pela Central.
+  if (!ehChefe()) {
+    await signOut(auth);
+    $('loginErro').textContent = `A conta ${u.email} não tem acesso à Central de Controle. Peça ao administrador.`;
+    return;
+  }
+  usuario = u;
   $('login').style.display = 'none';
   $('app').classList.add('on');
   $('nome').textContent = `${u.displayName || u.email}${papel ? ' · ' + papel : ''}`;
@@ -803,6 +811,11 @@ function popupTraco(t) {
   esconder.onclick = () => { mapa.closePopup(); historico.push({ acao: 'esconder', ids: [t.id] }); mudarEscondidos([...escondidos, t.id]); };
   div.appendChild(esconder);
   if (t.autorUid === usuario?.uid || ehChefe()) {
+    const ima = document.createElement('button');
+    ima.className = 'btn-pop'; ima.textContent = '🧲 Ajustar pela imagem';
+    ima.title = 'Puxa o traço para a trilha visível na imagem de satélite (vira tipo Trilha)';
+    ima.onclick = () => { mapa.closePopup(); ajustarTracoSalvo(t); };
+    div.appendChild(ima);
     const b = document.createElement('button');
     b.className = 'btn-pop perigo'; b.textContent = '🗑️ Apagar para todos';
     b.onclick = () => { mapa.closePopup(); deleteDoc(doc(db, 'rotaServico', t.id)).catch(e => alert('Não foi possível apagar: ' + e.message)); };
@@ -997,14 +1010,16 @@ async function imaTrilha(latlngs) {
   return { pontos: simp.map(p => mapa.unproject(p, z)), contraste };
 }
 
+let ajustarTracoSalvo = () => {}; // definido em montarDesenho (usa o estado do desenho)
+
 function montarDesenho() {
   const el = $('mapa');
   const PASSO_PX = 6, MAX = 500;
   let pontos = [], ultimoPx = null, linhaViva = null, ativo = false, imaPendente = false;
 
-  const salvarTraco = async (lista) => {
+  const salvarTraco = async (lista, tipo = tipoSel) => {
     const ref = await addDoc(collection(db, 'rotaServico'), {
-      tipo: tipoSel,
+      tipo,
       pontos: lista.map(p => ({ latitude: p.lat, longitude: p.lng })),
       autorUid: usuario.uid,
       autorNome: usuario.displayName || 'Central',
@@ -1015,16 +1030,24 @@ function montarDesenho() {
     $('btnDesfazer').disabled = false;
   };
 
-  // Trilha: mostra o desenho (tracejado) e a versão do ímã; a pessoa escolhe
-  const ajustarTrilha = async (lista, original) => {
+  // Trilha: mostra o desenho (tracejado) e a versão do ímã; a pessoa escolhe.
+  // `existente` = traço já salvo (botão 🧲 do popup): a ajustada entra como
+  // Trilha no lugar dele; "manter" não muda nada.
+  const ajustarTrilha = async (lista, original, existente = null) => {
     const aviso = $('avisoMapa'), textoAviso = aviso.innerHTML;
     imaPendente = true;
+    aviso.classList.add('on'); // fora do modo desenho o aviso fica escondido
     aviso.textContent = '🧲 Procurando a trilha na imagem de satélite…';
     let corrigida = null;
     const fim = async (usar) => {
       aviso.innerHTML = textoAviso; imaPendente = false;
+      aviso.classList.toggle('on', desenhando);
       corrigida?.remove(); original.remove();
-      if (usar) try { await salvarTraco(usar); } catch (err) { alert('Não foi possível salvar o traço: ' + err.message); }
+      if (!usar || (existente && usar === lista)) return;
+      try {
+        await salvarTraco(usar, existente ? 'trilha' : tipoSel);
+        if (existente) await deleteDoc(doc(db, 'rotaServico', existente.id));
+      } catch (err) { alert('Não foi possível salvar o traço: ' + err.message); }
     };
     try {
       const r = await imaTrilha(lista);
@@ -1039,8 +1062,14 @@ function montarDesenho() {
     } catch (err) {
       aviso.innerHTML = `🧲 Não deu para ajustar (${esc(err.message)}). <button class="btn-pop" id="imaManter">✏️ Salvar como desenhei</button><button class="btn-pop perigo" id="imaDescartar">✕ Descartar</button>`;
     }
+    if (existente) $('imaManter').textContent = '✏️ Manter como está';
     $('imaManter').onclick = () => fim(lista);
     $('imaDescartar').onclick = () => fim(null);
+  };
+  ajustarTracoSalvo = (t) => {
+    if (imaPendente || !(t.pontos?.length > 1)) return;
+    const lista = t.pontos.map(p => L.latLng(p.latitude, p.longitude));
+    ajustarTrilha(lista, L.polyline(lista, { color: '#fff', dashArray: '6 8', weight: 3 }).addTo(mapa), t);
   };
 
   $('btnDesenhar').onclick = () => {
