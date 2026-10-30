@@ -1229,7 +1229,7 @@ function montarEquipe() {
   onSnapshot(collection(db, 'equipe'), (snap) => {
     $('listaEquipe').innerHTML = snap.empty
       ? 'Ninguém liberado por aqui ainda.'
-      : snap.docs.map(d => `<div class="kv" style="align-items:center"><span>${esc(d.id)}</span><button class="pil" data-tirar="${esc(d.id)}">Remover</button></div>`).join('');
+      : snap.docs.map(d => `<div class="kv" style="align-items:center"><span style="min-width:0;overflow-wrap:anywhere">${esc(d.id)}</span><button class="pil" style="flex-shrink:0;--c:var(--fogo-forte)" data-tirar="${esc(d.id)}" title="Tirar o acesso desta pessoa à Central">🚫 Remover</button></div>`).join('');
   }, (e) => console.warn('Central: equipe', e.message));
   $('listaEquipe').onclick = (ev) => {
     const b = ev.target.closest('[data-tirar]');
