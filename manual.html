@@ -1111,14 +1111,17 @@ body{padding-bottom:90px}
   }
 
   // ── Vozes em português (escolha salva) ──
+  // 1ª opção "Automática": não força voz nenhuma, o aparelho usa a pt-BR dele.
+  // No iPhone a lista traz vozes "aprimoradas" que só existem depois de
+  // baixadas — forçar uma delas "lê" em silêncio (o destaque anda, sem som).
   let vozes = [];
   const carregarVozes = () => {
     const todas = fala.getVoices();
     vozes = todas.filter(v => v.lang.toLowerCase().startsWith('pt'));
-    if (!vozes.length) vozes = todas;
     vozes.sort((a, b) => (b.lang === 'pt-BR') - (a.lang === 'pt-BR'));
     const salva = ler('manual_voz');
-    $('lerVoz').innerHTML = vozes.map((v, i) => `<option value="${i}"${v.name === salva ? ' selected' : ''}>${v.name.replace(/Microsoft |Google /, '')} (${v.lang})</option>`).join('');
+    $('lerVoz').innerHTML = '<option value="auto">Automática (do aparelho)</option>'
+      + vozes.map((v, i) => `<option value="${i}"${v.name === salva ? ' selected' : ''}>${v.name.replace(/Microsoft |Google /, '')} (${v.lang})</option>`).join('');
   };
   carregarVozes();
   fala.onvoiceschanged = carregarVozes;
@@ -1140,38 +1143,56 @@ body{padding-bottom:90px}
     return lista;
   };
 
-  let fila = [], atual = null;
+  // Pausa feita pelo próprio leitor: pause()/resume() do navegador falham no
+  // Chrome (vozes Google pausam e não voltam). Pausar = parar e guardar o
+  // trecho; Continuar = ler de novo esse trecho e seguir. Cada fala tem um
+  // número: fala cancelada (pausa, parar, nova seção) não puxa a próxima.
+  let fila = [], atual = null, pausado = false, numero = 0;
   const limpar = () => { document.querySelectorAll('.lendo').forEach(e => e.classList.remove('lendo')); };
   const mostrarControles = (lendo) => { $('lerPausa').hidden = !lendo; $('lerParar').hidden = !lendo; $('lerPausa').textContent = '⏸ Pausar'; };
+  const falar = (trecho) => {
+    const meu = ++numero;
+    const u = new SpeechSynthesisUtterance(trecho.t);
+    const v = $('lerVoz').value === 'auto' ? null : vozes[$('lerVoz').value];
+    if (v) { u.voice = v; u.lang = v.lang; } else u.lang = 'pt-BR';
+    u.rate = parseFloat($('lerVel').value) || 1;
+    const seguir = () => { if (meu === numero && !pausado) proximo(); };
+    u.onend = seguir;
+    u.onerror = (e) => { if (e.error !== 'interrupted' && e.error !== 'canceled') seguir(); };
+    fala.speak(u);
+  };
   const proximo = () => {
     limpar();
     atual = fila.shift();
     if (!atual) { mostrarControles(false); return; }
     atual.el.classList.add('lendo');
     atual.el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    const u = new SpeechSynthesisUtterance(atual.t);
-    const v = $('lerVoz').value === 'auto' ? null : vozes[$('lerVoz').value];
-    if (v) { u.voice = v; u.lang = v.lang; } else u.lang = 'pt-BR';
-    u.rate = parseFloat($('lerVel').value) || 1;
-    u.onend = proximo;
-    u.onerror = (e) => { if (e.error !== 'interrupted' && e.error !== 'canceled') proximo(); };
-    fala.speak(u);
+    falar(atual);
   };
+  const silenciar = () => { numero++; if (fala.speaking || fala.pending) fala.cancel(); };
   const iniciar = (raiz) => {
     // Só cancela se já estiver falando: no Safari, cancel() seguido de speak()
     // às vezes deixa a fala seguinte muda. A 1ª fala sai dentro do toque (o
     // iPhone só libera som em resposta direta a um toque).
-    if (fala.speaking || fala.pending) fala.cancel();
+    silenciar();
+    pausado = false;
     fila = pedacos(raiz);
     mostrarControles(true);
     proximo();
   };
 
   $('lerTudo').onclick = () => iniciar(document.querySelector('.container'));
-  $('lerParar').onclick = () => { fila = []; fala.cancel(); limpar(); mostrarControles(false); };
+  $('lerParar').onclick = () => { fila = []; pausado = false; silenciar(); limpar(); mostrarControles(false); };
   $('lerPausa').onclick = () => {
-    if (fala.paused) { fala.resume(); $('lerPausa').textContent = '⏸ Pausar'; }
-    else { fala.pause(); $('lerPausa').textContent = '▶ Continuar'; }
+    if (!pausado) {
+      pausado = true;
+      silenciar();
+      $('lerPausa').textContent = '▶ Continuar';
+    } else {
+      pausado = false;
+      $('lerPausa').textContent = '⏸ Pausar';
+      if (atual) falar(atual); else proximo(); // retoma do trecho em que parou
+    }
   };
 
   // ── Botão "Ouvir esta parte" em cada seção ──
