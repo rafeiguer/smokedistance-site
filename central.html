@@ -649,15 +649,30 @@ function escutarDados() {
   }, erro('brigadas'));
 }
 
+// 🧮 Recursos enviados pela Calculadora do app (rotaServicoService.enviarRecursosBrigada)
+function htmlRecursos(r) {
+  if (!r?.itens) return '';
+  const d = quando(r.enviadoEm), falta = r.coberturaPct != null && r.coberturaPct < 100;
+  const qtd = (x) => x.un === 'L' ? `${(+x.estoque).toFixed(1).replace('.', ',')} L` : `${x.estoque} ${esc(x.un)}`;
+  return `<hr style="border:0;border-top:1px solid rgba(255,255,255,.15);margin:6px 0">`
+    + `<b>🧮 Recursos</b> <span class="dica">${idade(d).txt}</span><br>`
+    + `Duram <b>${duracao(r.horas)}</b> · acaba primeiro: ${esc(r.limitante)}<br>`
+    + (r.andamentoPct != null ? `Missão cumprida: <b>${r.andamentoPct}%</b><br>` : '')
+    + (r.coberturaPct != null ? `<b style="color:${falta ? '#E53935' : '#4ADE80'}">${falta ? '⚠️' : '✅'} Cobre ${r.coberturaPct}% do que falta da missão</b><br>` : '')
+    + r.itens.map(x => `<span class="dica">Resta ${qtd(x)} de ${esc(x.nome)} → ${duracao(x.horas)}</span>`).join('<br>');
+}
+
 function desenharBrigadas() {
   if (!grupos.brigadas) return;
   const g = grupos.brigadas; g.clearLayers();
-  eventos.brigadas = brigadas.map(b => {
+  eventos.brigadas = brigadas.flatMap(b => {
     const d = quando(b.atualizadoEm), i = idade(d);
     const cor = { ok: '#4ADE80', atencao: '#FBBF24', velho: '#E53935' }[i.cls];
     const m = L.marker([b.latitude, b.longitude], { icon: icone('🚒', 'rgba(0,0,0,.8)', 34, cor), zIndexOffset: 800 }).addTo(g)
-      .bindPopup(`<b>🚒 ${esc(b.nome || 'Brigada')}</b><br>Posição <b style="color:${cor}">${i.txt}</b> (${hhmm(d)})${b.precisaoM ? `<br>Precisão do GPS ± ${b.precisaoM} m` : ''}`);
-    return { d, txt: `🚒 ${b.nome || 'Brigada'} enviou a posição`, lat: b.latitude, lon: b.longitude, abrir: () => m.openPopup() };
+      .bindPopup(`<b>🚒 ${esc(b.nome || 'Brigada')}</b><br>Posição <b style="color:${cor}">${i.txt}</b> (${hhmm(d)})${b.precisaoM ? `<br>Precisão do GPS ± ${b.precisaoM} m` : ''}${htmlRecursos(b.recursos)}`);
+    const ev = [{ d, txt: `🚒 ${b.nome || 'Brigada'} enviou a posição`, lat: b.latitude, lon: b.longitude, abrir: () => m.openPopup() }];
+    if (b.recursos) ev.push({ d: quando(b.recursos.enviadoEm), txt: `🧮 ${b.nome || 'Brigada'}: recursos para ${duracao(b.recursos.horas)}`, cls: b.recursos.coberturaPct != null && b.recursos.coberturaPct < 100 ? 'fogo' : '', lat: b.latitude, lon: b.longitude, abrir: () => m.openPopup() });
+    return ev;
   });
   atualizarQtd('brigadas', brigadas.length);
 }
