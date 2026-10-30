@@ -1150,7 +1150,7 @@ body{padding-bottom:90px}
     atual.el.classList.add('lendo');
     atual.el.scrollIntoView({ behavior: 'smooth', block: 'center' });
     const u = new SpeechSynthesisUtterance(atual.t);
-    const v = vozes[$('lerVoz').value];
+    const v = $('lerVoz').value === 'auto' ? null : vozes[$('lerVoz').value];
     if (v) { u.voice = v; u.lang = v.lang; } else u.lang = 'pt-BR';
     u.rate = parseFloat($('lerVel').value) || 1;
     u.onend = proximo;
@@ -1158,7 +1158,10 @@ body{padding-bottom:90px}
     fala.speak(u);
   };
   const iniciar = (raiz) => {
-    fala.cancel();
+    // Só cancela se já estiver falando: no Safari, cancel() seguido de speak()
+    // às vezes deixa a fala seguinte muda. A 1ª fala sai dentro do toque (o
+    // iPhone só libera som em resposta direta a um toque).
+    if (fala.speaking || fala.pending) fala.cancel();
     fila = pedacos(raiz);
     mostrarControles(true);
     proximo();
