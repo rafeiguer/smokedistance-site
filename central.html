@@ -499,6 +499,8 @@ function iniciar() {
   iniciado = true;
   mapa = L.map('mapa', { zoomControl: false, preferCanvas: true }).setView([-12.6, -41.5], 11);
   L.control.zoom({ position: 'bottomright' }).addTo(mapa);
+  // Celular: tocar no mapa fecha o painel aberto (Msgs, Registro…), igual ao botão Mapa
+  mapa.on('click', () => { if (document.querySelector('.col.mostra')) document.querySelector('#abas [data-aba="mapa"]').click(); });
   baseAtual = bases.sat().addTo(mapa);
   document.querySelectorAll('[data-base]').forEach(b => b.onclick = () => {
     mapa.removeLayer(baseAtual); baseAtual = bases[b.dataset.base]().addTo(mapa);
