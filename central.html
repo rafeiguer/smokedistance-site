@@ -389,6 +389,7 @@ nav.abas{display:none}
 </div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet.tilelayer.fallback@1.0.4/dist/leaflet.tilelayer.fallback.js"></script>
 <script type="module">
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js';
 import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js';
@@ -493,16 +494,19 @@ onAuthStateChanged(auth, async (u) => {
 
 /* ───────────── MAPA ───────────── */
 let mapa, iniciado = false;
-// Zoom: a Esri só tem foto até o nível 18 na Chapada (no 19 devolve a tela
-// cinza "Map data not yet available" — conferido 30/10 no Capão). Acima do nível
-// real (maxNativeZoom) o Leaflet amplia a última imagem, como o Google no app:
-// não fica mais nítida, mas fica maior para mirar o risco.
+// Zoom: a foto da Esri vai até níveis diferentes conforme o lugar (Capão: 18;
+// trechos da Chapada: 17; cidades: 19+). Sem foto, a Esri devolve a tela cinza
+// "Map data not yet available" — com blankTile=false ela devolve 404, e o
+// Leaflet.TileLayer.Fallback usa a foto do nível de baixo, ampliada. Acima do
+// maxNativeZoom o Leaflet amplia a última imagem, como o Google no app.
 const ZOOM_MAX = 21;
+const URL_ESRI = 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}?blankTile=false';
+const satelite = (attribution) => L.tileLayer.fallback(URL_ESRI, { maxZoom: ZOOM_MAX, maxNativeZoom: 19, attribution });
 const bases = {
-  sat: () => L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: ZOOM_MAX, maxNativeZoom: 18, attribution: 'Imagem © Esri' }),
+  sat: () => satelite('Imagem © Esri'),
   // Híbrido = satélite + estradas + nomes de lugares/limites por cima (Esri, grátis)
   hibrido: () => L.layerGroup([
-    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: ZOOM_MAX, maxNativeZoom: 18, attribution: 'Imagem e rótulos © Esri' }),
+    satelite('Imagem e rótulos © Esri'),
     L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Transportation/MapServer/tile/{z}/{y}/{x}', { maxZoom: ZOOM_MAX, maxNativeZoom: 19 }),
     L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}', { maxZoom: ZOOM_MAX, maxNativeZoom: 19 }),
   ]),
@@ -949,21 +953,37 @@ function montarTipos() {
    rio seco, estrada e sombra enganam): o resultado é mostrado e só vale se aceito.
    Roda no navegador, uma vez por traço (sem custo, sem servidor). */
 // Zoom 18 = a foto mais detalhada que a Esri tem na Chapada (~0,6 m/px): a
-// trilha fina fica com 2–4 px em vez de 1–2. Calibração 30/10 ("mais claro que
-// os dois lados", 9 casos em Fumaça e Capão): trilha real 21–41 (no zoom 17,
-// 13–31 — trilha apagada passava raspando); sem trilha 3,8–12 (areal com moitas
-// é o pior). 16 fica no meio. Custo: 4× mais imagem → trechos de ~1 km.
-const IMA = { zoom: 18, raioM: 20, ladoPx: 5, minContraste: 16, maxLadrilhos: 80 };
+// trilha fina fica com 2–4 px em vez de 1–2. Custo: 4× mais imagem → ~1 km.
+// Onde não há foto no 18 (404 com blankTile=false) ou o traço passa de ~1 km,
+// refaz no 17.
+// Decisão = DESTAQUE (contraste da trilha ÷ ruído do lugar), não contraste
+// puro: trilha apagada em capim liso tem contraste baixo mas fundo liso; areal
+// com moitas tem contraste médio mas fundo todo manchado. Calibração 30/10, 13
+// casos (Fumaça; areal do Capão; trilhas fracas -12.579/-12.558; círculo
+// -12.525,-41.483, que só tem foto no 17): trilha real 1,11–2,06; sem trilha
+// 0,41–0,59 → 0,85. Pelo contraste puro os dois grupos se misturavam (6,6 × 11,8).
+// minContraste 4 só evita "achar" trilha em área quase sem ruído (nuvem, água).
+const IMA_NIVEIS = [{ zoom: 18, ladoPx: 5 }, { zoom: 17, ladoPx: 3 }];
+const IMA_BASE = { raioM: 20, maxLadrilhos: 80, minDestaque: 0.85, minContraste: 4 };
 const carregarImg = (src) => new Promise((ok, falha) => { const i = new Image(); i.crossOrigin = 'anonymous'; i.onload = () => ok(i); i.onerror = () => falha(new Error('imagem de satélite não carregou')); i.src = src; });
 
 async function imaTrilha(latlngs) {
+  let ultimoErro;
+  for (const nivel of IMA_NIVEIS) {
+    try { return await imaTrilhaNoNivel(latlngs, { ...IMA_BASE, ...nivel }); }
+    catch (e) { ultimoErro = e; } // sem foto nesse nível ou traço longo: tenta o de baixo
+  }
+  throw ultimoErro;
+}
+
+async function imaTrilhaNoNivel(latlngs, IMA) {
   const z = IMA.zoom;
   const glob = latlngs.map(p => mapa.project(p, z)); // pixel global no zoom z
   const mpp = 40075016.686 * Math.cos(latlngs[0].lat * Math.PI / 180) / (256 * 2 ** z);
   const W = Math.round(IMA.raioM / mpp), M = W + IMA.ladoPx + 4;
   const tx0 = Math.floor((Math.min(...glob.map(p => p.x)) - M) / 256), tx1 = Math.floor((Math.max(...glob.map(p => p.x)) + M) / 256);
   const ty0 = Math.floor((Math.min(...glob.map(p => p.y)) - M) / 256), ty1 = Math.floor((Math.max(...glob.map(p => p.y)) + M) / 256);
-  if ((tx1 - tx0 + 1) * (ty1 - ty0 + 1) > IMA.maxLadrilhos) throw new Error('traço grande demais para ajustar de uma vez — desenhe em trechos de até ~1 km');
+  if ((tx1 - tx0 + 1) * (ty1 - ty0 + 1) > IMA.maxLadrilhos) throw new Error('traço grande demais para ajustar de uma vez — desenhe em trechos de até ~2 km');
 
   // 1) Imagem em volta do traço
   const w = (tx1 - tx0 + 1) * 256, h = (ty1 - ty0 + 1) * 256;
@@ -971,7 +991,7 @@ async function imaTrilha(latlngs) {
   const cx = cv.getContext('2d', { willReadFrequently: true });
   const lad = [];
   for (let x = tx0; x <= tx1; x++) for (let y = ty0; y <= ty1; y++) lad.push([x, y]);
-  await Promise.all(lad.map(async ([x, y]) => cx.drawImage(await carregarImg(`https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/${z}/${y}/${x}`), (x - tx0) * 256, (y - ty0) * 256)));
+  await Promise.all(lad.map(async ([x, y]) => cx.drawImage(await carregarImg(`https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/${z}/${y}/${x}?blankTile=false`), (x - tx0) * 256, (y - ty0) * 256)));
   const px = cx.getImageData(0, 0, w, h).data;
 
   // 2) Brilho descontado o verde (caminho = chão exposto, não folha)
@@ -1014,7 +1034,17 @@ async function imaTrilha(latlngs) {
   // 4) Programação dinâmica: maximiza "parece caminho" − leve atração ao risco,
   //    andando no máximo 1 px de lado a cada 2 px (curva suave)
   const custo = new Float32Array(n * nO), de = new Int8Array(n * nO);
-  const ganho = (i, o) => valor(am[i].x + normais[i].x * (o - W), am[i].y + normais[i].y * (o - W), normais[i].x, normais[i].y) - 0.15 * Math.abs(o - W);
+  // "Parece caminho" de cada amostra × deslocamento, calculado uma vez; o desvio
+  // padrão de tudo isso é o ruído do lugar (capim liso: baixo; areal com moitas: alto)
+  const val = new Float32Array(n * nO);
+  let soma = 0, soma2 = 0, cont = 0;
+  for (let i = 0; i < n; i++) for (let o = 0; o < nO; o++) {
+    const v = valor(am[i].x + normais[i].x * (o - W), am[i].y + normais[i].y * (o - W), normais[i].x, normais[i].y);
+    val[i * nO + o] = v;
+    if (v > -99) { soma += v; soma2 += v * v; cont++; }
+  }
+  const ruido = Math.sqrt(Math.max(0, soma2 / cont - (soma / cont) ** 2)) || 1;
+  const ganho = (i, o) => val[i * nO + o] - 0.15 * Math.abs(o - W);
   for (let o = 0; o < nO; o++) custo[o] = ganho(0, o);
   for (let i = 1; i < n; i++) for (let o = 0; o < nO; o++) {
     let melhor = -Infinity, passo = 0;
@@ -1027,15 +1057,16 @@ async function imaTrilha(latlngs) {
   for (let i = n - 1; i >= 0; i--) { offs[i] = o; o += de[i * nO + o]; }
 
   // 5) Achou caminho claro de verdade? (senão, mantém o desenho)
-  const contraste = offs.reduce((s, oi, i) => s + valor(am[i].x + normais[i].x * (oi - W), am[i].y + normais[i].y * (oi - W), normais[i].x, normais[i].y), 0) / n;
-  if (contraste < IMA.minContraste) return { pontos: null, contraste };
+  const contraste = offs.reduce((s, oi, i) => s + val[i * nO + oi], 0) / n;
+  const destaque = contraste / ruido;
+  if (destaque < IMA.minDestaque || contraste < IMA.minContraste) return { pontos: null, contraste, destaque, zoom: z };
 
   // Média móvel do deslocamento: tira a tremida de 1–2 px da escolha pixel a pixel
   const suave = offs.map((_, i) => { let s = 0, c = 0; for (let j = Math.max(0, i - 3); j <= Math.min(n - 1, i + 3); j++) { s += offs[j]; c++; } return s / c; });
   const pts = am.map((p, i) => L.point(p.x + normais[i].x * (suave[i] - W), p.y + normais[i].y * (suave[i] - W)));
   let simp = L.LineUtil.simplify(pts, 1);
   for (let tol = 2; simp.length > 500; tol *= 2) simp = L.LineUtil.simplify(pts, tol);
-  return { pontos: simp.map(p => mapa.unproject(p, z)), contraste };
+  return { pontos: simp.map(p => mapa.unproject(p, z)), contraste, destaque, zoom: z };
 }
 
 let ajustarTracoSalvo = () => {}; // definido em montarDesenho (usa o estado do desenho)
