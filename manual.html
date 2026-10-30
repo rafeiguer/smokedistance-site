@@ -313,6 +313,7 @@ footer{
       <li><a href="#drone">Observação por Drone</a></li>
       <li><a href="#rota">Rota a Pé até o Foco</a></li>
       <li><a href="#rota-servico">Rota de Serviço — Desenhar no Mapa</a></li>
+      <li><a href="#calculadora">Calculadora de Campo</a></li>
       <li><a href="#fotos">Fotos de Campo</a></li>
       <li><a href="#agua">Água e Cobertura de Rede</a></li>
       <li><a href="#trilhas">Trilhas — Gravar e Explorar</a></li>
@@ -454,7 +455,7 @@ footer{
       <tr><td>Ícone <strong>ⓘ</strong> nos cartões</td><td>Abre uma explicação rápida: o que é, quando usar, requisitos e cuidados.</td></tr>
       <tr><td><strong>LOCALIZAÇÃO</strong></td><td>Latitude, longitude e altitude. A altitude vem do modelo de relevo; sem internet, vem do GPS e aparece como "Altitude (GPS)".</td></tr>
       <tr><td><strong>METEOROLOGIA</strong></td><td>Temperatura, umidade, vento, de onde o vento vem e para onde o fogo tende a ir. Sem internet, avisa que não há dados (o app nunca mostra valores inventados).</td></tr>
-      <tr><td>Grade de atalhos</td><td><span class="btn-tag btn-green">Mapa</span> <span class="btn-tag btn-blue">Rota de serviço</span> <span class="btn-tag btn-orange">Gravar trilha</span> <span class="btn-tag btn-red">Propagação</span> <span class="btn-tag btn-blue">Satélites</span> <span class="btn-tag btn-purple">Compartilhar</span> <span class="btn-tag btn-gray">Configurações</span> <span class="btn-tag btn-orange">📖 Manual do app</span> — abre este manual no navegador do celular (precisa de internet).</td></tr>
+      <tr><td>Grade de atalhos</td><td><span class="btn-tag btn-green">Mapa</span> <span class="btn-tag btn-blue">Rota de serviço</span> <span class="btn-tag btn-orange">Gravar trilha</span> <span class="btn-tag btn-red">Propagação</span> <span class="btn-tag btn-blue">Satélites</span> <span class="btn-tag btn-purple">Compartilhar</span> <span class="btn-tag btn-gray">Configurações</span> <span class="btn-tag btn-purple">🧮 Calculadora</span> <span class="btn-tag btn-orange">📖 Manual do app</span> — abre este manual no navegador do celular (precisa de internet).</td></tr>
     </table></div>
   </div>
 
@@ -730,6 +731,26 @@ footer{
       <div class="alert-title">💡 Precisa de internet</div>
       O traço é enviado na hora quando há sinal. Use a rota de fuga e a zona de segurança em toda operação — é o protocolo internacional de segurança do combatente.
     </div>
+  </div>
+
+  <!-- 8C. CALCULADORA -->
+  <div class="section" id="calculadora">
+    <span class="section-label">08C</span>
+    <h2>Calculadora de Campo</h2>
+    <p>Calcula <strong>quanto tempo dura o que a brigada levou</strong> — combustível, água e comida — e <strong>funciona sem internet</strong>. Os equipamentos (consumo, tanque, mistura) vêm da tabela da Central de Controle; uma cópia fica no celular para usar em campo. A mesma conta existe na Central.</p>
+    <div class="tabela"><table>
+      <tr><th>Parte</th><th>O que preencher</th></tr>
+      <tr><td>🧰 Equipamentos levados</td><td>Quantos de cada foram levados e quantos estão <strong>ligados</strong> (vazio = todos). O consumo (L/h) pode ser corrigido ali.</td></tr>
+      <tr><td>📦 O que foi levado</td><td>Duração da missão, pessoas, gasolina, óleo 2T, mistura pronta, diesel, água de combate, água potável, hidratação por pessoa, refeições e de quantas em quantas horas se come.</td></tr>
+      <tr><td><span class="btn-tag btn-purple">🧮 Calcular</span></td><td>Mostra o resultado.</td></tr>
+    </table></div>
+    <h3>O que o resultado mostra</h3>
+    <ul class="lista">
+      <li><strong>Resultado final</strong>: quanto a operação dura, o que acaba primeiro e a que horas, e se dá para a missão.</li>
+      <li><strong>Mistura</strong>: gasolina + óleo na proporção (50:1) = litros de mistura, quanto óleo seria preciso e o que sobra.</li>
+      <li><strong>Cada equipamento</strong>: quanto dura 1 tanque, quanto dura 1 ligado sozinho, todos ligados juntos e quantos tanques dá para encher. Ex.: 12 L de gasolina + 0,24 L de óleo → 1 BR 600 sozinho dura ~10h, os 9 juntos ~1h07.</li>
+      <li><strong>Água de combate, água potável e comida</strong>: quantas horas duram, quando acabam e quanto falta para a missão.</li>
+    </ul>
   </div>
 
   <!-- 9. FOTOS -->

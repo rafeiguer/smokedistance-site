@@ -293,14 +293,18 @@ nav.abas{display:none}
         <div class="campos">
           <div class="campo"><label>Duração da missão (h)</label><input type="number" min="0" step="0.5" data-calc="duracao"></div>
           <div class="campo"><label>Pessoas</label><input type="number" min="0" step="1" data-calc="pessoas"></div>
-          <div class="campo"><label>Gasolina levada (L)</label><input type="number" min="0" step="0.5" data-calc="gasolina"></div>
-          <div class="campo"><label>Óleo 2T levado (L)</label><input type="number" min="0" step="0.1" data-calc="oleo"></div>
+          <div class="campo"><label>Gasolina (L)</label><input type="number" min="0" step="0.5" data-calc="gasolina"></div>
+          <div class="campo"><label>Óleo 2T (L)</label><input type="number" min="0" step="0.1" data-calc="oleo"></div>
+          <div class="campo"><label>Mistura pronta (L)</label><input type="number" min="0" step="0.5" data-calc="misturaPronta"></div>
           <div class="campo"><label>Diesel (L)</label><input type="number" min="0" step="0.5" data-calc="diesel"></div>
           <div class="campo"><label>Água de combate (L)</label><input type="number" min="0" step="10" data-calc="agua"></div>
           <div class="campo"><label>Água potável (L)</label><input type="number" min="0" step="1" data-calc="potavel"></div>
-          <div class="campo"><label>Hidratação L/h por pessoa</label><input type="number" min="0" step="0.1" data-calc="hidratacao" placeholder="ex.: 0,5"></div>
+          <div class="campo"><label>Hidratação L/h p/ pessoa</label><input type="number" min="0" step="0.1" data-calc="hidratacao" placeholder="ex.: 0,5"></div>
+          <div class="campo"><label>Refeições levadas</label><input type="number" min="0" step="1" data-calc="refeicoes"></div>
+          <div class="campo"><label>1 refeição a cada (h)</label><input type="number" min="0" step="0.5" data-calc="refeicaoCadaH" placeholder="ex.: 4"></div>
         </div>
-        <div id="resultados"></div>
+        <button class="pil destaque grande" id="btnCalcular" style="--c:var(--roxo);width:100%;justify-content:center;margin-top:12px">🧮 Calcular</button>
+        <div id="resultados"><p class="dica" style="margin-top:10px">Preencha o que foi levado e clique em Calcular. "Em uso" vazio na tabela = todos os levados ligados.</p></div>
       </section>
     </div>
   </main>
@@ -905,12 +909,13 @@ async function montarEquipamentos() {
   const calc = lerLocal('central_calc', {});
   document.querySelectorAll('[data-calc]').forEach(i => {
     if (calc[i.dataset.calc] != null) i.value = calc[i.dataset.calc];
-    i.oninput = () => { calc[i.dataset.calc] = i.value; gravarLocal('central_calc', calc); calcular(); };
+    i.oninput = () => { calc[i.dataset.calc] = i.value; gravarLocal('central_calc', calc); };
+    i.onkeydown = (e) => { if (e.key === 'Enter') calcular(); };
   });
 
   $('btnLinha').onclick = () => { linhas.push({ nome: '', qtd: 1, uso: '', comb: 'gasolina', prop: '', tanque: '', consumo: '', vazao: '' }); desenharTabela(); };
   $('btnSalvarEquip').onclick = salvarTabela;
-  calcular();
+  $('btnCalcular').onclick = calcular;
 }
 
 function desenharTabela() {
@@ -928,9 +933,8 @@ function desenharTabela() {
   document.querySelectorAll('#tabEquip [data-k]').forEach(inp => inp.oninput = inp.onchange = () => {
     linhas[inp.dataset.i][inp.dataset.k] = inp.value;
     $('estadoEquip').textContent = 'alterado — não salvo';
-    calcular();
   });
-  document.querySelectorAll('#tabEquip [data-del]').forEach(b => b.onclick = () => { linhas.splice(+b.dataset.del, 1); desenharTabela(); calcular(); });
+  document.querySelectorAll('#tabEquip [data-del]').forEach(b => b.onclick = () => { linhas.splice(+b.dataset.del, 1); desenharTabela(); });
 }
 
 async function salvarTabela() {
@@ -946,64 +950,85 @@ async function salvarTabela() {
   }
 }
 
-function calcular() {
-  const v = {};
-  document.querySelectorAll('[data-calc]').forEach(i => v[i.dataset.calc] = n(i.value));
-  // "Em uso" vazio = todos ligados
-  const emUso = (l) => (String(l.uso ?? '').trim() === '' ? n(l.qtd) : n(l.uso));
-  let gas = 0, oleo = 0, diesel = 0, agua = 0, ligados = 0, avisos = [];
-  linhas.forEach(l => {
-    const uso = emUso(l), c = n(l.consumo), R = n(l.prop);
-    if (uso > n(l.qtd)) avisos.push(`"${l.nome}" está com mais em uso do que a quantidade.`);
-    if (uso > 0 && !c && l.comb !== 'nenhum') avisos.push(`"${l.nome || 'equipamento'}" sem consumo (L/h) — fica fora do cálculo.`);
-    if (uso > 0 && c) ligados += uso;
-    if (l.comb === 'mistura' && R > 0) { gas += uso * c * R / (R + 1); oleo += uso * c / (R + 1); }
-    else if (l.comb === 'mistura' || l.comb === 'gasolina') gas += uso * c;
-    else if (l.comb === 'diesel') diesel += uso * c;
-    agua += uso * n(l.vazao) * 60;
-  });
-  const potavel = v.pessoas * v.hidratacao;
-  const H = v.duracao;
-  const recursos = [
-    { nome: '⛽ Gasolina', est: v.gasolina, h: gas, casas: 1 },
-    { nome: '🛢️ Óleo 2T', est: v.oleo, h: oleo, casas: 2 },
-    { nome: '⛽ Diesel', est: v.diesel, h: diesel, casas: 1 },
-    { nome: '💧 Água de combate', est: v.agua, h: agua, casas: 0 },
-    { nome: '🚰 Água potável', est: v.potavel, h: potavel, casas: 1 },
-  ].filter(r => r.h > 0);
-  const agora = Date.now();
-  const linhasRes = recursos.map(r => ({ ...r, aut: r.est > 0 ? r.est / r.h : 0, total: H > 0 ? r.h * H : null }));
-  const limitante = linhasRes.filter(r => r.est > 0).sort((a, b) => a.aut - b.aut)[0];
+// ── Conta: CÓPIA de src/utils/calculoEquipamentos.js (app). Mudou lá, mude aqui.
+const CAMPOS_ESTOQUE = ['gasolina', 'oleo', 'misturaPronta', 'diesel', 'agua', 'potavel', 'refeicoes', 'pessoas', 'hidratacao', 'refeicaoCadaH', 'duracao'];
+const emUso = (l) => (String(l.uso ?? '').trim() === '' ? n(l.qtd) : n(l.uso)); // vazio = todos ligados
+const fmtL = (l, casas = 1) => `${(Number.isFinite(l) ? l : 0).toFixed(casas).replace('.', ',')} L`;
+const fmtH = (h) => (!Number.isFinite(h) || h <= 0 ? '0h00' : duracao(h));
 
-  // Resultado final: o que levar, quanto dura e o que acaba primeiro
-  let resumo = '';
-  if (recursos.length) {
-    resumo = `<div class="resumo"><h3>Resultado final</h3>
-      <div class="kv"><span>Equipamentos ligados</span><b>${ligados}</b></div>
-      ${H > 0 ? `<div class="kv"><span>Missão</span><b>${duracao(H)} · até ${hhmm(new Date(agora + H * 3600000))}</b></div>` : ''}
-      ${linhasRes.map(r => `<div class="kv"><span>${r.nome}${H > 0 ? ' p/ a missão' : ' por hora'}</span><b>${H > 0 ? `${r.total.toFixed(r.casas)} L` : `${r.h.toFixed(r.casas)} L/h`}</b></div>`).join('')}
-      ${limitante ? `<div style="margin-top:8px">Com o que foi levado, a operação dura</div>
-        <div class="grande" style="color:${H > 0 && limitante.aut < H ? 'var(--fogo-forte)' : 'var(--verde)'}">${duracao(limitante.aut)}</div>
-        <div class="dica">acaba primeiro: <b>${limitante.nome}</b> às <b>${hhmm(new Date(agora + limitante.aut * 3600000))}</b>${H > 0 ? (limitante.aut < H ? ' — <b style="color:#EF9A9A">antes do fim da missão</b>' : ' — dá para a missão inteira') : ''}</div>`
-        : '<div class="dica" style="margin-top:6px">Preencha o que foi levado (litros) para saber quanto dura.</div>'}
-    </div>`;
-  }
+function calcularAutonomia(linhas, e) {
+  const est = Object.fromEntries(CAMPOS_ESTOQUE.map(k => [k, n(e?.[k])]));
+  const avisos = [];
+  const R = n((linhas.find(l => l.comb === 'mistura' && n(l.prop) > 0) || {}).prop);
+  const usaMistura = linhas.some(l => l.comb === 'mistura' && emUso(l) > 0 && n(l.consumo) > 0);
+  let mistura = est.misturaPronta, gasolinaPura = est.gasolina, oleoIdeal = 0, sobraGasolina = 0, sobraOleo = 0;
+  if (usaMistura && R > 0) {
+    const feita = Math.min(est.gasolina * (R + 1) / R, est.oleo * (R + 1));
+    mistura += feita;
+    oleoIdeal = est.gasolina / R;
+    sobraGasolina = est.gasolina - feita * R / (R + 1);
+    sobraOleo = est.oleo - feita / (R + 1);
+    gasolinaPura = sobraGasolina;
+    if (est.gasolina > 0 && est.oleo <= 0) avisos.push('Sem óleo 2T: a gasolina não vira mistura e os sopradores não podem usá-la.');
+  } else if (usaMistura) avisos.push('Informe a proporção da mistura (ex.: 50) dos equipamentos 2T.');
 
-  $('resultados').innerHTML = !recursos.length
-    ? `<p class="dica" style="margin-top:10px">Preencha o consumo dos equipamentos na tabela e a duração da missão — o total de litros e a duração aparecem aqui.</p>`
-    : resumo + linhasRes.map(r => {
-      const ruim = H > 0 && r.est > 0 && r.aut < H;
-      const falta = H > 0 ? Math.max(0, r.total - r.est) : 0;
-      return `<div class="resultado ${H > 0 && r.est > 0 ? (ruim ? 'ruim' : 'ok') : ''}">
-        <span class="nome">${r.nome}</span><span class="valor">${r.est > 0 ? duracao(r.aut) : '—'}</span>
-        <span class="sub">Gasto ${r.h.toFixed(r.casas + 1)} L/h${H > 0 ? ` · precisa de ${r.total.toFixed(r.casas)} L na missão` : ''}${r.est > 0 ? ` · levado ${r.est} L · acaba às <b>${hhmm(new Date(agora + r.aut * 3600000))}</b>` : ' · informe quanto foi levado'}${ruim ? ` · <b style="color:#EF9A9A">faltam ${falta.toFixed(r.casas)} L</b>` : ''}</span>
-      </div>`;
-    }).join('');
-  $('resultados').innerHTML += (avisos.length ? `<p class="dica" style="margin-top:8px;color:var(--alerta)">${avisos.map(esc).join('<br>')}</p>` : '')
-    + '<p class="dica" style="margin-top:8px">Mistura 50:1 → em 51 L de mistura, 50 L são gasolina e 1 L é óleo 2T. Consumo de fábrica com motor em carga; o real varia com a operação.</p>';
+  const ligadas = linhas.filter(l => emUso(l) > 0);
+  const soma = (comb) => ligadas.filter(l => l.comb === comb).reduce((s, l) => s + emUso(l) * n(l.consumo), 0);
+  const consumo = { mistura: soma('mistura'), gasolina: soma('gasolina'), diesel: soma('diesel') };
+  const vazaoTotal = ligadas.reduce((s, l) => s + emUso(l) * n(l.vazao) * 60, 0);
+  const estoqueDe = (c) => (c === 'mistura' ? mistura : c === 'gasolina' ? gasolinaPura : c === 'diesel' ? est.diesel : 0);
+
+  const maquinas = linhas.filter(l => n(l.qtd) > 0 && l.comb !== 'nenhum').map(l => {
+    const c = n(l.consumo), q = emUso(l), estoque = estoqueDe(l.comb), tanque = n(l.tanque);
+    if (!c) { avisos.push(`"${l.nome || 'equipamento'}" sem consumo (L/h) — fica fora do cálculo.`); return null; }
+    if (q > n(l.qtd)) avisos.push(`"${l.nome}" está com mais em uso do que a quantidade levada.`);
+    return { nome: l.nome || 'Equipamento', consumo: c, emUso: q, tanqueDuraH: tanque ? tanque / c : null, sozinhaH: estoque / c,
+      todasDesteTipoH: q ? estoque / (q * c) : 0, tanquesCheios: tanque ? Math.floor(estoque / tanque) : null,
+      vazaoLh: n(l.vazao) * 60 * q, juntasH: consumo[l.comb] ? estoque / consumo[l.comb] : 0 };
+  }).filter(Boolean);
+
+  const recursos = [];
+  const add = (id, nome, un, estoque, porHora) => {
+    if (porHora <= 0) return;
+    recursos.push({ id, nome, un, estoque, porHora, horas: estoque / porHora, precisaMissao: est.duracao > 0 ? porHora * est.duracao : null, faltaMissao: est.duracao > 0 ? Math.max(0, porHora * est.duracao - estoque) : 0 });
+  };
+  add('mistura', '⛽ Mistura 2T (sopradores/bombas 2T)', 'L', mistura, consumo.mistura);
+  add('gasolina', '⛽ Gasolina pura', 'L', gasolinaPura, consumo.gasolina);
+  add('diesel', '⛽ Diesel', 'L', est.diesel, consumo.diesel);
+  add('agua', '💧 Água de combate', 'L', est.agua, vazaoTotal);
+  add('potavel', '🚰 Água potável', 'L', est.potavel, est.pessoas * est.hidratacao);
+  if (est.pessoas > 0 && est.refeicaoCadaH > 0) add('comida', '🍞 Comida', 'refeições', est.refeicoes, est.pessoas / est.refeicaoCadaH);
+  if (est.pessoas > 0 && est.potavel > 0 && !est.hidratacao) avisos.push('Informe a hidratação (L/h por pessoa) para calcular a água potável.');
+  if (est.pessoas > 0 && est.refeicoes > 0 && !est.refeicaoCadaH) avisos.push('Informe "1 refeição a cada (h)" para calcular a comida.');
+  const limitante = recursos.length ? recursos.reduce((a, b) => (b.horas < a.horas ? b : a)) : null;
+  return { combustivel: { R, mistura, gasolina: est.gasolina, oleo: est.oleo, oleoIdeal, sobraGasolina, sobraOleo, misturaPronta: est.misturaPronta }, maquinas, recursos, limitante, avisos, H: est.duracao };
 }
-// "Acaba às" anda com o relógio
-setInterval(() => { if (iniciado && linhas.length) calcular(); }, 60000);
+
+// ── Botão Calcular: relatório detalhado, igual à calculadora do app
+function calcular() {
+  const e = {};
+  document.querySelectorAll('[data-calc]').forEach(i => e[i.dataset.calc] = i.value);
+  const { combustivel: c, maquinas, recursos, limitante, avisos, H } = calcularAutonomia(linhas, e);
+  const as = (h) => hhmm(new Date(Date.now() + h * 3600000));
+  const qtd = (r, v) => (r.un === 'L' ? fmtL(v) : `${Math.ceil(v)} ${r.un}`);
+  const atrasa = limitante && H > 0 && limitante.horas < H;
+  let html = '';
+  if (limitante) html += `<div class="resumo"><h3>Resultado final</h3>
+    <div>Com o que foi levado, a operação dura</div>
+    <div class="grande" style="color:${atrasa ? 'var(--fogo-forte)' : 'var(--verde)'}">${fmtH(limitante.horas)}</div>
+    <div class="dica">Acaba primeiro: <b>${esc(limitante.nome)}</b>, às <b>${as(limitante.horas)}</b>.</div>
+    ${H > 0 ? `<div style="margin-top:6px;color:${atrasa ? '#EF9A9A' : 'var(--verde)'}">${atrasa ? `⚠️ Não dá para a missão de ${fmtH(H)}.` : `✅ Dá para a missão de ${fmtH(H)}.`}</div>` : ''}</div>`;
+  if (c.mistura > 0) html += `<div class="resultado"><span class="nome">⛽ Mistura</span><span class="valor">${fmtL(c.mistura, 2)}</span>
+    <span class="sub">${c.gasolina > 0 ? `${fmtL(c.gasolina)} de gasolina + ${fmtL(c.oleo, 2)} de óleo (${c.R}:1)` : ''}${c.misturaPronta > 0 ? `${c.gasolina > 0 ? ' + ' : ''}${fmtL(c.misturaPronta)} já misturados` : ''}.${c.gasolina > 0 ? ` Para misturar toda a gasolina são precisos ${fmtL(c.oleoIdeal, 2)} de óleo.` : ''}${c.sobraGasolina > 0.01 ? ` Sobram ${fmtL(c.sobraGasolina)} de gasolina sem óleo.` : ''}${c.sobraOleo > 0.01 ? ` Sobram ${fmtL(c.sobraOleo, 2)} de óleo.` : ''}</span></div>`;
+  html += maquinas.map(m => `<div class="resultado"><span class="nome">${esc(m.nome)}</span><span class="valor">${String(m.consumo).replace('.', ',')} L/h</span>
+    <span class="sub">${m.tanqueDuraH ? `1 tanque dura <b>${fmtH(m.tanqueDuraH)}</b> · ` : ''}1 ligado sozinho: <b>${fmtH(m.sozinhaH)}</b>${m.emUso > 1 ? ` · os ${m.emUso} ligados juntos: <b>${fmtH(m.todasDesteTipoH)}</b>` : ''}${m.emUso > 0 && Math.abs(m.juntasH - m.todasDesteTipoH) > 0.01 ? ` · dividindo com as outras máquinas ligadas: <b>${fmtH(m.juntasH)}</b>` : ''}${m.tanquesCheios != null ? ` · dá para encher <b>${m.tanquesCheios}</b> tanques` : ''}${m.vazaoLh > 0 ? ` · joga ${fmtL(m.vazaoLh, 0)} de água por hora` : ''}</span></div>`).join('');
+  html += recursos.map(r => `<div class="resultado ${r === limitante ? 'ruim' : (H > 0 && !r.faltaMissao ? 'ok' : '')}"><span class="nome">${esc(r.nome)}</span><span class="valor">${fmtH(r.horas)}</span>
+    <span class="sub">${qtd(r, r.estoque)} ÷ ${r.porHora.toFixed(2).replace('.', ',')} ${r.un}/h${r.estoque > 0 ? ` · acaba às <b>${as(r.horas)}</b>` : ''}${r.precisaMissao != null ? ` · para a missão: ${qtd(r, r.precisaMissao)}${r.faltaMissao > 0 ? ` · <b style="color:#EF9A9A">faltam ${qtd(r, r.faltaMissao)}</b>` : ' ✅'}` : ''}</span></div>`).join('');
+  if (!recursos.length) html += '<p class="dica" style="margin-top:10px">Marque equipamentos ligados com consumo na tabela, ou informe pessoas com água/comida, para calcular.</p>';
+  if (avisos.length) html += `<p class="dica" style="margin-top:8px;color:var(--alerta)">${avisos.map(a => '⚠️ ' + esc(a)).join('<br>')}</p>`;
+  html += '<p class="dica" style="margin-top:8px">Consumo de fábrica com motor em carga; o real varia. A gasolina vira mistura até acabar o óleo; o que sobrar vai para máquinas a gasolina pura.</p>';
+  $('resultados').innerHTML = html;
+}
 </script>
 </body>
 </html>
