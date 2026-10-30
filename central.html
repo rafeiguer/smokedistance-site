@@ -346,16 +346,17 @@ nav.abas{display:none}
           <button class="pil ativo" id="btnSalvarEquip" style="--c:var(--verde)">💾 Salvar tabela</button>
           <span class="estado-salvo" id="estadoEquip"></span>
         </div>
-        <p class="dica" style="margin-top:8px">Consumo de fábrica (motor em carga): BR 600 1,21 L/h · BR 800 1,47 L/h, mistura 50:1. As bombas ficam em branco até conferir a plaqueta. "Em uso" = quantos estão ligados agora (vazio = todos).</p>
+        <p class="dica" style="margin-top:8px">Consumo de fábrica (motor em carga): BR 600 1,21 L/h · BR 800 1,47 L/h, mistura 50:1. <br><b>Motobombas Guarany</b> (motor Honda <b>4 tempos = gasolina pura, nunca mistura</b>):<br>· Moskito (GX31): ~0,5 L/h · tanque 0,65 L (~1h20) · até 189 L/min<br>· Mini Striker (GXH50): 0,91 L/h · tanque 0,77 L (~50 min) · até 256 L/min<br>Vazão = máxima de fábrica, sem mangueira; com mangueira e esguicho é menor. "Em uso" = quantos estão ligados agora (vazio = todos).</p>
       </section>
       <section class="vidro secao" id="secCalc" style="--c:var(--roxo)">
         <h2>🧮 Calculadora de autonomia</h2>
         <div class="campos">
           <div class="campo"><label>Duração da missão (h)</label><input type="number" min="0" step="0.5" data-calc="duracao"></div>
           <div class="campo"><label>Pessoas</label><input type="number" min="0" step="1" data-calc="pessoas"></div>
-          <div class="campo"><label>Gasolina (L)</label><input type="number" min="0" step="0.5" data-calc="gasolina"></div>
+          <div class="campo"><label>Gasolina p/ misturar (L)</label><input type="number" min="0" step="0.5" data-calc="gasolina"></div>
           <div class="campo"><label>Óleo 2T (L)</label><input type="number" min="0" step="0.1" data-calc="oleo"></div>
           <div class="campo"><label>Mistura pronta (L)</label><input type="number" min="0" step="0.5" data-calc="misturaPronta"></div>
+          <div class="campo"><label>Gasolina pura p/ bombas (L)</label><input type="number" min="0" step="0.5" data-calc="gasolinaPura"></div>
           <div class="campo"><label>Diesel (L)</label><input type="number" min="0" step="0.5" data-calc="diesel"></div>
           <div class="campo"><label>Água de combate (L)</label><input type="number" min="0" step="10" data-calc="agua"></div>
           <div class="campo"><label>Água potável (L)</label><input type="number" min="0" step="1" data-calc="potavel"></div>
@@ -419,7 +420,7 @@ const idade = (d) => {
   const txt = min < 60 ? `há ${min} min` : min < 1440 ? `há ${Math.floor(min / 60)} h` : `há ${Math.floor(min / 1440)} d`;
   return { txt, cls: min < 10 ? 'ok' : min < 60 ? 'atencao' : 'velho' };
 };
-const duracao = (h) => !Number.isFinite(h) ? '—' : `${Math.floor(h)}h${String(Math.round((h % 1) * 60)).padStart(2, '0')}`;
+const duracao = (h) => !Number.isFinite(h) ? '—' : h > 0 && h < 1 / 60 ? '< 1 min' : `${Math.floor(h)}h${String(Math.round((h % 1) * 60)).padStart(2, '0')}`;
 const n = (v) => { const x = parseFloat(String(v ?? '').replace(',', '.')); return Number.isFinite(x) ? x : 0; };
 const lerLocal = (k, padrao) => { try { return JSON.parse(localStorage.getItem(k)) ?? padrao; } catch { return padrao; } };
 const gravarLocal = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} };
@@ -1344,8 +1345,9 @@ setInterval(() => { if (iniciado) carregarTempo(); }, 10 * 60000);
 const PADRAO = [
   { nome: 'Soprador STIHL BR 600', qtd: 9, uso: '', comb: 'mistura', prop: 50, tanque: 1.4, consumo: 1.21, vazao: '' },
   { nome: 'Soprador STIHL BR 800', qtd: 1, uso: '', comb: 'mistura', prop: 50, tanque: 2.0, consumo: 1.47, vazao: '' },
-  { nome: 'Bomba Mosquito (conferir plaqueta)', qtd: 1, uso: '', comb: 'mistura', prop: '', tanque: '', consumo: '', vazao: '' },
-  { nome: 'Motobomba Wildfire/Honda (conferir)', qtd: 1, uso: '', comb: 'gasolina', prop: '', tanque: '', consumo: '', vazao: '' },
+  // Guarany com Honda 4T = gasolina pura; consumo da ficha Honda; vazão MÁXIMA informada (ver calculoEquipamentos.js)
+  { nome: 'Motobomba Guarany Moskito (Honda GX31)', qtd: 1, uso: '', comb: 'gasolina', prop: '', tanque: 0.65, consumo: 0.5, vazao: 189 },
+  { nome: 'Motobomba Guarany Mini Striker (Honda GXH50)', qtd: 1, uso: '', comb: 'gasolina', prop: '', tanque: 0.77, consumo: 0.91, vazao: 256 },
 ];
 const DOC_CATALOGO = doc(db, 'catalogoEquipamentos', 'padrao');
 let linhas = [];
@@ -1373,7 +1375,7 @@ async function montarEquipamentos() {
 }
 
 function desenharTabela() {
-  const sel = (v) => ['mistura', 'gasolina', 'diesel', 'nenhum'].map(o => `<option value="${o}"${o === v ? ' selected' : ''}>${{ mistura: 'Mistura 2T', gasolina: 'Gasolina', diesel: 'Diesel', nenhum: '—' }[o]}</option>`).join('');
+  const sel = (v) => ['mistura', 'gasolina', 'diesel', 'nenhum'].map(o => `<option value="${o}"${o === v ? ' selected' : ''}>${{ mistura: 'Mistura 2T', gasolina: 'Gasolina pura (4T)', diesel: 'Diesel', nenhum: '—' }[o]}</option>`).join('');
   $('tabEquip').innerHTML = linhas.map((l, i) => `<tr>
     <td><input data-i="${i}" data-k="nome" value="${esc(l.nome)}" placeholder="Equipamento" style="min-width:170px"></td>
     <td><input class="num" data-i="${i}" data-k="qtd" type="number" min="0" value="${esc(l.qtd)}"></td>
@@ -1405,7 +1407,7 @@ async function salvarTabela() {
 }
 
 // ── Conta: CÓPIA de src/utils/calculoEquipamentos.js (app). Mudou lá, mude aqui.
-const CAMPOS_ESTOQUE = ['gasolina', 'oleo', 'misturaPronta', 'diesel', 'agua', 'potavel', 'refeicoes', 'pessoas', 'hidratacao', 'refeicaoCadaH', 'duracao'];
+const CAMPOS_ESTOQUE = ['gasolina', 'gasolinaPura', 'oleo', 'misturaPronta', 'diesel', 'agua', 'potavel', 'refeicoes', 'pessoas', 'hidratacao', 'refeicaoCadaH', 'duracao'];
 const emUso = (l) => (String(l.uso ?? '').trim() === '' ? n(l.qtd) : n(l.uso)); // vazio = todos ligados
 const fmtL = (l, casas = 1) => `${(Number.isFinite(l) ? l : 0).toFixed(casas).replace('.', ',')} L`;
 const fmtH = (h) => (!Number.isFinite(h) || h <= 0 ? '0h00' : duracao(h));
@@ -1415,14 +1417,14 @@ function calcularAutonomia(linhas, e) {
   const avisos = [];
   const R = n((linhas.find(l => l.comb === 'mistura' && n(l.prop) > 0) || {}).prop);
   const usaMistura = linhas.some(l => l.comb === 'mistura' && emUso(l) > 0 && n(l.consumo) > 0);
-  let mistura = est.misturaPronta, gasolinaPura = est.gasolina, oleoIdeal = 0, sobraGasolina = 0, sobraOleo = 0;
+  let mistura = est.misturaPronta, gasolinaPura = est.gasolinaPura + est.gasolina, oleoIdeal = 0, sobraGasolina = 0, sobraOleo = 0;
   if (usaMistura && R > 0) {
     const feita = Math.min(est.gasolina * (R + 1) / R, est.oleo * (R + 1));
     mistura += feita;
     oleoIdeal = est.gasolina / R;
     sobraGasolina = est.gasolina - feita * R / (R + 1);
     sobraOleo = est.oleo - feita / (R + 1);
-    gasolinaPura = sobraGasolina;
+    gasolinaPura = est.gasolinaPura + sobraGasolina; // galão de pura + o que sobrou sem óleo
     if (est.gasolina > 0 && est.oleo <= 0) avisos.push('Sem óleo 2T: a gasolina não vira mistura e os sopradores não podem usá-la.');
   } else if (usaMistura) avisos.push('Informe a proporção da mistura (ex.: 50) dos equipamentos 2T.');
 
@@ -1447,9 +1449,9 @@ function calcularAutonomia(linhas, e) {
     recursos.push({ id, nome, un, estoque, porHora, horas: estoque / porHora, precisaMissao: est.duracao > 0 ? porHora * est.duracao : null, faltaMissao: est.duracao > 0 ? Math.max(0, porHora * est.duracao - estoque) : 0 });
   };
   add('mistura', '⛽ Mistura 2T (sopradores/bombas 2T)', 'L', mistura, consumo.mistura);
-  add('gasolina', '⛽ Gasolina pura', 'L', gasolinaPura, consumo.gasolina);
+  add('gasolina', '⛽ Gasolina pura (motobombas 4 tempos)', 'L', gasolinaPura, consumo.gasolina);
   add('diesel', '⛽ Diesel', 'L', est.diesel, consumo.diesel);
-  add('agua', '💧 Água de combate', 'L', est.agua, vazaoTotal);
+  add('agua', '💧 Água de combate (galão/caixa)', 'L', est.agua, vazaoTotal);
   add('potavel', '🚰 Água potável', 'L', est.potavel, est.pessoas * est.hidratacao);
   if (est.pessoas > 0 && est.refeicaoCadaH > 0) add('comida', '🍞 Comida', 'refeições', est.refeicoes, est.pessoas / est.refeicaoCadaH);
   if (est.pessoas > 0 && est.potavel > 0 && !est.hidratacao) avisos.push('Informe a hidratação (L/h por pessoa) para calcular a água potável.');
@@ -1480,7 +1482,7 @@ function calcular() {
     <span class="sub">${qtd(r, r.estoque)} ÷ ${r.porHora.toFixed(2).replace('.', ',')} ${r.un}/h${r.estoque > 0 ? ` · acaba às <b>${as(r.horas)}</b>` : ''}${r.precisaMissao != null ? ` · para a missão: ${qtd(r, r.precisaMissao)}${r.faltaMissao > 0 ? ` · <b style="color:#EF9A9A">faltam ${qtd(r, r.faltaMissao)}</b>` : ' ✅'}` : ''}</span></div>`).join('');
   if (!recursos.length) html += '<p class="dica" style="margin-top:10px">Marque equipamentos ligados com consumo na tabela, ou informe pessoas com água/comida, para calcular.</p>';
   if (avisos.length) html += `<p class="dica" style="margin-top:8px;color:var(--alerta)">${avisos.map(a => '⚠️ ' + esc(a)).join('<br>')}</p>`;
-  html += '<p class="dica" style="margin-top:8px">Consumo de fábrica com motor em carga; o real varia. A gasolina vira mistura até acabar o óleo; o que sobrar vai para máquinas a gasolina pura.</p>';
+  html += '<p class="dica" style="margin-top:8px">Consumo de fábrica com motor em carga; o real varia. A "gasolina p/ misturar" vira mistura até acabar o óleo (o que sobrar soma à pura). A "gasolina pura" é das motobombas e nunca é misturada. A água de combate conta a vazão máxima das bombas: se elas puxam de rio ou caixa, a água não acaba.</p>';
   $('resultados').innerHTML = html;
 }
 </script>
