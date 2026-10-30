@@ -942,16 +942,18 @@ function montarTipos() {
 /* ── 🧲 Ímã de trilha pela imagem de satélite (TESTE, só na Central) ──
    Trilha aberta no mato aparece na imagem como faixa mais clara e menos verde
    que a vegetação em volta. Ao soltar um traço do tipo Trilha: baixa os
-   ladrilhos da Esri em volta (zoom 17, ~1 m/px), marca o que "parece caminho"
-   (claro em relação à vizinhança, pouco verde) e escolhe, ponto a ponto, o
+   ladrilhos da Esri em volta (zoom 18, ~0,6 m/px), marca o que "parece caminho"
+   (faixa estreita mais clara que os dois lados, pouco verde) e escolhe, ponto a ponto, o
    deslocamento lateral de até IMA.raioM que passa pelo mais claro — por
    programação dinâmica, para o traço não ziguezaguear. Não é infalível (lajedo,
    rio seco, estrada e sombra enganam): o resultado é mostrado e só vale se aceito.
    Roda no navegador, uma vez por traço (sem custo, sem servidor). */
-// minContraste (teste 30/10, critério "mais claro que os dois lados"): trilha
-// real 17–32 (Fumaça; trilha no areal do Capão); sem trilha 2,6–8 (mato e areal
-// com moitas). 12 fica no meio.
-const IMA = { zoom: 17, raioM: 20, ladoPx: 3, minContraste: 12, maxLadrilhos: 80 };
+// Zoom 18 = a foto mais detalhada que a Esri tem na Chapada (~0,6 m/px): a
+// trilha fina fica com 2–4 px em vez de 1–2. Calibração 30/10 ("mais claro que
+// os dois lados", 9 casos em Fumaça e Capão): trilha real 21–41 (no zoom 17,
+// 13–31 — trilha apagada passava raspando); sem trilha 3,8–12 (areal com moitas
+// é o pior). 16 fica no meio. Custo: 4× mais imagem → trechos de ~1 km.
+const IMA = { zoom: 18, raioM: 20, ladoPx: 5, minContraste: 16, maxLadrilhos: 80 };
 const carregarImg = (src) => new Promise((ok, falha) => { const i = new Image(); i.crossOrigin = 'anonymous'; i.onload = () => ok(i); i.onerror = () => falha(new Error('imagem de satélite não carregou')); i.src = src; });
 
 async function imaTrilha(latlngs) {
@@ -961,7 +963,7 @@ async function imaTrilha(latlngs) {
   const W = Math.round(IMA.raioM / mpp), M = W + IMA.ladoPx + 4;
   const tx0 = Math.floor((Math.min(...glob.map(p => p.x)) - M) / 256), tx1 = Math.floor((Math.max(...glob.map(p => p.x)) + M) / 256);
   const ty0 = Math.floor((Math.min(...glob.map(p => p.y)) - M) / 256), ty1 = Math.floor((Math.max(...glob.map(p => p.y)) + M) / 256);
-  if ((tx1 - tx0 + 1) * (ty1 - ty0 + 1) > IMA.maxLadrilhos) throw new Error('traço grande demais para ajustar de uma vez — desenhe em trechos de até ~2 km');
+  if ((tx1 - tx0 + 1) * (ty1 - ty0 + 1) > IMA.maxLadrilhos) throw new Error('traço grande demais para ajustar de uma vez — desenhe em trechos de até ~1 km');
 
   // 1) Imagem em volta do traço
   const w = (tx1 - tx0 + 1) * 256, h = (ty1 - ty0 + 1) * 256;
