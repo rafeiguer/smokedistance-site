@@ -268,10 +268,11 @@ nav.abas{display:none}
         <h2>👥 Equipe com acesso à Central</h2>
         <div id="listaEquipe" class="dica">Carregando…</div>
         <div class="entrada">
-          <input type="text" inputmode="email" autocomplete="off" id="txtEquipe" placeholder="E-mail Google da pessoa">
+          <input type="text" inputmode="email" autocomplete="off" id="txtEquipe" placeholder="E-mail da pessoa">
+          <select id="papelEquipe" class="pil" style="--c:var(--azul)"><option value="brigadista">Brigadista (só app)</option><option value="coordinator">Coordenador (app + Central)</option></select>
           <button class="pil destaque" id="btnEquipe" style="--c:var(--azul)">Dar acesso</button>
         </div>
-        <p class="dica" style="margin-top:8px">Entra como <b>coordenador</b>: usa a Central, desenha, manda mensagens, edita a tabela de equipamentos e apaga traços, textos e mensagens de qualquer um. Só você (admin) vê esta seção.</p>
+        <p class="dica" style="margin-top:8px"><b>Brigadista</b>: no app, vê e desenha rotas, mensagens e a posição das brigadas. Ele precisa confirmar <b>esse mesmo e-mail</b> no app (Compartilhar → Registro Oficial).<br><b>Coordenador</b>: tudo isso + entra na Central (login Google com esse e-mail), edita a tabela de equipamentos e apaga traços, textos e mensagens de qualquer um.<br>Quem não está aqui não recebe nada disso. Só você (admin) vê esta seção.</p>
       </section>
       <section class="vidro secao" id="secRegistro" style="--c:var(--alerta)">
         <h2>📜 Registro da operação</h2>
@@ -1305,8 +1306,9 @@ function desenharMensagens() {
 }
 
 /* ───────────── 👥 EQUIPE (só admin) ─────────────
-   Dá/tira acesso de coordenador por e-mail Google, sem terminal: grava
-   equipe/{e-mail} e as firestore.rules (ehChefe) passam a aceitar a pessoa. */
+   Dá/tira acesso por e-mail, sem terminal: grava equipe/{e-mail} {papel}.
+   brigadista = app (rules ehEquipe: e-mail confirmado no app = claim verifiedEmail);
+   coordinator = app + Central (rules ehChefe: login Google com esse e-mail). */
 function montarEquipe() {
   if (papel !== 'admin') return;
   $('secEquipe').hidden = false;
@@ -1314,7 +1316,7 @@ function montarEquipe() {
   onSnapshot(collection(db, 'equipe'), (snap) => {
     $('listaEquipe').innerHTML = snap.empty
       ? 'Ninguém liberado por aqui ainda.'
-      : snap.docs.map(d => `<div class="kv" style="align-items:center"><span style="min-width:0;overflow-wrap:anywhere">${esc(d.id)}</span><button class="pil" style="flex-shrink:0;--c:var(--fogo-forte)" data-tirar="${esc(d.id)}" title="Tirar o acesso desta pessoa à Central">🚫 Remover</button></div>`).join('');
+      : snap.docs.map(d => `<div class="kv" style="align-items:center"><span style="min-width:0;overflow-wrap:anywhere">${esc(d.id)} <span class="dica">· ${d.data().papel === 'coordinator' ? 'coordenador' : 'brigadista'}</span></span><button class="pil" style="flex-shrink:0;--c:var(--fogo-forte)" data-tirar="${esc(d.id)}" title="Tirar o acesso desta pessoa à Central">🚫 Remover</button></div>`).join('');
   }, (e) => console.warn('Central: equipe', e.message));
   $('listaEquipe').onclick = (ev) => {
     const b = ev.target.closest('[data-tirar]');
@@ -1324,7 +1326,7 @@ function montarEquipe() {
     const email = $('txtEquipe').value.trim().toLowerCase();
     if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return alert('Digite um e-mail válido.');
     try {
-      await setDoc(doc(db, 'equipe', email), { papel: 'coordinator', adicionadoPor: usuario.email, adicionadoEm: serverTimestamp() });
+      await setDoc(doc(db, 'equipe', email), { papel: $('papelEquipe').value, adicionadoPor: usuario.email, adicionadoEm: serverTimestamp() });
       $('txtEquipe').value = '';
     } catch (e) { alert('Não foi possível dar acesso: ' + e.message); }
   };
