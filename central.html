@@ -179,6 +179,9 @@ table.planilha{border-collapse:collapse;width:100%;min-width:640px;font-size:12.
 .campo input:focus{border-color:var(--azul)}
 .campo select{width:100%;background:rgba(255,255,255,.06);border:1px solid var(--borda);border-radius:12px;padding:8px 10px;outline:none;color:inherit}
 .campo select option{background:#16201c}
+.caixa-oleo{flex:1;border-radius:14px;padding:10px;border:2px solid var(--borda);background:rgba(255,255,255,.05);cursor:pointer;text-align:center;color:var(--suave);font-weight:700;font-size:12.5px}
+.caixa-oleo b{display:block;font-family:var(--mono);font-size:24px;color:var(--texto);margin-top:2px}
+.caixa-oleo.ativo{border-color:var(--fogo);background:color-mix(in srgb,var(--fogo) 22%,transparent);color:var(--texto)}
 .resumo{margin-top:12px;padding:12px;border-radius:16px;background:rgba(192,132,252,.1);border:1px solid rgba(192,132,252,.45)}
 .resumo h3{font-size:12px;letter-spacing:1px;text-transform:uppercase;color:var(--roxo);margin-bottom:8px}
 .resumo .grande{font-size:24px;font-weight:800;font-family:var(--mono)}
@@ -349,16 +352,16 @@ nav.abas{display:none}
           <button class="pil ativo" id="btnSalvarEquip" style="--c:var(--verde)">💾 Salvar tabela</button>
           <span class="estado-salvo" id="estadoEquip"></span>
         </div>
-        <p class="dica" style="margin-top:8px">Consumo de fábrica (motor em carga): BR 600 1,21 L/h · BR 800 1,47 L/h. <b>Mistura: 50:1 só com óleo STIHL; com qualquer outro óleo 2T, 40:1.</b><br><b>Motobombas</b> (motor Honda <b>4 tempos = gasolina pura, nunca mistura</b>):<br>· Moskito (GX31): ~0,5 L/h · tanque 0,65 L (~1h20) · até 189 L/min<br>· Mini Striker (GXH50): 0,91 L/h · tanque 0,77 L (~50 min) · até 256 L/min<br>Vazão = máxima de fábrica, sem mangueira; com mangueira e esguicho é menor. "Em uso" = quantos estão ligados agora (vazio = todos).</p>
+        <p class="dica" style="margin-top:8px">Consumo de fábrica (motor em carga): BR 600 1,21 L/h · BR 800 1,47 L/h. <b>Mistura: 50:1 só com óleo STIHL; com qualquer outro óleo 2T, 25:1</b> (manual STIHL).<br><b>Motobombas</b> (motor Honda <b>4 tempos = gasolina pura, nunca mistura</b>):<br>· Moskito (GX31): ~0,5 L/h · tanque 0,65 L (~1h20) · até 189 L/min<br>· Mini Striker (GXH50): 0,91 L/h · tanque 0,77 L (~50 min) · até 256 L/min<br>Vazão = máxima de fábrica, sem mangueira; com mangueira e esguicho é menor. "Em uso" = quantos estão ligados agora (vazio = todos).</p>
         <div class="vidro" style="margin-top:12px;padding:12px;border-radius:14px">
-          <h2 style="margin-bottom:8px">🧪 Quanto óleo vai na gasolina?</h2>
+          <h2 style="margin-bottom:8px">🧪 Óleo 2T x gasolina</h2>
+          <div style="display:flex;gap:8px;margin-bottom:10px">
+            <button class="caixa-oleo ativo" data-oleo="50">Óleo STIHL<b>50:1</b></button>
+            <button class="caixa-oleo" data-oleo="25">Óleo comum<b>25:1</b></button>
+          </div>
           <div class="campos">
             <div class="campo"><label>Gasolina</label><input type="number" min="0" step="any" id="mixGas" placeholder="ex.: 500"></div>
             <div class="campo"><label>Unidade</label><select id="mixUn"><option value="ml">ml</option><option value="L">litros</option></select></div>
-            <div class="campo"><label>Proporção</label><div style="display:flex;align-items:center;gap:6px"><input type="number" min="1" step="1" id="mixProp" value="50"><span class="dica">:1</span></div></div>
-          </div>
-          <div class="linha" style="margin-top:8px">
-            <button class="pil ativo" data-oleo="50" style="--c:var(--fogo)">Óleo STIHL 50:1</button><button class="pil" data-oleo="40" style="--c:var(--fogo)">Outro óleo 2T 40:1</button>
           </div>
           <div class="linha" style="margin-top:8px" id="mixAtalhos">
             <button class="pil" data-mix="500,ml">500 ml</button><button class="pil" data-mix="1,L">1 L</button><button class="pil" data-mix="5,L">5 L</button><button class="pil" data-mix="20,L">20 L</button>
@@ -373,7 +376,7 @@ nav.abas{display:none}
           <div class="campo"><label>Pessoas</label><input type="number" min="0" step="1" data-calc="pessoas"></div>
           <div class="campo"><label>Gasolina p/ misturar (L)</label><input type="number" min="0" step="0.5" data-calc="gasolina"></div>
           <div class="campo"><label>Óleo 2T (L)</label><input type="number" min="0" step="0.1" data-calc="oleo"></div>
-          <div class="campo"><label>Qual óleo 2T</label><select data-calc="oleoProp"><option value="50">STIHL (50:1)</option><option value="40">Outro óleo (40:1)</option></select></div>
+          <div class="campo"><label>Óleo 2T x gasolina</label><select data-calc="oleoProp"><option value="50">Óleo STIHL (50:1)</option><option value="25">Óleo comum (25:1)</option></select></div>
           <div class="campo"><label>Mistura pronta (L)</label><input type="number" min="0" step="0.5" data-calc="misturaPronta"></div>
           <div class="campo"><label>Gasolina pura p/ bombas (L)</label><input type="number" min="0" step="0.5" data-calc="gasolinaPura"></div>
           <div class="campo"><label>Diesel (L)</label><input type="number" min="0" step="0.5" data-calc="diesel"></div>
@@ -1360,7 +1363,7 @@ setInterval(() => { if (iniciado) carregarTempo(); }, 10 * 60000);
 
 /* ───────────── EQUIPAMENTOS + CALCULADORA ───────────── */
 // Valores de fábrica conferidos: STIHL BR 600 (1,21 L/h EPA, tanque 1,4 L) e
-// BR 800 (1,47 L/h, tanque 2,0 L), 50:1 com óleo STIHL (outro óleo: 40:1).
+// BR 800 (1,47 L/h, tanque 2,0 L), 50:1 com óleo STIHL (outro óleo: 25:1).
 const PADRAO = [
   { nome: 'Soprador STIHL BR 600', qtd: 9, uso: '', comb: 'mistura', prop: 50, tanque: 1.4, consumo: 1.21, vazao: '' },
   { nome: 'Soprador STIHL BR 800', qtd: 1, uso: '', comb: 'mistura', prop: 50, tanque: 2.0, consumo: 1.47, vazao: '' },
@@ -1391,19 +1394,21 @@ async function montarEquipamentos() {
   $('btnLinha').onclick = () => { linhas.push({ nome: '', qtd: 1, uso: '', comb: 'gasolina', prop: '', tanque: '', consumo: '', vazao: '' }); desenharTabela(); };
 
   // 🧪 Óleo da mistura: óleo = gasolina ÷ proporção (50:1 → 500 ml de gasolina levam 10 ml de óleo)
+  let p = 50; // caixa escolhida: óleo STIHL 50 ou óleo comum
   const mix = () => {
-    const g = n($('mixGas').value), p = n($('mixProp').value);
-    if (!g || !p) { $('mixRes').innerHTML = '<span class="dica">Digite a gasolina para ver o óleo.</span>'; return; }
+    const g = n($('mixGas').value);
+    if (!g) { $('mixRes').innerHTML = '<span class="dica">Digite a gasolina para ver o óleo.</span>'; return; }
     const gml = $('mixUn').value === 'L' ? g * 1000 : g, oml = gml / p;
     const fmt = (v) => (v >= 1000 ? `${(v / 1000).toFixed(2)} L` : `${v < 10 ? v.toFixed(1) : Math.round(v)} ml`).replace('.', ',');
     $('mixRes').innerHTML = `Óleo 2T: <b style="font-size:20px">${fmt(oml)}</b> <span class="dica">· total de mistura ${fmt(gml + oml)} (${p}:1)</span>`;
   };
-  ['mixGas', 'mixUn', 'mixProp'].forEach(id => { $(id).oninput = mix; $(id).onchange = mix; });
+  ['mixGas', 'mixUn'].forEach(id => { $(id).oninput = mix; $(id).onchange = mix; });
   document.querySelectorAll('[data-mix]').forEach(b => b.onclick = () => { const [v, u] = b.dataset.mix.split(','); $('mixGas').value = v; $('mixUn').value = u; mix(); });
-  // Só óleo STIHL é 50:1; qualquer outro óleo 2T é 40:1
-  const marcarOleo = () => document.querySelectorAll('[data-oleo]').forEach(x => x.classList.toggle('ativo', x.dataset.oleo === $('mixProp').value));
-  document.querySelectorAll('[data-oleo]').forEach(b => b.onclick = () => { $('mixProp').value = b.dataset.oleo; marcarOleo(); mix(); });
-  $('mixProp').addEventListener('input', marcarOleo);
+  document.querySelectorAll('[data-oleo]').forEach(b => b.onclick = () => {
+    p = +b.dataset.oleo;
+    document.querySelectorAll('[data-oleo]').forEach(x => x.classList.toggle('ativo', x === b));
+    mix();
+  });
   $('btnSalvarEquip').onclick = salvarTabela;
   $('btnCalcular').onclick = calcular;
 }
@@ -1452,7 +1457,7 @@ const fmtH = (h) => (!Number.isFinite(h) || h <= 0 ? '0h00' : duracao(h));
 function calcularAutonomia(linhas, e) {
   const est = Object.fromEntries(CAMPOS_ESTOQUE.map(k => [k, n(e?.[k])]));
   const avisos = [];
-  // Proporção vem do ÓLEO escolhido (STIHL 50:1, outro 40:1) — CÓPIA de calculoEquipamentos.js
+  // Proporção vem do ÓLEO escolhido (STIHL 50:1, outro 25:1) — CÓPIA de calculoEquipamentos.js
   const R = est.oleoProp || n((linhas.find(l => l.comb === 'mistura' && n(l.prop) > 0) || {}).prop);
   const usaMistura = linhas.some(l => l.comb === 'mistura' && emUso(l) > 0 && n(l.consumo) > 0);
   let mistura = est.misturaPronta, gasolinaPura = est.gasolinaPura + est.gasolina, oleoIdeal = 0, sobraGasolina = 0, sobraOleo = 0;
