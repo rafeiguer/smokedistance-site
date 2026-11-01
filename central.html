@@ -343,7 +343,7 @@ nav.abas{display:none}
         <h2>🧰 Equipamentos</h2>
         <div class="planilha-wrap rolagem">
           <table class="planilha">
-            <thead><tr><th>Equipamento</th><th>Qtd</th><th>Em uso</th><th>Combustível</th><th>Mistura</th><th>Tanque L</th><th>Consumo L/h</th><th>Vazão L/min</th><th></th></tr></thead>
+            <thead><tr><th>Equipamento</th><th>Qtd</th><th>Em uso</th><th>Combustível</th><th>Mistura</th><th>Tanque L</th><th>Consumo L/h</th><th>Vazão L/min</th><th>Pressão psi</th><th></th></tr></thead>
             <tbody id="tabEquip"></tbody>
           </table>
         </div>
@@ -380,7 +380,6 @@ nav.abas{display:none}
           <div class="campo"><label>Mistura pronta (L)</label><input type="number" min="0" step="0.5" data-calc="misturaPronta"></div>
           <div class="campo"><label>Gasolina pura p/ bombas (L)</label><input type="number" min="0" step="0.5" data-calc="gasolinaPura"></div>
           <div class="campo"><label>Diesel (L)</label><input type="number" min="0" step="0.5" data-calc="diesel"></div>
-          <div class="campo"><label>Água de combate (L)</label><input type="number" min="0" step="10" data-calc="agua"></div>
           <div class="campo"><label>Água potável (L)</label><input type="number" min="0" step="1" data-calc="potavel"></div>
           <div class="campo"><label>Hidratação L/h p/ pessoa</label><input type="number" min="0" step="0.1" data-calc="hidratacao" placeholder="ex.: 0,5"></div>
           <div class="campo"><label>Refeições levadas</label><input type="number" min="0" step="1" data-calc="refeicoes"></div>
@@ -388,6 +387,26 @@ nav.abas{display:none}
         </div>
         <button class="pil destaque grande" id="btnCalcular" style="--c:var(--roxo);width:100%;justify-content:center;margin-top:12px">🧮 Calcular</button>
         <div id="resultados"><p class="dica" style="margin-top:10px">Preencha o que foi levado e clique em Calcular. "Em uso" vazio na tabela = todos os levados ligados.</p></div>
+        <div class="vidro" style="margin-top:14px;padding:12px;border-radius:14px">
+          <h2 style="color:var(--azul);margin-bottom:4px">💧 Água das motobombas</h2>
+          <p class="dica">Quanto a bomba joga naquele lugar, com a mangueira e o desnível de lá.</p>
+          <div class="linha" style="margin-top:8px" id="aguaBombas"></div>
+          <div class="linha" style="margin-top:8px" id="aguaDiam"></div>
+          <div class="campos" style="margin-top:8px">
+            <div class="campo"><label>Mangueira (m)</label><input type="number" min="0" step="1" id="aguaComp" placeholder="ex.: 30"></div>
+            <div class="campo"><label>Desnível (m) · sobe + / desce −</label><input type="number" step="1" id="aguaDesn" placeholder="ex.: 5"></div>
+            <div class="campo"><label>Horas de trabalho</label><input type="number" min="0" step="0.5" id="aguaHoras" placeholder="ex.: 2"></div>
+            <div class="campo"><label>Poço/caixa tem (L)</label><input type="number" min="0" step="100" id="aguaVol" placeholder="opcional"></div>
+          </div>
+          <p class="dica">Desnível = da superfície da água até a ponta da mangueira.</p>
+          <div class="linha" style="margin-top:6px"><button class="pil" id="btnMedirAgua" style="--c:var(--azul)">📍 Medir desnível no mapa</button></div>
+          <p class="dica" id="aguaMedida"></p>
+          <div class="linha" style="margin-top:8px" id="aguaPonta">
+            <button class="pil ativo" data-esguicho="1" style="--c:var(--azul)">Com esguicho</button><button class="pil" data-esguicho="0" style="--c:var(--azul)">Ponta livre</button>
+          </div>
+          <div id="aguaRes" style="margin-top:10px"></div>
+          <p class="dica" style="margin-top:6px">Estimativa (±20–30%): calculada com a vazão e a pressão máximas de fábrica (tabela de equipamentos).</p>
+        </div>
       </section>
     </div>
   </main>
@@ -1368,8 +1387,8 @@ const PADRAO = [
   { nome: 'Soprador STIHL BR 600', qtd: 9, uso: '', comb: 'mistura', prop: 50, tanque: 1.4, consumo: 1.21, vazao: '' },
   { nome: 'Soprador STIHL BR 800', qtd: 1, uso: '', comb: 'mistura', prop: 50, tanque: 2.0, consumo: 1.47, vazao: '' },
   // Motobombas com Honda 4T = gasolina pura; consumo da ficha Honda; vazão MÁXIMA informada (ver calculoEquipamentos.js)
-  { nome: 'Motobomba Moskito', qtd: 1, uso: '', comb: 'gasolina', prop: '', tanque: 0.65, consumo: 0.5, vazao: 189 },
-  { nome: 'Motobomba Mini Striker', qtd: 1, uso: '', comb: 'gasolina', prop: '', tanque: 0.77, consumo: 0.91, vazao: 256 },
+  { nome: 'Motobomba Moskito', qtd: 1, uso: '', comb: 'gasolina', prop: '', tanque: 0.65, consumo: 0.5, vazao: 189, pressao: 82 },
+  { nome: 'Motobomba Mini Striker', qtd: 1, uso: '', comb: 'gasolina', prop: '', tanque: 0.77, consumo: 0.91, vazao: 256, pressao: 85 },
 ];
 const DOC_CATALOGO = doc(db, 'catalogoEquipamentos', 'padrao');
 let linhas = [];
@@ -1382,6 +1401,7 @@ async function montarEquipamentos() {
   if (!linhas) linhas = lerLocal('central_equip', null);
   if (!linhas?.length) linhas = PADRAO.map(l => ({ ...l }));
   desenharTabela();
+  montarAgua();
 
   // Estoques da calculadora: só neste navegador (mudam a cada saída)
   const calc = lerLocal('central_calc', {});
@@ -1391,7 +1411,7 @@ async function montarEquipamentos() {
     i.onkeydown = (e) => { if (e.key === 'Enter') calcular(); };
   });
 
-  $('btnLinha').onclick = () => { linhas.push({ nome: '', qtd: 1, uso: '', comb: 'gasolina', prop: '', tanque: '', consumo: '', vazao: '' }); desenharTabela(); };
+  $('btnLinha').onclick = () => { linhas.push({ nome: '', qtd: 1, uso: '', comb: 'gasolina', prop: '', tanque: '', consumo: '', vazao: '', pressao: '' }); desenharTabela(); };
 
   // 🧪 Óleo da mistura: óleo = gasolina ÷ proporção (50:1 → 500 ml de gasolina levam 10 ml de óleo)
   let p = 50; // caixa escolhida: óleo STIHL 50 ou óleo comum
@@ -1426,6 +1446,7 @@ function desenharTabela() {
     <td><input class="num" data-i="${i}" data-k="tanque" type="number" min="0" step="0.1" value="${esc(l.tanque)}"></td>
     <td><input class="num" data-i="${i}" data-k="consumo" type="number" min="0" step="0.01" value="${esc(l.consumo)}"></td>
     <td><input class="num" data-i="${i}" data-k="vazao" type="number" min="0" step="1" value="${esc(l.vazao)}"></td>
+    <td><input class="num" data-i="${i}" data-k="pressao" type="number" min="0" step="1" value="${esc(l.pressao ?? '')}" title="Pressão máxima de fábrica (psi) — usada na calculadora de água"></td>
     <td><button class="x" data-del="${i}" title="Remover linha">✕</button></td></tr>`).join('');
   document.querySelectorAll('#tabEquip [data-k]').forEach(inp => inp.oninput = inp.onchange = () => {
     linhas[inp.dataset.i][inp.dataset.k] = inp.value;
@@ -1433,6 +1454,88 @@ function desenharTabela() {
     if (inp.dataset.k === 'comb') desenharTabela(); // coluna Mistura só vale para 2T
   });
   document.querySelectorAll('#tabEquip [data-del]').forEach(b => b.onclick = () => { linhas.splice(+b.dataset.del, 1); desenharTabela(); });
+}
+
+/* ── 💧 Água das motobombas — conta: CÓPIA de src/utils/calculoAgua.js (app).
+   Mudou lá, mude aqui. Curva da bomba H = Hmáx·(1−(Q/Qmáx)²) com os 2 pontos de
+   fábrica; atrito Hazen-Williams C=140; esguicho ≈ 20 m. Desnível pelo mapa:
+   relevo Open-Meteo (Copernicus 90 m, grátis, sem chave) — não enxerga pontos
+   muito próximos. */
+const DIAMETROS = [{ mm: 38, nome: '1½"' }, { mm: 25, nome: '1"' }, { mm: 19, nome: '¾"' }];
+const atritoM = (qLmin, compM, diamMm) => (qLmin <= 0 || compM <= 0 ? 0 : 10.67 * compM * (qLmin / 60000) ** 1.852 / (140 ** 1.852 * (diamMm / 1000) ** 4.87));
+function vazaoNaPonta(bomba, { compM, diamMm, desnivelM, esguicho }) {
+  const qMax = n(bomba?.vazao), hMax = n(bomba?.pressao) * 0.703;
+  if (!qMax || !hMax) return null;
+  const fixa = n(desnivelM) + (esguicho ? 20 : 0);
+  const sobra = (q) => hMax * (1 - (q / qMax) ** 2) - (fixa + atritoM(q, compM, diamMm));
+  if (sobra(0) <= 0) return { lmin: 0, lh: 0, alturaM: fixa, atritoM: 0, alturaMaxM: hMax, chega: false };
+  let lo = 0, hi = qMax;
+  if (sobra(qMax) < 0) for (let k = 0; k < 40; k++) { const m = (lo + hi) / 2; if (sobra(m) > 0) lo = m; else hi = m; }
+  else lo = qMax;
+  const at = atritoM(lo, compM, diamMm);
+  return { lmin: lo, lh: lo * 60, alturaM: fixa + at, atritoM: at, alturaMaxM: hMax, chega: true };
+}
+
+function montarAgua() {
+  let iBomba = 0, diamMm = 38, esguicho = true, medindo = null, marcas = [];
+  const bombas = () => linhas.filter(l => n(l.vazao) > 0 && n(l.pressao) > 0);
+  const litros = (l) => `${Math.round(l).toLocaleString('pt-BR')} L`;
+  const botoes = (id, itens, ativo, aoEscolher) => {
+    $(id).innerHTML = itens.map((t, i) => `<button class="pil${i === ativo ? ' ativo' : ''}" data-i="${i}" style="--c:var(--azul)">${esc(t)}</button>`).join('');
+    $(id).querySelectorAll('button').forEach(b => b.onclick = () => aoEscolher(+b.dataset.i));
+  };
+  const calcular = () => {
+    const bs = bombas();
+    botoes('aguaBombas', bs.map(b => b.nome.replace('Motobomba ', '')), iBomba, (i) => { iBomba = i; calcular(); });
+    botoes('aguaDiam', DIAMETROS.map(d => `Mangueira ${d.nome}`), DIAMETROS.findIndex(d => d.mm === diamMm), (i) => { diamMm = DIAMETROS[i].mm; calcular(); });
+    const b = bs[iBomba], comp = n($('aguaComp').value);
+    if (!b) { $('aguaRes').innerHTML = '<span class="dica">Nenhuma bomba com vazão e pressão na tabela de equipamentos.</span>'; return; }
+    if (!comp) { $('aguaRes').innerHTML = '<span class="dica">Informe o comprimento da mangueira.</span>'; return; }
+    const r = vazaoNaPonta(b, { compM: comp, diamMm, desnivelM: $('aguaDesn').value, esguicho });
+    if (!r.chega) { $('aguaRes').innerHTML = `<div style="color:#EF9A9A">⚠️ A água não chega: a ${esc(b.nome.replace('Motobomba ', ''))} vence no máximo ${Math.round(r.alturaMaxM)} m e aqui precisa de ${Math.round(r.alturaM)} m.${esguicho ? ' Tente sem esguicho.' : ''}</div>`; return; }
+    const h = n($('aguaHoras').value), vol = n($('aguaVol').value);
+    $('aguaRes').innerHTML = `<div style="font-size:26px;font-weight:800;color:var(--azul)">${Math.round(r.lmin)} L/min</div>
+      <div>= <b>${litros(r.lh)} por hora</b> saindo na ponta</div>
+      ${h > 0 ? `<div>Em ${duracao(h)}: <b>${litros(r.lh * h)}</b></div>` : ''}
+      ${vol > 0 ? `<div>${litros(vol)} duram <b>${duracao(vol / r.lh)}</b></div>` : ''}
+      <div class="dica">A bomba vence ${Math.round(r.alturaM)} m de ${Math.round(r.alturaMaxM)} m possíveis (atrito na mangueira: ${r.atritoM.toFixed(1).replace('.', ',')} m${esguicho ? ' · esguicho: 20 m' : ''}).</div>`;
+  };
+  ['aguaComp', 'aguaDesn', 'aguaHoras', 'aguaVol'].forEach(id => $(id).oninput = calcular);
+  document.querySelectorAll('[data-esguicho]').forEach(b => b.onclick = () => {
+    esguicho = b.dataset.esguicho === '1';
+    document.querySelectorAll('[data-esguicho]').forEach(x => x.classList.toggle('ativo', x === b));
+    calcular();
+  });
+
+  // 📍 Dois cliques no mapa: 1º = água (poço/rio), 2º = ponta da mangueira
+  const celular = () => window.matchMedia('(max-width:980px)').matches;
+  $('btnMedirAgua').onclick = () => {
+    marcas.forEach(m => m.remove()); marcas = []; medindo = [];
+    $('aguaMedida').textContent = 'Clique no mapa onde está a água (poço/rio).';
+    if (celular()) document.querySelector('#abas [data-aba="mapa"]').click();
+  };
+  mapa.on('click', async (e) => {
+    if (!medindo) return;
+    medindo.push(e.latlng);
+    marcas.push(L.marker(e.latlng, { icon: icone(medindo.length === 1 ? '💧' : '🚩', 'rgba(0,0,0,.75)', 28) }).addTo(mapa));
+    if (medindo.length === 1) { $('aguaMedida').textContent = 'Agora clique na ponta da mangueira.'; return; }
+    const [a, p] = medindo; medindo = null;
+    const dist = a.distanceTo(p);
+    $('aguaMedida').textContent = 'Buscando o relevo…';
+    try {
+      const resp = await fetch(`https://api.open-meteo.com/v1/elevation?latitude=${a.lat.toFixed(5)},${p.lat.toFixed(5)}&longitude=${a.lng.toFixed(5)},${p.lng.toFixed(5)}`);
+      const [ea, ep] = (await resp.json()).elevation || [];
+      if (!Number.isFinite(ea) || !Number.isFinite(ep)) throw new Error('sem relevo');
+      $('aguaDesn').value = Math.round(ep - ea);
+      if (!$('aguaComp').value) $('aguaComp').value = Math.round(dist);
+      $('aguaMedida').textContent = dist < 100
+        ? `⚠️ Pontos a só ${Math.round(dist)} m: o relevo do mapa (90 m) não mede bem tão perto. Confira o desnível no olho.`
+        : `Desnível: ${Math.round(ep - ea)} m em ${Math.round(dist)} m em linha reta (a mangueira costuma ser mais longa).`;
+      calcular();
+    } catch (err) { $('aguaMedida').textContent = 'Não deu para buscar o relevo agora. Digite o desnível.'; }
+    if (celular()) document.querySelector('#abas [data-aba="secCalc"]').click();
+  });
+  calcular();
 }
 
 async function salvarTabela() {
@@ -1449,7 +1552,7 @@ async function salvarTabela() {
 }
 
 // ── Conta: CÓPIA de src/utils/calculoEquipamentos.js (app). Mudou lá, mude aqui.
-const CAMPOS_ESTOQUE = ['gasolina', 'gasolinaPura', 'oleo', 'oleoProp', 'misturaPronta', 'diesel', 'agua', 'potavel', 'refeicoes', 'pessoas', 'hidratacao', 'refeicaoCadaH', 'duracao'];
+const CAMPOS_ESTOQUE = ['gasolina', 'gasolinaPura', 'oleo', 'oleoProp', 'misturaPronta', 'diesel', 'potavel', 'refeicoes', 'pessoas', 'hidratacao', 'refeicaoCadaH', 'duracao'];
 const emUso = (l) => (String(l.uso ?? '').trim() === '' ? n(l.qtd) : n(l.uso)); // vazio = todos ligados
 const fmtL = (l, casas = 1) => `${(Number.isFinite(l) ? l : 0).toFixed(casas).replace('.', ',')} L`;
 const fmtH = (h) => (!Number.isFinite(h) || h <= 0 ? '0h00' : duracao(h));
@@ -1474,7 +1577,6 @@ function calcularAutonomia(linhas, e) {
   const ligadas = linhas.filter(l => emUso(l) > 0);
   const soma = (comb) => ligadas.filter(l => l.comb === comb).reduce((s, l) => s + emUso(l) * n(l.consumo), 0);
   const consumo = { mistura: soma('mistura'), gasolina: soma('gasolina'), diesel: soma('diesel') };
-  const vazaoTotal = ligadas.reduce((s, l) => s + emUso(l) * n(l.vazao) * 60, 0);
   const estoqueDe = (c) => (c === 'mistura' ? mistura : c === 'gasolina' ? gasolinaPura : c === 'diesel' ? est.diesel : 0);
 
   const maquinas = linhas.filter(l => n(l.qtd) > 0 && l.comb !== 'nenhum').map(l => {
@@ -1483,7 +1585,7 @@ function calcularAutonomia(linhas, e) {
     if (q > n(l.qtd)) avisos.push(`"${l.nome}" está com mais em uso do que a quantidade levada.`);
     return { nome: l.nome || 'Equipamento', consumo: c, emUso: q, tanqueDuraH: tanque ? tanque / c : null, sozinhaH: estoque / c,
       todasDesteTipoH: q ? estoque / (q * c) : 0, tanquesCheios: tanque ? Math.floor(estoque / tanque) : null,
-      vazaoLh: n(l.vazao) * 60 * q, juntasH: consumo[l.comb] ? estoque / consumo[l.comb] : 0 };
+      juntasH: consumo[l.comb] ? estoque / consumo[l.comb] : 0 };
   }).filter(Boolean);
 
   const recursos = [];
@@ -1494,7 +1596,6 @@ function calcularAutonomia(linhas, e) {
   add('mistura', '⛽ Mistura 2T (sopradores/bombas 2T)', 'L', mistura, consumo.mistura);
   add('gasolina', '⛽ Gasolina pura (motobombas 4 tempos)', 'L', gasolinaPura, consumo.gasolina);
   add('diesel', '⛽ Diesel', 'L', est.diesel, consumo.diesel);
-  add('agua', '💧 Água de combate (galão/caixa)', 'L', est.agua, vazaoTotal);
   add('potavel', '🚰 Água potável', 'L', est.potavel, est.pessoas * est.hidratacao);
   if (est.pessoas > 0 && est.refeicaoCadaH > 0) add('comida', '🍞 Comida', 'refeições', est.refeicoes, est.pessoas / est.refeicaoCadaH);
   if (est.pessoas > 0 && est.potavel > 0 && !est.hidratacao) avisos.push('Informe a hidratação (L/h por pessoa) para calcular a água potável.');
@@ -1520,7 +1621,7 @@ function calcular() {
   if (c.mistura > 0) html += `<div class="resultado"><span class="nome">⛽ Mistura</span><span class="valor">${fmtL(c.mistura, 2)}</span>
     <span class="sub">${c.gasolina > 0 ? `${fmtL(c.gasolina)} de gasolina + ${fmtL(c.oleo, 2)} de óleo (${c.R}:1)` : ''}${c.misturaPronta > 0 ? `${c.gasolina > 0 ? ' + ' : ''}${fmtL(c.misturaPronta)} já misturados` : ''}.${c.gasolina > 0 ? ` Para misturar toda a gasolina são precisos ${fmtL(c.oleoIdeal, 2)} de óleo.` : ''}${c.sobraGasolina > 0.01 ? ` Sobram ${fmtL(c.sobraGasolina)} de gasolina sem óleo.` : ''}${c.sobraOleo > 0.01 ? ` Sobram ${fmtL(c.sobraOleo, 2)} de óleo.` : ''}</span></div>`;
   html += maquinas.map(m => `<div class="resultado"><span class="nome">${esc(m.nome)}</span><span class="valor">${String(m.consumo).replace('.', ',')} L/h</span>
-    <span class="sub">${m.tanqueDuraH ? `1 tanque dura <b>${fmtH(m.tanqueDuraH)}</b> · ` : ''}1 ligado sozinho: <b>${fmtH(m.sozinhaH)}</b>${m.emUso > 1 ? ` · os ${m.emUso} ligados juntos: <b>${fmtH(m.todasDesteTipoH)}</b>` : ''}${m.emUso > 0 && Math.abs(m.juntasH - m.todasDesteTipoH) > 0.01 ? ` · dividindo com as outras máquinas ligadas: <b>${fmtH(m.juntasH)}</b>` : ''}${m.tanquesCheios != null ? ` · dá para encher <b>${m.tanquesCheios}</b> tanques` : ''}${m.vazaoLh > 0 ? ` · joga ${fmtL(m.vazaoLh, 0)} de água por hora` : ''}</span></div>`).join('');
+    <span class="sub">${m.tanqueDuraH ? `1 tanque dura <b>${fmtH(m.tanqueDuraH)}</b> · ` : ''}1 ligado sozinho: <b>${fmtH(m.sozinhaH)}</b>${m.emUso > 1 ? ` · os ${m.emUso} ligados juntos: <b>${fmtH(m.todasDesteTipoH)}</b>` : ''}${m.emUso > 0 && Math.abs(m.juntasH - m.todasDesteTipoH) > 0.01 ? ` · dividindo com as outras máquinas ligadas: <b>${fmtH(m.juntasH)}</b>` : ''}${m.tanquesCheios != null ? ` · dá para encher <b>${m.tanquesCheios}</b> tanques` : ''}</span></div>`).join('');
   html += recursos.map(r => `<div class="resultado ${r === limitante ? 'ruim' : (H > 0 && !r.faltaMissao ? 'ok' : '')}"><span class="nome">${esc(r.nome)}</span><span class="valor">${fmtH(r.horas)}</span>
     <span class="sub">${qtd(r, r.estoque)} ÷ ${r.porHora.toFixed(2).replace('.', ',')} ${r.un}/h${r.estoque > 0 ? ` · acaba às <b>${as(r.horas)}</b>` : ''}${r.precisaMissao != null ? ` · para a missão: ${qtd(r, r.precisaMissao)}${r.faltaMissao > 0 ? ` · <b style="color:#EF9A9A">faltam ${qtd(r, r.faltaMissao)}</b>` : ' ✅'}` : ''}</span></div>`).join('');
   if (!recursos.length) html += '<p class="dica" style="margin-top:10px">Marque equipamentos ligados com consumo na tabela, ou informe pessoas com água/comida, para calcular.</p>';
