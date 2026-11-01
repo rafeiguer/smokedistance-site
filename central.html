@@ -179,6 +179,16 @@ table.planilha{border-collapse:collapse;width:100%;min-width:640px;font-size:12.
 .campo input:focus{border-color:var(--azul)}
 .campo select{width:100%;background:rgba(255,255,255,.06);border:1px solid var(--borda);border-radius:12px;padding:8px 10px;outline:none;color:inherit}
 .campo select option{background:#16201c}
+/* ROI */
+.roi-sec{margin-top:14px;padding-top:8px;border-top:1px solid var(--borda)}
+.roi-sec>h3{font-size:11px;letter-spacing:1.2px;color:var(--alerta);margin-bottom:6px}
+.roi-campo{margin:6px 0}
+.roi-campo>label.r{display:block;font-size:11px;color:var(--suave);margin-bottom:3px}
+.roi-ops{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:12.5px}
+.roi-ops label{display:flex;align-items:center;gap:5px;cursor:pointer}
+.roi-campo input[type=text],.roi-campo input[type=date],.roi-campo input[type=time],.roi-campo input[type=number],.roi-campo textarea{width:100%;background:rgba(255,255,255,.06);border:1px solid var(--borda);border-radius:10px;padding:6px 9px;outline:none;color:inherit;font:inherit}
+.roi-grade{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;align-items:center;font-size:12.5px}
+.roi-grade.t4{grid-template-columns:1fr 2fr 2fr 1fr}
 .caixa-oleo{flex:1;border-radius:14px;padding:10px;border:2px solid var(--borda);background:rgba(255,255,255,.05);cursor:pointer;text-align:center;color:var(--suave);font-weight:700;font-size:12.5px}
 .caixa-oleo b{display:block;font-family:var(--mono);font-size:24px;color:var(--texto);margin-top:2px}
 .caixa-oleo.ativo{border-color:var(--fogo);background:color-mix(in srgb,var(--fogo) 22%,transparent);color:var(--texto)}
@@ -409,6 +419,17 @@ nav.abas{display:none}
           <p class="dica" style="margin-top:6px">Estimativa (±20–30%): calculada com a vazão e a pressão máximas de fábrica (tabela de equipamentos).</p>
         </div>
       </section>
+      <section class="vidro secao" id="secROI" style="--c:var(--alerta)">
+        <h2>📝 ROI — Registro de Ocorrência de Incêndio</h2>
+        <p class="dica">Modelo SISFOGO / MMA. O rascunho fica salvo neste navegador enquanto você preenche.</p>
+        <div class="linha" style="margin:8px 0">
+          <button class="pil destaque" id="btnRoiAuto" style="--c:var(--alerta);color:#111">⚡ Preencher com os dados da Central</button>
+          <button class="pil" id="btnRoiImprimir" style="--c:var(--azul)">🖨️ Imprimir / PDF</button>
+          <button class="pil" id="btnRoiNovo">🧹 Novo ROI</button>
+        </div>
+        <p class="dica" id="roiAviso"></p>
+        <div id="roiForm"></div>
+      </section>
     </div>
   </main>
 
@@ -421,6 +442,7 @@ nav.abas{display:none}
     <button data-aba="secTempo"><span>🌤️</span>Tempo</button>
     <button data-aba="secEquip"><span>🧰</span>Equip.</button>
     <button data-aba="secCalc"><span>🧮</span>Cálculo</button>
+    <button data-aba="secROI"><span>📝</span>ROI</button>
   </nav>
 </div>
 
@@ -596,6 +618,7 @@ function iniciar() {
   montarVisor();
   montarMensagens();
   montarEquipe();
+  montarROI();
   escutarDados();
   montarEquipamentos();
   setInterval(() => { $('relogio').textContent = new Date().toLocaleTimeString('pt-BR'); }, 1000);
@@ -1332,6 +1355,163 @@ function montarEquipe() {
   };
   $('btnEquipe').onclick = dar;
   $('txtEquipe').addEventListener('keydown', (e) => { if (e.key === 'Enter') dar(); });
+}
+
+/* ───────────── 📝 ROI — Registro de Ocorrência de Incêndio (SISFOGO/MMA) ─────────────
+   O modelo oficial (2 páginas) está descrito UMA vez em ROI_MODELO; dele saem o
+   formulário da tela e a folha de impressão — nunca ficam diferentes. Tipos:
+   texto, longo, data, um (escolha única), varios (+ "outro"), etapas (data/hora),
+   combatentes, tabela. Rascunho no localStorage deste navegador. */
+const FASES = ['1º ataque', 'Controle', 'Extinção'];
+const ROI_MODELO = [
+  ['DADOS DO ROI', [
+    { k: 'numero', r: 'ROI Nº', t: 'texto' },
+    { k: 'nivel', r: 'Nível de acionamento', t: 'um', op: ['Nível 1', 'Nível 2', 'Nível 3'] }]],
+  ['LOCALIZAÇÃO DO INCÊNDIO', [
+    { k: 'tipoArea', r: 'Tipo de área', t: 'um', op: ['Área protegida', 'Outras áreas'] },
+    { k: 'tipoLocalidade', r: 'Tipo de localidade', t: 'varios', op: ['Projeto de assentamento', 'Terra indígena', 'Unidade de conservação', 'Floresta pública', 'Propriedade rural', 'Comunidade tradicional'], outro: true },
+    { k: 'localidade', r: 'Localidade', t: 'texto' },
+    { k: 'dentroEntorno', r: 'Dentro / entorno', t: 'um', op: ['Dentro', 'Entorno'] },
+    { k: 'classificacao', r: 'Classificação', t: 'um', op: ['Federal', 'Estadual', 'Municipal', 'Particular'] },
+    { k: 'uf', r: 'UF', t: 'texto' },
+    { k: 'municipios', r: 'Municípios atingidos', t: 'texto' },
+    { k: 'lat', r: 'Latitude', t: 'texto' },
+    { k: 'lon', r: 'Longitude', t: 'texto' }]],
+  ['DADOS DE COMBATE', [
+    { k: 'deteccao', r: 'Método de detecção', t: 'varios', op: ['Assentado/proprietário', 'Denúncia anônima', 'Durante combate', 'Indígena', 'Monitoramento por satélite', 'Ponto de observação', 'Ronda', 'Telefone'], outro: true },
+    { k: 'etapas', r: 'Etapas do combate', t: 'etapas', op: ['Início do fogo', 'Detecção', 'Deslocamento', 'Primeiro ataque', 'Reforço', 'Controle de incêndio', 'Extinção de incêndio'] },
+    { k: 'extincao', r: 'Formas de extinção', t: 'varios', op: ['Combate indireto', 'Combate direto', 'Extinção natural'] },
+    { k: 'pericia', r: 'Perícia', t: 'um', op: ['Sim', 'Não'] },
+    { k: 'responsaveisTecnicos', r: 'Responsáveis técnicos', t: 'texto' }]],
+  ['DADOS DOS COMBATENTES', [
+    { k: 'combatentes', t: 'combatentes', linhas: [
+      { k: 'brig', r: 'Brigadista', sub: ['Local', 'Voluntário', 'Outras localidades (mesma instituição)'] },
+      { k: 'serv', r: 'Servidor local' },
+      { k: 'mil', r: 'Militar', sub: ['Exército', 'Marinha', 'Aeronáutica', 'Bombeiros'] },
+      { k: 'inst', r: 'Outras instituições', sub: ['Defesa civil', 'Guarda municipal'], outro: true },
+      { k: 'morador', r: 'Morador do entorno' }] }]],
+  ['PARTICIPAÇÃO DE OUTRAS BRIGADAS', [{ k: 'outrasBrigadas', t: 'tabela', cols: ['Quantidade', 'Brigada', 'Instituição'], linhas: 3 }]],
+  ['COMBATE AÉREO', [{ k: 'aereo', t: 'tabela', cols: ['Quantidade', 'Ferramentas', 'Instituição', 'Horas de voo'], linhas: 2 }]],
+  ['PROVÁVEIS CAUSAS', [
+    { k: 'cAcidente', r: 'Acidente', t: 'varios', op: ['Confecção de aceiro', 'Cabo de alta tensão', 'Fagulha de máquinas', 'Fagulha transportada pelo vento', 'Reignição'] },
+    { k: 'cExtrativismo', r: 'Extrativismo', t: 'varios', op: ['Caça', 'Extração de mel', 'Extração de espécie vegetal', 'Extração de madeira', 'Limpeza de área para mineração'] },
+    { k: 'cAgro', r: 'Atividade agropecuária', t: 'varios', op: ['Limpeza de área para cultivo', 'Renovação de pastagem natural', 'Renovação de pastagem plantada', 'Queima de cana-de-açúcar', 'Queima de restos de exploração', 'Queima de lixo'] },
+    { k: 'cNatural', r: 'Causas naturais', t: 'varios', op: ['Descarga elétrica de raio'] },
+    { k: 'cOutras', r: 'Outras causas', t: 'varios', op: ['Indeterminado', 'Fogos de artifício', 'Fogueira de acampamento', 'Litígio com órgão ambiental', 'Queda de balão', 'Ritual religioso', 'Vandalismo'] },
+    { k: 'cOutros', r: 'Outros', t: 'texto' }]],
+  ['DANOS', [
+    { k: 'vegetacao', r: 'Vegetação atingida', t: 'varios', op: ['Área degradada ou capoeira', 'Bananal', 'Floresta cultivada', 'Mata ou floresta nativa', 'Pastagem nativa ou campo limpo', 'Vegetação arbustiva', 'Brejo, várzea ou vereda'], outro: true },
+    { k: 'area', r: 'Área atingida por incêndio (ha)', t: 'texto' },
+    { k: 'metodoArea', r: 'Método de cálculo', t: 'um', op: ['Estimativa visual', 'Imagem satélite', 'GPS'] }]],
+  ['INFORMAÇÕES ADICIONAIS', [
+    { k: 'dificuldades', r: 'Dificuldades encontradas', t: 'longo' },
+    { k: 'observacoes', r: 'Observações', t: 'longo' },
+    { k: 'respElab', r: 'Responsável pela elaboração', t: 'texto' }, { k: 'dataElab', r: 'Data', t: 'data' },
+    { k: 'respDig', r: 'Responsável pela digitação', t: 'texto' }, { k: 'dataDig', r: 'Data', t: 'data' }]],
+];
+const ROI_VAZIO = () => ({ uf: 'BA', etapas: {}, combatentes: {} });
+
+function montarROI() {
+  let roi = lerLocal('central_roi', null) || ROI_VAZIO();
+  const salvar = () => gravarLocal('central_roi', roi);
+  const marcado = (lista, v) => (roi[lista] || []).includes(v);
+  const ck = (dk, v, on) => `<label><input type="checkbox" data-k="${dk}" value="${esc(v)}"${on ? ' checked' : ''}>${esc(v)}</label>`;
+
+  const campoHTML = (c) => {
+    const v = roi[c.k];
+    if (c.t === 'texto' || c.t === 'data') return `<div class="roi-campo"><label class="r">${esc(c.r)}</label><input type="${c.t === 'data' ? 'date' : 'text'}" data-k="${c.k}" value="${esc(v ?? '')}"></div>`;
+    if (c.t === 'longo') return `<div class="roi-campo"><label class="r">${esc(c.r)}</label><textarea rows="3" data-k="${c.k}">${esc(v ?? '')}</textarea></div>`;
+    if (c.t === 'um') return `<div class="roi-campo"><label class="r">${esc(c.r)}</label><div class="roi-ops">${c.op.map(o => `<label><input type="radio" name="roi-${c.k}" data-k="${c.k}" value="${esc(o)}"${v === o ? ' checked' : ''}>${esc(o)}</label>`).join('')}</div></div>`;
+    if (c.t === 'varios') return `<div class="roi-campo"><label class="r">${esc(c.r)}</label><div class="roi-ops">${c.op.map(o => ck(c.k, o, marcado(c.k, o))).join('')}</div>${c.outro ? `<input type="text" data-k="${c.k}Outro" placeholder="Outro: …" value="${esc(roi[c.k + 'Outro'] ?? '')}" style="margin-top:4px">` : ''}</div>`;
+    if (c.t === 'etapas') return `<div class="roi-campo"><label class="r">${esc(c.r)}</label>${c.op.map(o => { const e = roi.etapas[o] || {}; return `<div class="roi-grade"><span>${esc(o)}</span><input type="date" data-k="etapa|${esc(o)}|data" value="${esc(e.data ?? '')}"><input type="time" data-k="etapa|${esc(o)}|hora" value="${esc(e.hora ?? '')}"></div>`; }).join('')}</div>`;
+    if (c.t === 'combatentes') return c.linhas.map(l => { const e = roi.combatentes[l.k] || {}; return `<div class="roi-campo"><label class="r">${esc(l.r)}</label>
+      ${l.sub ? `<div class="roi-ops">${l.sub.map(s => ck(`comb|${l.k}|sub`, s, (e.sub || []).includes(s))).join('')}</div>` : ''}
+      ${l.outro ? `<input type="text" data-k="comb|${l.k}|outro" placeholder="Outra: …" value="${esc(e.outro ?? '')}" style="margin:4px 0">` : ''}
+      <div class="roi-ops"><label>Qtde <input type="number" min="0" data-k="comb|${l.k}|qtd" value="${esc(e.qtd ?? '')}" style="width:70px"></label>${FASES.map(f => ck(`comb|${l.k}|fase`, f, (e.fase || []).includes(f))).join('')}</div></div>`; }).join('');
+    if (c.t === 'tabela') { const t = roi[c.k] || []; return `<div class="roi-campo"><div class="roi-grade${c.cols.length === 4 ? ' t4' : ''}">${c.cols.map(x => `<span class="dica">${esc(x)}</span>`).join('')}${Array.from({ length: c.linhas }, (_, i) => c.cols.map((_, j) => `<input type="text" data-k="tab|${c.k}|${i}|${j}" value="${esc(t[i]?.[j] ?? '')}">`).join('')).join('')}</div></div>`; }
+    return '';
+  };
+  const desenhar = () => { $('roiForm').innerHTML = ROI_MODELO.map(([sec, campos]) => `<div class="roi-sec"><h3>${esc(sec)}</h3>${campos.map(campoHTML).join('')}</div>`).join(''); };
+
+  // Um ouvinte para o formulário inteiro: data-k diz onde guardar
+  const aoMudar = (ev) => {
+    const el = ev.target, dk = el.dataset?.k;
+    if (!dk) return;
+    const [tipo, a, b, c2] = dk.split('|');
+    if (tipo === 'etapa') { roi.etapas[a] = { ...(roi.etapas[a] || {}), [b]: el.value }; }
+    else if (tipo === 'comb') {
+      const e = roi.combatentes[a] = roi.combatentes[a] || {};
+      if (b === 'sub' || b === 'fase') { e[b] = (e[b] || []).filter(x => x !== el.value); if (el.checked) e[b].push(el.value); }
+      else e[b] = el.value;
+    } else if (tipo === 'tab') { roi[a] = roi[a] || []; roi[a][b] = roi[a][b] || []; roi[a][b][c2] = el.value; }
+    else if (el.type === 'checkbox') { roi[dk] = (roi[dk] || []).filter(x => x !== el.value); if (el.checked) roi[dk].push(el.value); }
+    else roi[dk] = el.value;
+    salvar();
+  };
+  $('roiForm').addEventListener('input', aoMudar);
+  $('roiForm').addEventListener('change', aoMudar);
+
+  $('btnRoiNovo').onclick = () => { if (confirm('Começar um ROI em branco? O rascunho atual será apagado.')) { roi = ROI_VAZIO(); salvar(); desenhar(); $('roiAviso').textContent = ''; } };
+
+  // ⚡ Preenche só o que a Central sabe; não apaga o que já foi digitado
+  $('btnRoiAuto').onclick = async () => {
+    const preenchidos = [];
+    const por = (k, v, nome) => { if (v != null && v !== '' && !roi[k]) { roi[k] = v; preenchidos.push(nome); } };
+    if (ultimaTri) {
+      por('lat', ultimaTri.latitude.toFixed(5), 'coordenadas'); por('lon', ultimaTri.longitude.toFixed(5), '');
+      const d = quando(ultimaTri.calculadaEm);
+      if (d && !roi.etapas['Detecção']?.data) {
+        roi.etapas['Detecção'] = { data: d.toLocaleDateString('sv-SE'), hora: d.toTimeString().slice(0, 5) };
+        preenchidos.push('data/hora da detecção (triangulação)');
+      }
+      if (!(roi.deteccao || []).length) { roi.deteccao = ['Ponto de observação']; preenchidos.push('método de detecção'); }
+      try { // Município e UF pelo ponto (OpenStreetMap/Nominatim, grátis)
+        const r = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&zoom=10&accept-language=pt-BR&lat=${ultimaTri.latitude}&lon=${ultimaTri.longitude}`);
+        const a = (await r.json()).address || {};
+        por('municipios', a.city || a.town || a.municipality || a.village || '', 'município');
+        const uf = (a['ISO3166-2-lvl4'] || '').replace('BR-', '');
+        if (uf && (roi.uf === 'BA' || !roi.uf) && uf !== roi.uf) { roi.uf = uf; preenchidos.push('UF'); }
+      } catch {}
+    }
+    const pessoas = n(lerLocal('central_calc', {}).pessoas);
+    if (pessoas && !roi.combatentes.brig?.qtd) { roi.combatentes.brig = { ...(roi.combatentes.brig || {}), qtd: String(pessoas) }; preenchidos.push('nº de brigadistas (calculadora)'); }
+    por('respElab', usuario?.displayName || usuario?.email || '', 'responsável');
+    por('dataElab', new Date().toLocaleDateString('sv-SE'), 'data');
+    salvar(); desenhar();
+    $('roiAviso').textContent = ultimaTri
+      ? `Preenchido: ${preenchidos.filter(Boolean).join(', ') || 'nada novo (campos já preenchidos ficam como estão)'}. Confira e complete o resto.`
+      : 'Ainda não há foco triangulado: preenchi só o que não depende dele.';
+  };
+
+  // 🖨️ Folha no formato do modelo: abre numa janela e chama a impressão (dá para salvar em PDF)
+  $('btnRoiImprimir').onclick = () => {
+    // Marcado em negrito e maior: em letra pequena ☒ e ☐ quase não se distinguem
+    const x = (on) => (on ? '<b class="mk">☒</b>' : '☐');
+    const linha = (c) => {
+      const v = roi[c.k];
+      if (['texto', 'data', 'longo'].includes(c.t)) return `<tr><td><b>${esc(c.r)}:</b> ${esc(c.t === 'data' && v ? v.split('-').reverse().join('/') : v ?? '').replace(/\n/g, '<br>')}</td></tr>`;
+      const op = (on, o) => `${x(on)} ${on ? `<b>${esc(o)}</b>` : esc(o)}`;
+      if (c.t === 'um') return `<tr><td><b>${esc(c.r)}:</b> ${c.op.map(o => op(v === o, o)).join(' &nbsp; ')}</td></tr>`;
+      if (c.t === 'varios') return `<tr><td><b>${esc(c.r)}:</b> ${c.op.map(o => op((v || []).includes(o), o)).join(' &nbsp; ')}${c.outro ? ` &nbsp; ${x(!!roi[c.k + 'Outro'])} Outro: ${esc(roi[c.k + 'Outro'] ?? '')}` : ''}</td></tr>`;
+      if (c.t === 'etapas') return `<tr><td><table class="g"><tr><th>Etapas do combate</th><th>Data</th><th>Hora</th></tr>${c.op.map(o => { const e = roi.etapas[o] || {}; return `<tr><td>${esc(o)}</td><td>${esc(e.data ? e.data.split('-').reverse().join('/') : '')}</td><td>${esc(e.hora ?? '')}</td></tr>`; }).join('')}</table></td></tr>`;
+      if (c.t === 'combatentes') return `<tr><td><table class="g"><tr><th>Combatentes</th><th>Qtde</th>${FASES.map(f => `<th>${f}</th>`).join('')}</tr>${c.linhas.map(l => { const e = roi.combatentes[l.k] || {}; return `<tr><td><b>${esc(l.r)}</b>${l.sub ? ': ' + l.sub.map(s => `${x((e.sub || []).includes(s))} ${esc(s)}`).join(' ') : ''}${l.outro ? ` ${x(!!e.outro)} Outra: ${esc(e.outro ?? '')}` : ''}</td><td>${esc(e.qtd ?? '')}</td>${FASES.map(f => `<td>${x((e.fase || []).includes(f))}</td>`).join('')}</tr>`; }).join('')}</table></td></tr>`;
+      if (c.t === 'tabela') { const t = roi[c.k] || []; return `<tr><td><table class="g"><tr>${c.cols.map(h => `<th>${esc(h)}</th>`).join('')}</tr>${Array.from({ length: c.linhas }, (_, i) => `<tr>${c.cols.map((_, j) => `<td>${esc(t[i]?.[j] ?? '')}</td>`).join('')}</tr>`).join('')}</table></td></tr>`; }
+      return '';
+    };
+    const w = window.open('', '_blank');
+    if (!w) { alert('O navegador bloqueou a janela de impressão. Permita pop-ups para este site.'); return; }
+    w.document.write(`<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>ROI ${esc(roi.numero || '')}</title><style>
+      body{font:11px Arial,sans-serif;color:#000;margin:16px} table{width:100%;border-collapse:collapse} td,th{border:1px solid #000;padding:3px 5px;text-align:left;vertical-align:top}
+      .cab td{text-align:center;font-weight:bold} .sec{background:#d9d9d9;text-align:center;font-weight:bold} table.g td,table.g th{font-size:10.5px} .mk{font-size:14px} @page{size:A4;margin:12mm}
+      .sec,.cab td{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+    </style></head><body><table>
+      <tr class="cab"><td>MINISTÉRIO DO MEIO AMBIENTE – MMA</td></tr><tr class="cab"><td>SISTEMA NACIONAL DE INFORMAÇÕES SOBRE O FOGO – SISFOGO</td></tr><tr class="cab"><td>REGISTRO DE OCORRÊNCIAS DE INCÊNDIO - ROI</td></tr>
+      ${ROI_MODELO.map(([sec, campos]) => `<tr><td class="sec">${esc(sec)}</td></tr>${campos.map(linha).join('')}`).join('')}
+    </table><script>window.onload=()=>window.print()<\/script></body></html>`);
+    w.document.close();
+  };
+
+  desenhar();
 }
 
 /* ───────────── ABAS (celular) ───────────── */
