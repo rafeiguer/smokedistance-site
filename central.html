@@ -267,6 +267,28 @@ nav.abas{display:none}
           <button class="pil destaque" id="btnEnviar" style="--c:var(--azul)">Enviar</button>
         </div>
       </section>
+      <section class="vidro secao" id="secCombate" style="--c:var(--fogo)">
+        <h2>🚒 Brigadas de combate</h2>
+        <div id="combateOc" class="dica">Carregando…</div>
+        <div class="linha" style="margin-top:8px" id="combateAbrir">
+          <input type="text" id="txtOcNome" placeholder="Nome da ocorrência (ex.: Morro do Pai Inácio)" style="flex:1 1 180px;min-width:0;background:rgba(255,255,255,.06);border:1px solid var(--borda);border-radius:999px;padding:8px 12px;outline:none;color:inherit">
+          <button class="pil destaque" id="btnAbrirOc" style="--c:var(--fogo)">🔥 Abrir ocorrência</button>
+        </div>
+        <div id="combatePainel" style="margin-top:10px"></div>
+        <div id="combateDesignar" hidden style="margin-top:10px">
+          <div class="dica" style="margin-bottom:4px"><b>📋 Designar tarefa</b></div>
+          <div class="linha">
+            <select id="selTarefa" class="pil"></select>
+            <input type="text" id="txtAlvo" list="listaBrigadas" placeholder="Brigada (vazio = todas)" style="flex:1 1 120px;min-width:0;background:rgba(255,255,255,.06);border:1px solid var(--borda);border-radius:999px;padding:7px 12px;outline:none;color:inherit">
+            <datalist id="listaBrigadas"></datalist>
+          </div>
+          <div class="linha" style="margin-top:6px">
+            <input type="text" id="txtDetalhe" maxlength="120" placeholder="Detalhe (ex.: lado norte, até a estrada)" style="flex:1 1 180px;min-width:0;background:rgba(255,255,255,.06);border:1px solid var(--borda);border-radius:999px;padding:7px 12px;outline:none;color:inherit">
+            <button class="pil destaque" id="btnDesignar" style="--c:var(--verde)">Enviar</button>
+          </div>
+        </div>
+        <details style="margin-top:10px"><summary class="dica" style="cursor:pointer">📜 Linha do tempo</summary><div id="combateTempo" class="dica" style="margin-top:6px"></div></details>
+      </section>
       <section class="vidro secao" id="secCamadas" style="--c:var(--verde)">
         <h2>🗂️ Camadas do mapa</h2>
         <div id="listaCamadas"></div>
@@ -436,6 +458,7 @@ nav.abas{display:none}
   <nav class="abas" id="abas">
     <button data-aba="mapa" class="on"><span>🗺️</span>Mapa</button>
     <button data-aba="secMsg"><span>💬</span>Msgs<i class="badge" id="badgeMsg" hidden></i></button>
+    <button data-aba="secCombate"><span>🚒</span>Combate</button>
     <button data-aba="secRegistro"><span>📜</span>Registro</button>
     <button data-aba="secCamadas"><span>🗂️</span>Camadas</button>
     <button data-aba="secEquipe" id="abaEquipe" hidden><span>👥</span>Equipe</button>
@@ -618,6 +641,7 @@ function iniciar() {
   montarVisor();
   montarMensagens();
   montarEquipe();
+  montarCombate();
   montarROI();
   escutarDados();
   montarEquipamentos();
@@ -1357,6 +1381,117 @@ function montarEquipe() {
   $('txtEquipe').addEventListener('keydown', (e) => { if (e.key === 'Enter') dar(); });
 }
 
+/* ───────────── 🚒 BRIGADAS DE COMBATE ─────────────
+   ocorrencias/{id} (a Central abre/encerra) e ocorrencias/{id}/registros (cada
+   brigada marca suas etapas e tarefas no app; a Central designa tarefas). Hora
+   que vale = emLocal (relógio do aparelho que registrou). CÓPIA de ETAPAS/TAREFAS
+   de src/services/combateService.js — mudou lá, mude aqui. */
+const ETAPAS = [
+  { k: 'saidaBase', nome: 'Saída da base' }, { k: 'chegadaFoco', nome: 'Chegada no foco' },
+  { k: 'primeiroAtaque', nome: 'Primeiro ataque' }, { k: 'controlado', nome: 'Controlado' },
+  { k: 'extinto', nome: 'Extinto' }, { k: 'saidaFoco', nome: 'Saída do foco' },
+];
+const TAREFAS = ['Rescaldo', 'Aceiro', 'Combate direto', 'Linha de mangueira', 'Contrafogo / queima', 'Vigilância', 'Transporte de água'];
+let ocAtual = null, combateRegs = [];
+const hm = (ms) => (ms ? new Date(ms).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : '—');
+
+function montarCombate() {
+  let pararRegs = () => {};
+  $('selTarefa').innerHTML = TAREFAS.map(t => `<option>${esc(t)}</option>`).join('');
+
+  onSnapshot(query(collection(db, 'ocorrencias'), orderBy('abertaEm', 'desc'), limit(15)), (snap) => {
+    const ocs = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    const aberta = ocs.find(o => o.aberta) || null;
+    if (aberta?.id !== ocAtual?.id) {
+      pararRegs(); combateRegs = [];
+      if (aberta) pararRegs = onSnapshot(query(collection(db, 'ocorrencias', aberta.id, 'registros'), orderBy('emLocal')), (s) => { combateRegs = s.docs.map(d => ({ id: d.id, ...d.data() })); desenharCombate(); }, (e) => console.warn('Central: registros', e.message));
+    }
+    ocAtual = aberta;
+    $('combateAbrir').hidden = !!aberta || !ehChefe();
+    $('combateDesignar').hidden = !aberta || !ehChefe();
+    $('combateOc').innerHTML = aberta
+      ? `<b style="color:var(--texto)">🔥 ${esc(aberta.nome || 'Ocorrência')}</b> · aberta ${esc(hhmm(quando(aberta.abertaEm)))}${Number.isFinite(aberta.latitude) ? ` · ${aberta.latitude.toFixed(4)}, ${aberta.longitude.toFixed(4)}` : ''}${ehChefe() ? ' <button class="pil" id="btnEncerrarOc" style="--c:var(--fogo-forte)">Encerrar</button>' : ''}`
+      : 'Nenhuma ocorrência aberta. As brigadas no app só registram etapas e tarefas depois que a Central abre a ocorrência.';
+    if ($('btnEncerrarOc')) $('btnEncerrarOc').onclick = () => {
+      if (confirm(`Encerrar "${aberta.nome || 'Ocorrência'}"? As brigadas param de registrar nela.`)) updateDoc(doc(db, 'ocorrencias', aberta.id), { aberta: false, encerradaEm: serverTimestamp() }).catch(e => alert('Não foi possível encerrar: ' + e.message));
+    };
+    desenharCombate();
+  }, (e) => { console.warn('Central: ocorrencias', e.message); $('combateOc').textContent = 'Sem acesso às ocorrências.'; });
+
+  $('btnAbrirOc').onclick = async () => {
+    const agora = new Date();
+    const nome = $('txtOcNome').value.trim() || `Ocorrência ${agora.toLocaleDateString('pt-BR')} ${hhmm(agora)}`;
+    try {
+      await addDoc(collection(db, 'ocorrencias'), {
+        nome, aberta: true, abertaEm: serverTimestamp(), abertaPor: usuario.displayName || usuario.email,
+        ...(ultimaTri ? { latitude: ultimaTri.latitude, longitude: ultimaTri.longitude } : {}),
+      });
+      $('txtOcNome').value = '';
+    } catch (e) { alert('Não foi possível abrir: ' + e.message); }
+  };
+
+  $('btnDesignar').onclick = async () => {
+    if (!ocAtual) return;
+    try {
+      await addDoc(collection(db, 'ocorrencias', ocAtual.id, 'registros'), {
+        tipo: 'designacao', tarefa: $('selTarefa').value, alvo: $('txtAlvo').value.trim() || 'Todas',
+        detalhe: $('txtDetalhe').value.trim().slice(0, 120), brigada: 'Central', uid: usuario.uid, origem: 'site',
+        emLocal: Date.now(), recebidoEm: serverTimestamp(),
+      });
+      $('txtDetalhe').value = '';
+    } catch (e) { alert('Não foi possível designar: ' + e.message); }
+  };
+}
+
+function desenharCombate() {
+  if (!ocAtual) { $('combatePainel').innerHTML = ''; $('combateTempo').innerHTML = ''; return; }
+  // Por brigada: etapas (1ª vez de cada) e tarefas (último estado de cada)
+  const brigs = {};
+  combateRegs.filter(r => r.tipo !== 'designacao').forEach(r => {
+    const b = brigs[r.brigada || 'Brigada'] = brigs[r.brigada || 'Brigada'] || { etapas: {}, tarefas: {} };
+    if (r.tipo === 'etapa' && !b.etapas[r.etapa]) b.etapas[r.etapa] = r.emLocal;
+    if (r.tipo === 'tarefa') {
+      const t = b.tarefas[r.tarefa] = b.tarefas[r.tarefa] || {};
+      if (r.acao === 'inicio') { t.inicio = r.emLocal; t.fim = null; } else t.fim = r.emLocal;
+    }
+  });
+  const nomes = Object.keys(brigs);
+  $('listaBrigadas').innerHTML = ['Todas', ...nomes].map(n2 => `<option value="${esc(n2)}">`).join('');
+  $('combatePainel').innerHTML = nomes.length ? nomes.map(nome => {
+    const b = brigs[nome];
+    const tarefas = Object.entries(b.tarefas).map(([t, v]) => v.fim
+      ? `<span style="color:var(--verde)">✅ ${esc(t)} ${hm(v.inicio)}–${hm(v.fim)}</span>`
+      : `<span style="color:var(--alerta)">⏳ ${esc(t)} desde ${hm(v.inicio)}</span>`).join(' · ');
+    return `<div class="resultado"><span class="nome">🚒 ${esc(nome)}</span>
+      <span class="sub">${ETAPAS.map(e => `${esc(e.nome)}: <b>${hm(b.etapas[e.k])}</b>`).join(' · ')}${tarefas ? `<br>${tarefas}` : ''}</span></div>`;
+  }).join('') : '<span class="dica">Nenhuma brigada registrou nada ainda.</span>';
+  const desc = (r) => r.tipo === 'etapa' ? ETAPAS.find(e => e.k === r.etapa)?.nome
+    : r.tipo === 'designacao' ? `📋 Central designou "${r.tarefa}" para ${r.alvo}${r.detalhe ? ` (${r.detalhe})` : ''}`
+    : `${r.tarefa}: ${r.acao === 'inicio' ? 'início' : 'fim'}`;
+  $('combateTempo').innerHTML = [...combateRegs].reverse().map(r => `<div>${new Date(r.emLocal).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })} · <b>${esc(r.brigada || '')}</b> · ${esc(desc(r) || '')}</div>`).join('') || 'Nada ainda.';
+}
+
+// Para o ROI: horário de cada etapa do combate, juntando todas as brigadas
+function etapasDoCombate() {
+  const etapa = (k) => combateRegs.filter(r => r.tipo === 'etapa' && r.etapa === k).map(r => r.emLocal).sort((a, b) => a - b);
+  // Reforço = chegada da 2ª brigada no foco
+  const chegadas = {};
+  combateRegs.filter(r => r.tipo === 'etapa' && r.etapa === 'chegadaFoco').forEach(r => { if (!chegadas[r.brigada]) chegadas[r.brigada] = r.emLocal; });
+  const ordem = Object.values(chegadas).sort((a, b) => a - b);
+  const tarefas = new Set(combateRegs.filter(r => r.tipo === 'tarefa').map(r => r.tarefa));
+  return {
+    'Deslocamento': etapa('saidaBase')[0],
+    'Primeiro ataque': etapa('primeiroAtaque')[0],
+    'Reforço': ordem[1],
+    'Controle de incêndio': etapa('controlado').at(-1),   // o último flanco controlado
+    'Extinção de incêndio': etapa('extinto').at(-1),
+    formas: [
+      ...(['Combate direto', 'Linha de mangueira'].some(t => tarefas.has(t)) ? ['Combate direto'] : []),
+      ...(['Aceiro', 'Contrafogo / queima'].some(t => tarefas.has(t)) ? ['Combate indireto'] : []),
+    ],
+  };
+}
+
 /* ───────────── 📝 ROI — Registro de Ocorrência de Incêndio (SISFOGO/MMA) ─────────────
    O modelo oficial (2 páginas) está descrito UMA vez em ROI_MODELO; dele saem o
    formulário da tela e a folha de impressão — nunca ficam diferentes. Tipos:
@@ -1473,6 +1608,17 @@ function montarROI() {
         if (uf && (roi.uf === 'BA' || !roi.uf) && uf !== roi.uf) { roi.uf = uf; preenchidos.push('UF'); }
       } catch {}
     }
+    // Etapas marcadas pelas brigadas na ocorrência aberta
+    const ec = etapasDoCombate();
+    ['Deslocamento', 'Primeiro ataque', 'Reforço', 'Controle de incêndio', 'Extinção de incêndio'].forEach(nome => {
+      const ms = ec[nome];
+      if (ms && !roi.etapas[nome]?.data) {
+        const d = new Date(ms);
+        roi.etapas[nome] = { data: d.toLocaleDateString('sv-SE'), hora: d.toTimeString().slice(0, 5) };
+        preenchidos.push(nome.toLowerCase());
+      }
+    });
+    if (ec.formas.length && !(roi.extincao || []).length) { roi.extincao = ec.formas; preenchidos.push('formas de extinção'); }
     const pessoas = n(lerLocal('central_calc', {}).pessoas);
     if (pessoas && !roi.combatentes.brig?.qtd) { roi.combatentes.brig = { ...(roi.combatentes.brig || {}), qtd: String(pessoas) }; preenchidos.push('nº de brigadistas (calculadora)'); }
     por('respElab', usuario?.displayName || usuario?.email || '', 'responsável');
