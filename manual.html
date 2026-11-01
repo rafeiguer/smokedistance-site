@@ -356,7 +356,7 @@ body{font-size:calc(17px * var(--escala,1))}
       <li><a href="#rota">Rota a Pé até o Foco</a></li>
       <li><a href="#rota-servico">Rota de Serviço — Desenhar no Mapa</a></li>
       <li><a href="#calculadora">Calculadora de Campo</a></li>
-      <li><a href="#brigadas-combate">Brigadas de Combate</a></li>
+      <li><a href="#brigadas-combate">Brigadas de Combate (na Rota de Serviço)</a></li>
       <li><a href="#fotos">Fotos de Campo</a></li>
       <li><a href="#agua">Água e Cobertura de Rede</a></li>
       <li><a href="#trilhas">Trilhas — Gravar e Explorar</a></li>
@@ -762,7 +762,8 @@ body{font-size:calc(17px * var(--escala,1))}
   <div class="section" id="rota-servico">
     <span class="section-label">08B</span>
     <h2>Rota de Serviço — Desenhar no Mapa</h2>
-    <p>Aba para <strong>explicar a rota e o plano aos demais combatentes desenhando no mapa com o dedo</strong>, conversar com a Central e mostrar onde a sua brigada está. Tudo o que é desenhado aparece <strong>ao vivo</strong> no celular de todos — e na <a href="central.html" style="color:var(--gold-light)">Central de Controle</a>, que também desenha e aparece no app.</p>
+    <p>Aba para <strong>explicar a rota e o plano aos demais combatentes desenhando no mapa com o dedo</strong>, conversar com a Central, registrar o combate e mostrar onde a sua brigada está. Tudo o que é desenhado aparece <strong>ao vivo</strong> no celular de todos — e na <a href="central.html" style="color:var(--gold-light)">Central de Controle</a>, que também desenha e aparece no app.</p>
+    <p>O mapa ocupa a tela inteira; os botões ficam numa <strong>coluna na lateral direita</strong> (como na Central): <strong>Tipo · Desenhar · Texto · Msgs · Combate · Posição · Mapa</strong>. Cada botão abre a sua janelinha; tocar de novo fecha.</p>
     <div class="tabela"><table>
       <tr><th>Botão</th><th>Função</th></tr>
       <tr><td><span class="btn-tag btn-blue">Rota</span> <span class="btn-tag btn-red">Aceiro</span> <span class="btn-tag btn-green">Rota de saída</span> <span class="btn-tag btn-orange">Anotação</span></td><td>Escolhe o tipo do traço. Cada tipo tem uma cor, igual no app e no site. A rota de saída é tracejada.</td></tr>
@@ -772,8 +773,10 @@ body{font-size:calc(17px * var(--escala,1))}
       <tr><td><span class="btn-tag btn-gray">🗑 Limpar</span></td><td>Esconde todos os traços <strong>só no seu celular</strong> — quem atrapalha a sua visão some do seu mapa, e o mapa dos outros não muda. "Mostrar tudo de novo" traz de volta.</td></tr>
       <tr><td>Tocar num traço</td><td>Mostra o tipo, quem desenhou (ou "Central de Controle") e quando. <strong>🙈 Esconder (só aqui)</strong> para qualquer um; <strong>🗑️ Apagar para todos</strong> só para quem desenhou (ou coordenador/admin).</td></tr>
       <tr><td><span class="btn-tag btn-orange">🏷️ Escrever no mapa</span></td><td>Abre uma caixinha para digitar (ex.: <strong>ACEIRO</strong>, "PONTO DE ÁGUA"). O texto aparece no centro do mapa; <strong>segure e arraste</strong> com o dedo (ou o mouse, na Central) até o lugar. Todos veem ao vivo. Move e apaga quem escreveu (ou coordenador/admin); os outros podem esconder só no próprio aparelho.</td></tr>
-      <tr><td><span class="btn-tag btn-gray">💬</span> (canto superior direito)</td><td><strong>Mensagens e tarefas</strong> com a Central de Controle. Botões rápidos ("Chegamos", "Precisamos de água", "Combustível acabando", "Ferido", "Recuar"), texto livre e <strong>tarefas</strong> — toque numa tarefa para marcar como feita. Cada mensagem leva a sua posição. O número vermelho mostra mensagens novas.</td></tr>
-      <tr><td><span class="btn-tag btn-orange">📍 Compartilhar minha posição</span></td><td>Envia a sua posição para a Central (e para os outros celulares) na hora e a cada 2 minutos, <strong>só enquanto a tela estiver aberta e o botão ligado</strong> — para poupar bateria. As outras brigadas aparecem no seu mapa como pino amarelo.</td></tr>
+      <tr><td><span class="btn-tag btn-red">🚒 Combate</span></td><td>As funções de <strong>Brigadas de combate</strong> (ver abaixo): etapas, tarefas e o <strong>destino que a Central mandou</strong> — o 🎯 e a rota a pé aparecem no próprio mapa. Um 🎯 no botão avisa que há destino.</td></tr>
+      <tr><td><span class="btn-tag btn-blue">🗺️ Mapa</span></td><td>Híbrido, satélite, relevo ou mapa.</td></tr>
+      <tr><td><span class="btn-tag btn-gray">💬 Msgs</span></td><td><strong>Mensagens e tarefas</strong> com a Central de Controle. Botões rápidos ("Chegamos", "Precisamos de água", "Combustível acabando", "Ferido", "Recuar"), texto livre e <strong>tarefas</strong> — toque numa tarefa para marcar como feita. Cada mensagem leva a sua posição. O número vermelho mostra mensagens novas.</td></tr>
+      <tr><td><span class="btn-tag btn-orange">📍 Posição</span></td><td>Liga e desliga (aceso = "No ar"). Envia a sua posição para a Central (e para os outros celulares) na hora e a cada 2 minutos, <strong>só enquanto a tela estiver aberta e o botão ligado</strong> — para poupar bateria. As outras brigadas aparecem no seu mapa como pino amarelo.</td></tr>
     </table></div>
     <div class="alert alert-blue">
       <div class="alert-title">💡 Precisa de internet</div>
@@ -820,7 +823,7 @@ body{font-size:calc(17px * var(--escala,1))}
   <div class="section" id="brigadas-combate">
     <span class="section-label">08D</span>
     <h2>Brigadas de Combate</h2>
-    <p>Registro do combate na <strong>ocorrência aberta pela Central de Controle</strong>. Só para quem o administrador liberou (e-mail confirmado em Compartilhar → Registro Oficial e cadastrado na Equipe da Central).</p>
+    <p>Fica na <strong>Rota de Serviço, botão 🚒 Combate</strong> da coluna lateral. Registro do combate na <strong>ocorrência aberta pela Central de Controle</strong>. Só para quem o administrador liberou (e-mail confirmado em Compartilhar → Registro Oficial e cadastrado na Equipe da Central).</p>
     <div class="tabela"><table>
       <tr><th>Parte</th><th>O que faz</th></tr>
       <tr><td>Nome da brigada</td><td>Escreva uma vez (ex.: "Brigada Capão"). Fica salvo no celular.</td></tr>
