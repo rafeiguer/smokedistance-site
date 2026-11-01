@@ -352,7 +352,7 @@ nav.abas{display:none}
           <button class="pil ativo" id="btnSalvarEquip" style="--c:var(--verde)">💾 Salvar tabela</button>
           <span class="estado-salvo" id="estadoEquip"></span>
         </div>
-        <p class="dica" style="margin-top:8px">Consumo de fábrica (motor em carga): BR 600 1,21 L/h · BR 800 1,47 L/h. <b>Mistura: 50:1 só com óleo STIHL; com qualquer outro óleo 2T, 25:1</b> (manual STIHL).<br><b>Motobombas</b> (motor Honda <b>4 tempos = gasolina pura, nunca mistura</b>):<br>· Moskito (GX31): ~0,5 L/h · tanque 0,65 L (~1h20) · até 189 L/min<br>· Mini Striker (GXH50): 0,91 L/h · tanque 0,77 L (~50 min) · até 256 L/min<br>Vazão = máxima de fábrica, sem mangueira; com mangueira e esguicho é menor. "Em uso" = quantos estão ligados agora (vazio = todos).</p>
+        <p class="dica" style="margin-top:8px">Consumo de fábrica (motor em carga): BR 600 1,21 L/h · BR 800 1,47 L/h. <b>Mistura: 50:1 só com óleo STIHL; com qualquer outro óleo 2T, 25:1</b> (manual STIHL).<br><b>Motobombas</b> (motor Honda <b>4 tempos = gasolina pura, nunca mistura</b>):<br>· Moskito (GX31): ~0,5 L/h · tanque 0,65 L (~1h20) · até 189 L/min<br>· Mini Striker (GXH50): 0,91 L/h · tanque 0,77 L (~50 min) · até 256 L/min<br><b>Mark-3</b> (Waterax, motor <b>2 tempos</b> 185 cc projeto Rotax = <b>mistura</b>, 50:1 com óleo sintético / 25:1 óleo comum): 5,7 L/h · alta pressão, até 380 psi e 371 L/min · tanque externo<br>Vazão = máxima de fábrica, sem mangueira; com mangueira e esguicho é menor. "Em uso" = quantos estão ligados agora (vazio = todos).</p>
         <div class="vidro" style="margin-top:12px;padding:12px;border-radius:14px">
           <h2 style="margin-bottom:8px">🧪 Óleo 2T x gasolina</h2>
           <div style="display:flex;gap:8px;margin-bottom:10px">
@@ -1389,6 +1389,8 @@ const PADRAO = [
   // Motobombas com Honda 4T = gasolina pura; consumo da ficha Honda; vazão MÁXIMA informada (ver calculoEquipamentos.js)
   { nome: 'Motobomba Moskito', qtd: 1, uso: '', comb: 'gasolina', prop: '', tanque: 0.65, consumo: 0.5, vazao: 189, pressao: 82 },
   { nome: 'Motobomba Mini Striker', qtd: 1, uso: '', comb: 'gasolina', prop: '', tanque: 0.77, consumo: 0.91, vazao: 256, pressao: 85 },
+  // Waterax Mark-3 (2T 185 cc, projeto Rotax): ficha Waterax 05/2015 — ver calculoEquipamentos.js
+  { nome: 'Motobomba Mark-3', qtd: 1, uso: '', comb: 'mistura', prop: 50, tanque: '', consumo: 5.7, vazao: 371, pressao: 380, curva: [{ q: 295, psi: 100 }, { q: 246, psi: 150 }, { q: 220, psi: 175 }, { q: 144, psi: 250 }] },
 ];
 const DOC_CATALOGO = doc(db, 'catalogoEquipamentos', 'padrao');
 let linhas = [];
@@ -1461,13 +1463,21 @@ function desenharTabela() {
    fábrica; atrito Hazen-Williams C=140; esguicho ≈ 20 m. Desnível pelo mapa:
    relevo Open-Meteo (Copernicus 90 m, grátis, sem chave) — não enxerga pontos
    muito próximos. */
-const DIAMETROS = [{ mm: 38, nome: '1½"' }, { mm: 25, nome: '1"' }, { mm: 19, nome: '¾"' }];
+const DIAMETROS = [{ mm: 38, nome: '1½"' }, { mm: 25, nome: '1"' }]; // ¾" não serve nessas bombas
 const atritoM = (qLmin, compM, diamMm) => (qLmin <= 0 || compM <= 0 ? 0 : 10.67 * compM * (qLmin / 60000) ** 1.852 / (140 ** 1.852 * (diamMm / 1000) ** 4.87));
 function vazaoNaPonta(bomba, { compM, diamMm, desnivelM, esguicho }) {
   const qMax = n(bomba?.vazao), hMax = n(bomba?.pressao) * 0.703;
   if (!qMax || !hMax) return null;
   const fixa = n(desnivelM) + (esguicho ? 20 : 0);
-  const sobra = (q) => hMax * (1 - (q / qMax) ** 2) - (fixa + atritoM(q, compM, diamMm));
+  // Curva medida da ficha (ex.: Mark-3, [{q: L/min, psi}] — objetos: o Firestore não guarda lista de listas)
+  const pts = Array.isArray(bomba.curva) && bomba.curva.length
+    ? [[0, hMax], ...bomba.curva.map(c => [n(c.q), n(c.psi) * 0.703]), [qMax, 0]].sort((a, b) => a[0] - b[0]) : null;
+  const altura = (q) => {
+    if (!pts) return hMax * (1 - (q / qMax) ** 2);
+    for (let i = 1; i < pts.length; i++) if (q <= pts[i][0]) return pts[i - 1][1] + (pts[i][1] - pts[i - 1][1]) * (q - pts[i - 1][0]) / ((pts[i][0] - pts[i - 1][0]) || 1);
+    return 0;
+  };
+  const sobra = (q) => altura(q) - (fixa + atritoM(q, compM, diamMm));
   if (sobra(0) <= 0) return { lmin: 0, lh: 0, alturaM: fixa, atritoM: 0, alturaMaxM: hMax, chega: false };
   let lo = 0, hi = qMax;
   if (sobra(qMax) < 0) for (let k = 0; k < 40; k++) { const m = (lo + hi) / 2; if (sobra(m) > 0) lo = m; else hi = m; }
