@@ -177,6 +177,8 @@ table.planilha{border-collapse:collapse;width:100%;min-width:640px;font-size:12.
 .campo label{display:block;font-size:11px;color:var(--suave);margin-bottom:3px}
 .campo input{width:100%;background:rgba(255,255,255,.06);border:1px solid var(--borda);border-radius:12px;padding:8px 10px;font-family:var(--mono);outline:none}
 .campo input:focus{border-color:var(--azul)}
+.campo select{width:100%;background:rgba(255,255,255,.06);border:1px solid var(--borda);border-radius:12px;padding:8px 10px;outline:none;color:inherit}
+.campo select option{background:#16201c}
 .resumo{margin-top:12px;padding:12px;border-radius:16px;background:rgba(192,132,252,.1);border:1px solid rgba(192,132,252,.45)}
 .resumo h3{font-size:12px;letter-spacing:1px;text-transform:uppercase;color:var(--roxo);margin-bottom:8px}
 .resumo .grande{font-size:24px;font-weight:800;font-family:var(--mono)}
@@ -348,6 +350,18 @@ nav.abas{display:none}
           <span class="estado-salvo" id="estadoEquip"></span>
         </div>
         <p class="dica" style="margin-top:8px">Consumo de fábrica (motor em carga): BR 600 1,21 L/h · BR 800 1,47 L/h, mistura 50:1. <br><b>Motobombas</b> (motor Honda <b>4 tempos = gasolina pura, nunca mistura</b>):<br>· Moskito (GX31): ~0,5 L/h · tanque 0,65 L (~1h20) · até 189 L/min<br>· Mini Striker (GXH50): 0,91 L/h · tanque 0,77 L (~50 min) · até 256 L/min<br>Vazão = máxima de fábrica, sem mangueira; com mangueira e esguicho é menor. "Em uso" = quantos estão ligados agora (vazio = todos).</p>
+        <div class="vidro" style="margin-top:12px;padding:12px;border-radius:14px">
+          <h2 style="margin-bottom:8px">🧪 Quanto óleo vai na gasolina?</h2>
+          <div class="campos">
+            <div class="campo"><label>Gasolina</label><input type="number" min="0" step="any" id="mixGas" placeholder="ex.: 500"></div>
+            <div class="campo"><label>Unidade</label><select id="mixUn"><option value="ml">ml</option><option value="L">litros</option></select></div>
+            <div class="campo"><label>Proporção</label><div style="display:flex;align-items:center;gap:6px"><input type="number" min="1" step="1" id="mixProp" value="50"><span class="dica">:1</span></div></div>
+          </div>
+          <div class="linha" style="margin-top:8px" id="mixAtalhos">
+            <button class="pil" data-mix="500,ml">500 ml</button><button class="pil" data-mix="1,L">1 L</button><button class="pil" data-mix="5,L">5 L</button><button class="pil" data-mix="20,L">20 L</button>
+          </div>
+          <p id="mixRes" style="margin-top:10px;font-size:15px"><span class="dica">Digite a gasolina para ver o óleo.</span></p>
+        </div>
       </section>
       <section class="vidro secao" id="secCalc" style="--c:var(--roxo)">
         <h2>🧮 Calculadora de autonomia</h2>
@@ -1371,6 +1385,17 @@ async function montarEquipamentos() {
   });
 
   $('btnLinha').onclick = () => { linhas.push({ nome: '', qtd: 1, uso: '', comb: 'gasolina', prop: '', tanque: '', consumo: '', vazao: '' }); desenharTabela(); };
+
+  // 🧪 Óleo da mistura: óleo = gasolina ÷ proporção (50:1 → 500 ml de gasolina levam 10 ml de óleo)
+  const mix = () => {
+    const g = n($('mixGas').value), p = n($('mixProp').value);
+    if (!g || !p) { $('mixRes').innerHTML = '<span class="dica">Digite a gasolina para ver o óleo.</span>'; return; }
+    const gml = $('mixUn').value === 'L' ? g * 1000 : g, oml = gml / p;
+    const fmt = (v) => (v >= 1000 ? `${(v / 1000).toFixed(2)} L` : `${v < 10 ? v.toFixed(1) : Math.round(v)} ml`).replace('.', ',');
+    $('mixRes').innerHTML = `Óleo 2T: <b style="font-size:20px">${fmt(oml)}</b> <span class="dica">· total de mistura ${fmt(gml + oml)} (${p}:1)</span>`;
+  };
+  ['mixGas', 'mixUn', 'mixProp'].forEach(id => { $(id).oninput = mix; $(id).onchange = mix; });
+  document.querySelectorAll('[data-mix]').forEach(b => b.onclick = () => { const [v, u] = b.dataset.mix.split(','); $('mixGas').value = v; $('mixUn').value = u; mix(); });
   $('btnSalvarEquip').onclick = salvarTabela;
   $('btnCalcular').onclick = calcular;
 }
@@ -1382,7 +1407,9 @@ function desenharTabela() {
     <td><input class="num" data-i="${i}" data-k="qtd" type="number" min="0" value="${esc(l.qtd)}"></td>
     <td><input class="num" data-i="${i}" data-k="uso" type="number" min="0" value="${esc(l.uso)}" placeholder="todos"></td>
     <td><select data-i="${i}" data-k="comb">${sel(l.comb)}</select></td>
-    <td><input class="num" data-i="${i}" data-k="prop" type="number" min="0" value="${esc(l.prop)}" placeholder="50" title="Proporção da mistura (50 = 50:1)"></td>
+    <td>${l.comb === 'mistura'
+      ? `<div style="display:flex;align-items:center;padding-right:8px"><input class="num" data-i="${i}" data-k="prop" type="number" min="0" value="${esc(l.prop)}" placeholder="50" title="Proporção: 50 = 50 partes de gasolina para 1 de óleo"><span class="dica">:1</span></div>`
+      : '<span class="dica" style="display:block;padding:8px">—</span>'}</td>
     <td><input class="num" data-i="${i}" data-k="tanque" type="number" min="0" step="0.1" value="${esc(l.tanque)}"></td>
     <td><input class="num" data-i="${i}" data-k="consumo" type="number" min="0" step="0.01" value="${esc(l.consumo)}"></td>
     <td><input class="num" data-i="${i}" data-k="vazao" type="number" min="0" step="1" value="${esc(l.vazao)}"></td>
@@ -1390,6 +1417,7 @@ function desenharTabela() {
   document.querySelectorAll('#tabEquip [data-k]').forEach(inp => inp.oninput = inp.onchange = () => {
     linhas[inp.dataset.i][inp.dataset.k] = inp.value;
     $('estadoEquip').textContent = 'alterado — não salvo';
+    if (inp.dataset.k === 'comb') desenharTabela(); // coluna Mistura só vale para 2T
   });
   document.querySelectorAll('#tabEquip [data-del]').forEach(b => b.onclick = () => { linhas.splice(+b.dataset.del, 1); desenharTabela(); });
 }
