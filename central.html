@@ -286,6 +286,13 @@ nav.abas{display:none}
             <input type="text" id="txtDetalhe" maxlength="120" placeholder="Detalhe (ex.: lado norte, até a estrada)" style="flex:1 1 180px;min-width:0;background:rgba(255,255,255,.06);border:1px solid var(--borda);border-radius:999px;padding:7px 12px;outline:none;color:inherit">
             <button class="pil destaque" id="btnDesignar" style="--c:var(--verde)">Enviar</button>
           </div>
+          <div class="dica" style="margin:10px 0 4px"><b>🎯 Mandar brigada para um ponto</b></div>
+          <div class="linha">
+            <input type="text" id="txtAlvoDestino" list="listaBrigadas" placeholder="Brigada (vazio = todas)" style="flex:1 1 120px;min-width:0;background:rgba(255,255,255,.06);border:1px solid var(--borda);border-radius:999px;padding:7px 12px;outline:none;color:inherit">
+            <input type="text" id="txtDescDestino" maxlength="80" placeholder="O quê (ex.: segurar a cabeça do fogo)" style="flex:1 1 160px;min-width:0;background:rgba(255,255,255,.06);border:1px solid var(--borda);border-radius:999px;padding:7px 12px;outline:none;color:inherit">
+            <button class="pil destaque" id="btnMarcarDestino" style="--c:var(--fogo)">📍 Marcar no mapa</button>
+          </div>
+          <p class="dica" id="avisoDestino"></p>
         </div>
         <details style="margin-top:10px"><summary class="dica" style="cursor:pointer">📜 Linha do tempo</summary><div id="combateTempo" class="dica" style="margin-top:6px"></div></details>
       </section>
@@ -607,6 +614,7 @@ const CAMADAS = [
   { id: 'rota', nome: '🧭 Rota de serviço', cor: 'var(--azul)' },
   { id: 'rotulos', nome: '🏷️ Textos no mapa', cor: 'var(--alerta)' },
   { id: 'brigadas', nome: '🚒 Brigadas', cor: 'var(--alerta)' },
+  { id: 'combate', nome: '🎯 Destinos e etapas das brigadas', cor: 'var(--fogo)' },
   { id: 'tri', nome: '🔥 Focos triangulados', cor: 'var(--fogo-forte)' },
   { id: 'visadas', nome: '👁️ Visadas', cor: 'var(--fogo)' },
   { id: 'manuais', nome: '📌 Focos marcados', cor: 'var(--fogo)' },
@@ -802,6 +810,7 @@ function desenharBrigadas() {
     return ev;
   });
   atualizarQtd('brigadas', brigadas.length);
+  desenharCombateNoMapa(); // a linha até o destino sai da posição atual da brigada
 }
 
 /* ── Margem de erro pela bússola — CÓPIA de raioIncerteza() em
@@ -1430,6 +1439,29 @@ function montarCombate() {
     } catch (e) { alert('Não foi possível abrir: ' + e.message); }
   };
 
+  // 🎯 Destino: escolhe a brigada, clica no botão e depois no mapa
+  let marcandoDestino = false;
+  const celular = () => window.matchMedia('(max-width:980px)').matches;
+  $('btnMarcarDestino').onclick = () => {
+    marcandoDestino = true;
+    $('avisoDestino').textContent = `Clique no mapa onde ${$('txtAlvoDestino').value.trim() || 'as brigadas'} deve(m) ir.`;
+    if (celular()) document.querySelector('#abas [data-aba="mapa"]').click();
+  };
+  mapa.on('click', async (e) => {
+    if (!marcandoDestino || !ocAtual) return;
+    marcandoDestino = false;
+    try {
+      await addDoc(collection(db, 'ocorrencias', ocAtual.id, 'registros'), {
+        tipo: 'destino', alvo: $('txtAlvoDestino').value.trim() || 'Todas', descricao: $('txtDescDestino').value.trim().slice(0, 80),
+        latitude: e.latlng.lat, longitude: e.latlng.lng, brigada: 'Central', uid: usuario.uid, origem: 'site',
+        emLocal: Date.now(), recebidoEm: serverTimestamp(),
+      });
+      $('avisoDestino').textContent = '✅ Destino enviado: aparece no app da brigada, com a rota até lá.';
+      $('txtDescDestino').value = '';
+    } catch (err) { $('avisoDestino').textContent = 'Não foi possível enviar: ' + err.message; }
+    if (celular()) document.querySelector('#abas [data-aba="secCombate"]').click();
+  });
+
   $('btnDesignar').onclick = async () => {
     if (!ocAtual) return;
     try {
@@ -1443,11 +1475,49 @@ function montarCombate() {
   };
 }
 
+// Mapa: destino de cada brigada (🎯, o mais recente por brigada) com linha
+// tracejada desde onde ela está, e os pontos onde marcou cada etapa (⏱️)
+function desenharCombateNoMapa() {
+  const g = grupos.combate;
+  if (!g) return;
+  g.clearLayers();
+  if (!ocAtual) { atualizarQtd('combate', 0); return; }
+  const destinos = {};
+  combateRegs.filter(r => r.tipo === 'destino').forEach(r => { destinos[r.alvo || 'Todas'] = r; });
+  Object.values(destinos).forEach(d => {
+    const m = L.marker([d.latitude, d.longitude], { icon: icone('🎯', 'rgba(229,57,53,.9)', 30), zIndexOffset: 900 }).addTo(g)
+      .bindTooltip(`${esc(d.alvo)}${d.descricao ? ': ' + esc(d.descricao) : ''}`, { permanent: true, direction: 'top', offset: [0, -14] });
+    m.bindPopup(() => {
+      const div = document.createElement('div');
+      div.innerHTML = `<b>🎯 ${esc(d.alvo)}</b><br>${esc(d.descricao || '')}<br><span class="dica">enviado ${hm(d.emLocal)}</span><br>`;
+      if (ehChefe()) {
+        const b = document.createElement('button'); b.className = 'btn-pop perigo'; b.textContent = '🗑️ Tirar destino';
+        b.onclick = () => { mapa.closePopup(); deleteDoc(doc(db, 'ocorrencias', ocAtual.id, 'registros', d.id)).catch(e => alert(e.message)); };
+        div.appendChild(b);
+      }
+      return div;
+    });
+    // De onde a brigada está: posição compartilhada (brigadas/{uid}) ou o último registro dela com posição
+    const regsDela = combateRegs.filter(r => r.tipo !== 'destino' && r.tipo !== 'designacao' && (d.alvo === 'Todas' || r.brigada === d.alvo));
+    const uids = new Set(regsDela.map(r => r.uid));
+    const vivas = brigadas.filter(b => uids.has(b.id)).map(b => [b.latitude, b.longitude]);
+    const ultimo = [...regsDela].reverse().find(r => Number.isFinite(r.latitude));
+    const origens = vivas.length ? vivas : ultimo ? [[ultimo.latitude, ultimo.longitude]] : [];
+    origens.forEach(o => L.polyline([o, [d.latitude, d.longitude]], { color: '#E53935', weight: 3, dashArray: '8 8', opacity: .9 }).addTo(g));
+  });
+  combateRegs.filter(r => r.tipo === 'etapa' && Number.isFinite(r.latitude)).forEach(r => {
+    L.marker([r.latitude, r.longitude], { icon: icone('⏱️', 'rgba(0,0,0,.7)', 22) }).addTo(g)
+      .bindPopup(`<b>${esc(r.brigada || '')}</b><br>${esc(ETAPAS.find(e => e.k === r.etapa)?.nome || '')} · ${hm(r.emLocal)}`);
+  });
+  atualizarQtd('combate', Object.keys(destinos).length);
+}
+
 function desenharCombate() {
+  desenharCombateNoMapa();
   if (!ocAtual) { $('combatePainel').innerHTML = ''; $('combateTempo').innerHTML = ''; return; }
   // Por brigada: etapas (1ª vez de cada) e tarefas (último estado de cada)
   const brigs = {};
-  combateRegs.filter(r => r.tipo !== 'designacao').forEach(r => {
+  combateRegs.filter(r => r.tipo !== 'designacao' && r.tipo !== 'destino').forEach(r => {
     const b = brigs[r.brigada || 'Brigada'] = brigs[r.brigada || 'Brigada'] || { etapas: {}, tarefas: {} };
     if (r.tipo === 'etapa' && !b.etapas[r.etapa]) b.etapas[r.etapa] = r.emLocal;
     if (r.tipo === 'tarefa') {
@@ -1467,6 +1537,7 @@ function desenharCombate() {
   }).join('') : '<span class="dica">Nenhuma brigada registrou nada ainda.</span>';
   const desc = (r) => r.tipo === 'etapa' ? ETAPAS.find(e => e.k === r.etapa)?.nome
     : r.tipo === 'designacao' ? `📋 Central designou "${r.tarefa}" para ${r.alvo}${r.detalhe ? ` (${r.detalhe})` : ''}`
+    : r.tipo === 'destino' ? `🎯 Central mandou ${r.alvo} para um ponto${r.descricao ? ` (${r.descricao})` : ''}`
     : `${r.tarefa}: ${r.acao === 'inicio' ? 'início' : 'fim'}`;
   $('combateTempo').innerHTML = [...combateRegs].reverse().map(r => `<div>${new Date(r.emLocal).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })} · <b>${esc(r.brigada || '')}</b> · ${esc(desc(r) || '')}</div>`).join('') || 'Nada ainda.';
 }
