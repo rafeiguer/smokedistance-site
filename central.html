@@ -803,9 +803,11 @@ function desenharBrigadas() {
   eventos.brigadas = brigadas.flatMap(b => {
     const d = quando(b.atualizadoEm), i = idade(d);
     const cor = { ok: '#4ADE80', atencao: '#FBBF24', velho: '#E53935' }[i.cls];
+    // Nome sempre à vista; a posição chega do "compartilhar posição" ou de cada registro em Brigadas de combate
     const m = L.marker([b.latitude, b.longitude], { icon: icone('🚒', 'rgba(0,0,0,.8)', 34, cor), zIndexOffset: 800 }).addTo(g)
-      .bindPopup(`<b>🚒 ${esc(b.nome || 'Brigada')}</b><br>Posição <b style="color:${cor}">${i.txt}</b> (${hhmm(d)})${b.precisaoM ? `<br>Precisão do GPS ± ${b.precisaoM} m` : ''}${htmlRecursos(b.recursos)}`);
-    const ev = [{ d, txt: `🚒 ${b.nome || 'Brigada'} enviou a posição`, lat: b.latitude, lon: b.longitude, abrir: () => m.openPopup() }];
+      .bindTooltip(`${esc(b.nome || 'Brigada')}${b.ultimoRegistro ? ' · ' + esc(b.ultimoRegistro) : ''}`, { permanent: true, direction: 'bottom', offset: [0, 16] })
+      .bindPopup(`<b>🚒 ${esc(b.nome || 'Brigada')}</b><br>Posição <b style="color:${cor}">${i.txt}</b> (${hhmm(d)})${b.ultimoRegistro ? `<br>Último registro: <b>${esc(b.ultimoRegistro)}</b>` : ''}${b.precisaoM ? `<br>Precisão do GPS ± ${b.precisaoM} m` : ''}${htmlRecursos(b.recursos)}`);
+    const ev = [{ d, txt: `🚒 ${b.nome || 'Brigada'} ${b.ultimoRegistro ? `registrou ${b.ultimoRegistro}` : 'enviou a posição'}`, lat: b.latitude, lon: b.longitude, abrir: () => m.openPopup() }];
     if (b.recursos) ev.push({ d: quando(b.recursos.enviadoEm), txt: `🧮 ${b.nome || 'Brigada'}: recursos para ${duracao(b.recursos.horas)}`, cls: b.recursos.coberturaPct != null && b.recursos.coberturaPct < 100 ? 'fogo' : '', lat: b.latitude, lon: b.longitude, abrir: () => m.openPopup() });
     return ev;
   });
