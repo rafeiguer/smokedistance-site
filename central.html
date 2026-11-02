@@ -171,6 +171,7 @@ table.planilha{border-collapse:collapse;width:100%;min-width:640px;font-size:12.
 .planilha input:focus,.planilha select:focus{background:rgba(96,165,250,.12)}
 .planilha select option{background:#16201c}
 .planilha input.num{text-align:right;font-family:var(--mono)}
+.planilha .x{cursor:pointer;color:var(--fraco);padding:0 8px;background:none;border:none}
 .planilha .fixo{display:block;padding:8px;white-space:nowrap;color:var(--suave)}
 .planilha .x:hover{color:var(--fogo-forte)}
 .estado-salvo{font-size:11.5px;color:var(--fraco)}
@@ -384,15 +385,16 @@ nav.abas{display:none}
         <h2>🧰 Equipamentos</h2>
         <div class="planilha-wrap rolagem">
           <table class="planilha">
-            <thead><tr><th>Equipamento</th><th>Qtd</th><th>Em uso</th><th>Combustível</th><th>Mistura</th><th>Tanque L</th><th>Consumo L/h</th><th>Vazão máx. L/min</th><th>Pressão máx. psi</th></tr></thead>
+            <thead><tr><th>Equipamento</th><th>Qtd</th><th>Em uso</th><th>Combustível</th><th>Mistura</th><th>Tanque L</th><th>Consumo L/h</th><th>Vazão máx. L/min</th><th>Pressão máx. psi</th><th></th></tr></thead>
             <tbody id="tabEquip"></tbody>
           </table>
         </div>
         <div class="linha" style="margin-top:8px">
-          <button class="pil ativo" id="btnSalvarEquip" style="--c:var(--verde)">💾 Salvar quantidades</button>
+          <button class="pil" id="btnLinha">+ Linha</button>
+          <button class="pil ativo" id="btnSalvarEquip" style="--c:var(--verde)">💾 Salvar tabela</button>
           <span class="estado-salvo" id="estadoEquip"></span>
         </div>
-        <p class="dica" style="margin-top:8px"><b>Ficha técnica fixa</b> (fabricante, conferida 02/11/2026) — só <b>Qtd</b> e <b>Em uso</b> mudam. Máquina nova entra pelo desenvolvedor, depois de conferir a ficha.<br>Sopradores STIHL (EPA): BR 600 1,21 L/h · tanque 1,4 L; BR 800 1,51 L/h · tanque 2,0 L. <b>Mistura: 50:1 só com óleo STIHL; com qualquer outro óleo 2T, 25:1</b> (manual STIHL).<br><b>Mini Striker</b> (Waterax, Honda GXH50 <b>4 tempos = gasolina pura</b>): 0,91 L/h · tanque 0,77 L (~50 min) · até 85 psi e 303 L/min (257 L/min a 25 psi, 159 a 50, 45 a 75).<br><b>Mark-3</b> (Waterax, <b>2 tempos = mistura</b>, 50:1 óleo sintético / 25:1 óleo comum): até 380 psi e 371 L/min · tanque externo · 5,7 L/h é o da Mark-3 Watson a 100% (a Classic 185 cc não tem consumo publicado).<br><b>Moskito</b> (motor Honda 4T, gasolina pura): ⚠️ sem ficha do fabricante encontrada — 0,5 L/h · tanque 0,65 L · 189 L/min · 82 psi são valores informados, a confirmar pela plaqueta.<br>Vazão = máxima de fábrica, sem mangueira; com mangueira e esguicho é menor. "Em uso" = quantos estão ligados agora (vazio = todos).</p>
+        <p class="dica" style="margin-top:8px">🔒 = <b>ficha técnica fixa</b> (fabricante, conferida 02/11/2026): só <b>Qtd</b> e <b>Em uso</b> mudam. <b>+ Linha</b> acrescenta outro equipamento com a ficha que você digitar (editável e removível).<br>Sopradores STIHL (EPA): BR 600 1,21 L/h · tanque 1,4 L; BR 800 1,51 L/h · tanque 2,0 L. <b>Mistura: 50:1 só com óleo STIHL; com qualquer outro óleo 2T, 25:1</b> (manual STIHL).<br><b>Mini Striker</b> (Waterax, Honda GXH50 <b>4 tempos = gasolina pura</b>): 0,91 L/h · tanque 0,77 L (~50 min) · até 85 psi e 303 L/min (257 L/min a 25 psi, 159 a 50, 45 a 75).<br><b>Mark-3</b> (Waterax, <b>2 tempos = mistura</b>, 50:1 óleo sintético / 25:1 óleo comum): até 380 psi e 371 L/min · tanque externo · 5,7 L/h é o da Mark-3 Watson a 100% (a Classic 185 cc não tem consumo publicado).<br><b>Moskito</b> (motor Honda 4T, gasolina pura): ⚠️ sem ficha do fabricante encontrada — 0,5 L/h · tanque 0,65 L · 189 L/min · 82 psi são valores informados, a confirmar pela plaqueta.<br>Vazão = máxima de fábrica, sem mangueira; com mangueira e esguicho é menor. "Em uso" = quantos estão ligados agora (vazio = todos).</p>
         <div class="vidro" style="margin-top:12px;padding:12px;border-radius:14px">
           <h2 style="margin-bottom:8px">🧪 Óleo 2T x gasolina</h2>
           <div style="display:flex;gap:8px;margin-bottom:10px">
@@ -2056,7 +2058,8 @@ setInterval(() => { if (iniciado) carregarTempo(); }, 10 * 60000);
 /* ───────────── EQUIPAMENTOS + CALCULADORA ───────────── */
 // FICHA TÉCNICA FIXA — CÓPIA de EQUIPAMENTOS_PADRAO em src/utils/calculoEquipamentos.js
 // (fontes e o que falta confirmar estão lá). Ninguém edita a ficha: da tabela
-// salva só valem quantidade e "em uso" (comFicha). Mudou lá, mude aqui.
+// salva só valem quantidade e "em uso" (comFicha). Linha acrescentada ("+ Linha")
+// é livre — editável e removível. Mudou lá, mude aqui.
 const PADRAO = [
   { nome: 'Soprador STIHL BR 600', qtd: 9, uso: '', comb: 'mistura', prop: 50, tanque: 1.4, consumo: 1.21, vazao: '' },
   { nome: 'Soprador STIHL BR 800', qtd: 1, uso: '', comb: 'mistura', prop: 50, tanque: 2.0, consumo: 1.51, vazao: '' },
@@ -2064,10 +2067,14 @@ const PADRAO = [
   { nome: 'Motobomba Mini Striker', qtd: 1, uso: '', comb: 'gasolina', prop: '', tanque: 0.77, consumo: 0.91, vazao: 303, pressao: 85, curva: [{ q: 257, psi: 25 }, { q: 159, psi: 50 }, { q: 45, psi: 75 }] },
   { nome: 'Motobomba Mark-3', qtd: 1, uso: '', comb: 'mistura', prop: 50, tanque: '', consumo: 5.7, vazao: 371, pressao: 380, curva: [{ q: 295, psi: 100 }, { q: 246, psi: 150 }, { q: 220, psi: 175 }, { q: 144, psi: 250 }] },
 ];
-const comFicha = (salvas) => PADRAO.map(p => {
-  const s = (salvas || []).find(l => l.nome === p.nome);
-  return { ...p, qtd: s?.qtd ?? p.qtd, uso: s?.uso ?? '' };
-});
+const fichaFixa = (nome) => PADRAO.some(p => p.nome === nome);
+const comFicha = (salvas) => [
+  ...PADRAO.map(p => {
+    const s = (salvas || []).find(l => l.nome === p.nome);
+    return { ...p, qtd: s?.qtd ?? p.qtd, uso: s?.uso ?? '' };
+  }),
+  ...(salvas || []).filter(l => !fichaFixa(l.nome)),
+];
 const DOC_CATALOGO = doc(db, 'catalogoEquipamentos', 'padrao');
 let linhas = [];
 
@@ -2106,28 +2113,39 @@ async function montarEquipamentos() {
     document.querySelectorAll('[data-oleo]').forEach(x => x.classList.toggle('ativo', x === b));
     mix();
   });
+  $('btnLinha').onclick = () => { linhas.push({ nome: '', qtd: 1, uso: '', comb: 'gasolina', prop: '', tanque: '', consumo: '', vazao: '', pressao: '' }); desenharTabela(); };
   $('btnSalvarEquip').onclick = salvarTabela;
   $('btnCalcular').onclick = calcular;
 }
 
 function desenharTabela() {
-  // Ficha técnica = texto fixo; só Qtd e Em uso são digitáveis
+  // Ficha conferida (PADRAO) = texto fixo, só Qtd e Em uso digitáveis; linha acrescentada = tudo editável
   const fixo = (v, un = '') => `<span class="fixo">${v === '' || v == null ? '—' : `${String(v).replace('.', ',')}${un}`}</span>`;
   const COMB = { mistura: 'Mistura 2T', gasolina: 'Gasolina pura (4T)', diesel: 'Diesel', nenhum: '—' };
-  $('tabEquip').innerHTML = linhas.map((l, i) => `<tr>
-    <td><span class="fixo" style="min-width:170px">${esc(l.nome)}${l.aConfirmar ? ' <span class="dica" title="Ficha do fabricante não encontrada — valores informados, a confirmar pela plaqueta">⚠️ a confirmar</span>' : ''}</span></td>
-    <td><input class="num" data-i="${i}" data-k="qtd" type="number" min="0" value="${esc(l.qtd)}"></td>
+  const sel = (i, v) => `<select data-i="${i}" data-k="comb">${Object.entries(COMB).map(([o, t]) => `<option value="${o}"${o === v ? ' selected' : ''}>${t}</option>`).join('')}</select>`;
+  const campo = (i, k, v, passo = 1) => `<input class="num" data-i="${i}" data-k="${k}" type="number" min="0" step="${passo}" value="${esc(v ?? '')}">`;
+  $('tabEquip').innerHTML = linhas.map((l, i) => {
+    const f = fichaFixa(l.nome);
+    return `<tr>
+    <td>${f ? `<span class="fixo" style="min-width:170px" title="Ficha do fabricante — fixa">🔒 ${esc(l.nome)}${l.aConfirmar ? ' <span class="dica" title="Ficha do fabricante não encontrada — valores informados, a confirmar pela plaqueta">⚠️ a confirmar</span>' : ''}</span>`
+      : `<input data-i="${i}" data-k="nome" value="${esc(l.nome)}" placeholder="Equipamento" style="min-width:170px">`}</td>
+    <td>${campo(i, 'qtd', l.qtd)}</td>
     <td><input class="num" data-i="${i}" data-k="uso" type="number" min="0" value="${esc(l.uso)}" placeholder="todos"></td>
-    <td>${fixo(COMB[l.comb] || l.comb)}</td>
-    <td>${l.comb === 'mistura' ? fixo(l.prop, ':1') : fixo('')}</td>
-    <td>${fixo(l.tanque)}</td>
-    <td>${fixo(l.consumo)}</td>
-    <td>${fixo(l.vazao)}</td>
-    <td>${fixo(l.pressao ?? '')}</td></tr>`).join('');
+    <td>${f ? fixo(COMB[l.comb] || l.comb) : sel(i, l.comb)}</td>
+    <td>${l.comb !== 'mistura' ? fixo('') : f ? fixo(l.prop, ':1')
+      : `<div style="display:flex;align-items:center;padding-right:8px">${campo(i, 'prop', l.prop)}<span class="dica">:1</span></div>`}</td>
+    <td>${f ? fixo(l.tanque) : campo(i, 'tanque', l.tanque, 0.1)}</td>
+    <td>${f ? fixo(l.consumo) : campo(i, 'consumo', l.consumo, 0.01)}</td>
+    <td>${f ? fixo(l.vazao) : campo(i, 'vazao', l.vazao)}</td>
+    <td>${f ? fixo(l.pressao ?? '') : campo(i, 'pressao', l.pressao)}</td>
+    <td>${f ? '' : `<button class="x" data-del="${i}" title="Remover linha">✕</button>`}</td></tr>`;
+  }).join('');
   document.querySelectorAll('#tabEquip [data-k]').forEach(inp => inp.oninput = inp.onchange = () => {
     linhas[inp.dataset.i][inp.dataset.k] = inp.value;
     $('estadoEquip').textContent = 'alterado — não salvo';
+    if (inp.dataset.k === 'comb') desenharTabela(); // coluna Mistura só vale para 2T
   });
+  document.querySelectorAll('#tabEquip [data-del]').forEach(b => b.onclick = () => { linhas.splice(+b.dataset.del, 1); desenharTabela(); $('estadoEquip').textContent = 'alterado — não salvo'; });
 }
 
 /* ── 💧 Água das motobombas — conta: CÓPIA de src/utils/calculoAgua.js (app).
