@@ -621,7 +621,8 @@ const CAMADAS = [
   { id: 'brigadas', nome: '🚒 Brigadas', cor: 'var(--alerta)' },
   { id: 'combate', nome: '🎯 Destinos e etapas das brigadas', cor: 'var(--fogo)' },
   { id: 'trajetos', nome: '🛤️ Trajetos das brigadas (24 h)', cor: 'var(--azul)' },
-  { id: 'tri', nome: '🔥 Focos triangulados', cor: 'var(--fogo-forte)' },
+  { id: 'tri', nome: '🔥 Foco triangulado (atual)', cor: 'var(--fogo-forte)' },
+  { id: 'triAnt', nome: '🕓 Triangulações anteriores', cor: 'var(--fraco)', desligada: true },
   { id: 'visadas', nome: '👁️ Visadas', cor: 'var(--fogo)' },
   { id: 'manuais', nome: '📌 Focos marcados', cor: 'var(--fogo)' },
   { id: 'fotos', nome: '📸 Fotos de campo', cor: 'var(--alerta)' },
@@ -647,7 +648,7 @@ function iniciar() {
   });
   montarTrilho();
 
-  CAMADAS.forEach(c => { grupos[c.id] = L.layerGroup().addTo(mapa); });
+  CAMADAS.forEach(c => { grupos[c.id] = L.layerGroup(); if (!c.desligada) grupos[c.id].addTo(mapa); });
   desenharListaCamadas();
   montarTipos();
   montarDesenho();
@@ -669,7 +670,7 @@ function iniciar() {
 
 function desenharListaCamadas() {
   $('listaCamadas').innerHTML = CAMADAS.map(c => `
-    <label class="camada"><input type="checkbox" data-camada="${c.id}" checked>
+    <label class="camada"><input type="checkbox" data-camada="${c.id}"${c.desligada ? '' : ' checked'}>
       <span class="ponto" style="--c:${c.cor}"></span>${c.nome}<span class="qtd" id="qtd-${c.id}">0</span></label>`).join('');
   document.querySelectorAll('[data-camada]').forEach(cb => cb.onchange = () => {
     const g = grupos[cb.dataset.camada];
@@ -714,7 +715,7 @@ function escutarDados() {
     trisCache = snap.docs.map(d => ({ id: d.id, ...d.data() }));
     desenharTris();
     ultimaTri = trisCache[0] || null;
-    enquadrar(trisCache.map(t => [t.latitude, t.longitude]));
+    enquadrar(trisCache.slice(0, 1).map(t => [t.latitude, t.longitude]));
     carregarTempo();
   }, erro('triangulacoes'));
 
@@ -1018,15 +1019,23 @@ function raioTri(t) {
   return Math.round(2.45 * Math.sqrt(meio + Math.sqrt(((c11 - c22) / 2) ** 2 + c12 * c12)));
 }
 
+// Cada vez que as visadas mudam o app grava uma triangulação nova (registro com a
+// meteorologia do momento). Só a mais recente é o foco das linhas de agora; as
+// outras ficam como histórico, numa camada desligada por padrão.
 function desenharTris() {
-  const g = grupos.tri; g.clearLayers();
-  eventos.tri = trisCache.map(t => {
-    const raio = raioTri(t);
-    const m = L.marker([t.latitude, t.longitude], { icon: icone('🔥', 'rgba(183,28,28,.92)', 38, '#FFEB3B'), zIndexOffset: 900 }).addTo(g).bindPopup(() => popupTri(t, raio));
-    if (raio) L.circle([t.latitude, t.longitude], { radius: raio, color: '#FFEB3B', weight: 1.5, fillOpacity: .06, dashArray: '4 4', interactive: false }).addTo(g);
-    return { d: quando(t.calculadaEm), txt: `🔥 Foco triangulado · ± ${raio ?? '?'} m`, cls: 'fogo', lat: t.latitude, lon: t.longitude, abrir: () => m.openPopup() };
+  const g = grupos.tri, ga = grupos.triAnt; g.clearLayers(); ga.clearLayers();
+  eventos.tri = trisCache.map((t, i) => {
+    const raio = raioTri(t), atual = i === 0;
+    const m = atual
+      ? L.marker([t.latitude, t.longitude], { icon: icone('🔥', 'rgba(183,28,28,.92)', 38, '#FFEB3B'), zIndexOffset: 900 }).addTo(g).bindPopup(() => popupTri(t, raio))
+      : L.marker([t.latitude, t.longitude], { icon: icone('🕓', 'rgba(60,60,60,.85)', 24, '#9E9E9E') }).addTo(ga).bindPopup(() => `<b>🕓 Triangulação anterior</b> <span class="dica">(não é o foco das linhas de agora)</span><br>${popupTri(t, raio)}`);
+    if (atual && raio) L.circle([t.latitude, t.longitude], { radius: raio, color: '#FFEB3B', weight: 1.5, fillOpacity: .06, dashArray: '4 4', interactive: false }).addTo(g);
+    return atual
+      ? { d: quando(t.calculadaEm), txt: `🔥 Foco triangulado · ± ${raio ?? '?'} m`, cls: 'fogo', lat: t.latitude, lon: t.longitude, abrir: () => m.openPopup() }
+      : { d: quando(t.calculadaEm), txt: `🕓 Triangulação anterior · ± ${raio ?? '?'} m`, lat: t.latitude, lon: t.longitude, abrir: () => { ga.addTo(mapa); document.querySelector('[data-camada="triAnt"]').checked = true; m.openPopup(); } };
   });
-  atualizarQtd('tri', trisCache.length);
+  atualizarQtd('tri', Math.min(trisCache.length, 1));
+  atualizarQtd('triAnt', Math.max(trisCache.length - 1, 0));
 }
 
 function popupTri(t, raio) {
