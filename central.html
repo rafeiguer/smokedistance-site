@@ -693,7 +693,7 @@ function irPara(lat, lon, abrir) {
 
 /* ───────────── DADOS AO VIVO ───────────── */
 // eventos[categoria] = [{ d, txt, cls, lat, lon, abrir }]
-const eventos = { rota: [], tri: [], visadas: [], fotos: [], trilhas: [], brigadas: [], msg: [] };
+const eventos = { rota: [], tri: [], visadas: [], fotos: [], trilhas: [], brigadas: [], trajetos: [], msg: [] };
 let tracos = [], ultimaTri = null, brigadas = [];
 
 function escutarDados() {
@@ -804,7 +804,9 @@ function escutarTrajetos(todas) {
   todas.forEach(b => {
     if (escutasTrajeto[b.id]) return;
     escutasTrajeto[b.id] = onSnapshot(query(collection(db, 'brigadas', b.id, 'trajeto'), where('ate', '>=', limite), orderBy('ate')), (s) => {
-      trajetos[b.id] = s.docs.flatMap(d => d.data().pontos || []).sort((x, y) => x.t - y.t);
+      // Sem duplicar pontos de blocos sobrepostos (app antigo regravava o bloco com outro id)
+      const porT = new Map(s.docs.flatMap(d => d.data().pontos || []).map(p => [p.t, p]));
+      trajetos[b.id] = [...porT.values()].sort((x, y) => x.t - y.t);
       desenharTrajetos();
     }, (e) => console.warn('Central: trajeto', e.message));
   });
@@ -827,7 +829,7 @@ function resumoTrajeto(pts) {
   pts.forEach((p, i) => {
     if (i) dist += distPts(pts[i - 1], p);
     if (Number.isFinite(p.al)) {
-      perfil.push([dist, p.al]);
+      perfil.push([dist, p.al, i]); // i = índice do ponto (liga o gráfico ao mapa)
       if (ref == null) ref = p.al;
       else if (Math.abs(p.al - ref) >= 3) { if (p.al > ref) sobe += p.al - ref; else desce += ref - p.al; ref = p.al; } // ignora oscilação < 3 m
     }
@@ -841,13 +843,67 @@ function resumoTrajeto(pts) {
 }
 
 // Gráfico de altimetria (altitude × distância) em SVG, para o popup
-function svgAltimetria(perfil, cor) {
+const ALT_W = 240, ALT_H = 64;
+const yAlt = (a, mn, faixa) => ALT_H - 4 - (a - mn) / faixa * (ALT_H - 12);
+function svgAltimetria(perfil, cor, uid) {
   if (perfil.length < 2) return '';
-  const W = 240, H = 64, maxD = perfil[perfil.length - 1][0] || 1;
+  const W = ALT_W, H = ALT_H, maxD = perfil[perfil.length - 1][0] || 1;
   const alts = perfil.map(p => p[1]), mn = Math.min(...alts), mx = Math.max(...alts), faixa = (mx - mn) || 1;
-  const pts = perfil.map(([d, a]) => `${(d / maxD * W).toFixed(1)},${(H - 4 - (a - mn) / faixa * (H - 12)).toFixed(1)}`).join(' ');
-  return `<svg width="${W}" height="${H}" style="display:block;margin-top:4px;background:rgba(255,255,255,.04);border-radius:6px"><polyline points="${pts}" fill="none" stroke="${cor}" stroke-width="2"/><text x="3" y="10" font-size="9" fill="#aaa">${Math.round(mx)} m</text><text x="3" y="${H - 2}" font-size="9" fill="#aaa">${Math.round(mn)} m</text><text x="${W - 3}" y="${H - 2}" font-size="9" fill="#aaa" text-anchor="end">${(maxD / 1000).toFixed(2).replace('.', ',')} km</text></svg>`;
+  const pts = perfil.map(([d, a]) => `${(d / maxD * W).toFixed(1)},${yAlt(a, mn, faixa).toFixed(1)}`).join(' ');
+  return `<svg class="alt" data-uid="${uid}" width="${W}" height="${H}" style="display:block;margin-top:4px;background:rgba(255,255,255,.04);border-radius:6px;cursor:crosshair;touch-action:none"><polyline points="${pts}" fill="none" stroke="${cor}" stroke-width="2"/><text x="3" y="10" font-size="9" fill="#aaa">${Math.round(mx)} m</text><text x="3" y="${H - 2}" font-size="9" fill="#aaa">${Math.round(mn)} m</text><text x="${W - 3}" y="${H - 2}" font-size="9" fill="#aaa" text-anchor="end">${(maxD / 1000).toFixed(2).replace('.', ',')} km</text><line class="alt-guia" y1="0" y2="${H}" stroke="#fff" stroke-opacity=".35" style="display:none"/><circle class="alt-bola" r="4" fill="#fff" stroke="${cor}" stroke-width="2" style="display:none"/><text class="alt-txt" y="10" font-size="9" fill="#fff" text-anchor="end" x="${W - 3}"></text></svg>`;
 }
+
+// 📈 Como no Wikiloc: passar o mouse no gráfico mostra o ponto no mapa, e
+// passar o mouse no rastro mostra o ponto no gráfico (popup aberto).
+const perfis = {}; // uid → perfil de altimetria (calculado ao desenhar, não a cada movimento do mouse)
+const bolaTrajeto = L.circleMarker([0, 0], { radius: 7, color: '#fff', weight: 3, fillColor: '#111', fillOpacity: 1, interactive: false });
+function marcarPontoTrajeto(uid, i) {
+  const pts = trajetos[uid];
+  if (!pts?.[i]) return esconderPontoTrajeto();
+  bolaTrajeto.setLatLng([pts[i].la, pts[i].lo]).addTo(mapa).bringToFront();
+  const perfil = perfis[uid] || [];
+  if (perfil.length < 2) return;
+  document.querySelectorAll(`svg.alt[data-uid="${uid}"]`).forEach(svg => {
+    const k = perfil.reduce((m, p, j) => Math.abs(p[2] - i) < Math.abs(perfil[m][2] - i) ? j : m, 0), p = perfil[k];
+    if (!p) return;
+    const alts = perfil.map(q => q[1]), mn = Math.min(...alts), faixa = (Math.max(...alts) - mn) || 1;
+    const x = p[0] / (perfil[perfil.length - 1][0] || 1) * ALT_W, y = yAlt(p[1], mn, faixa);
+    const bola = svg.querySelector('.alt-bola'), guia = svg.querySelector('.alt-guia');
+    bola.setAttribute('cx', x); bola.setAttribute('cy', y); bola.style.display = '';
+    guia.setAttribute('x1', x); guia.setAttribute('x2', x); guia.style.display = '';
+    svg.querySelector('.alt-txt').textContent = `${Math.round(p[1])} m · ${(p[0] / 1000).toFixed(2).replace('.', ',')} km · ${hm(pts[p[2]].t)}`;
+  });
+}
+function esconderPontoTrajeto() {
+  bolaTrajeto.remove();
+  document.querySelectorAll('svg.alt .alt-bola, svg.alt .alt-guia').forEach(el => { el.style.display = 'none'; });
+  document.querySelectorAll('svg.alt .alt-txt').forEach(el => { el.textContent = ''; });
+}
+document.addEventListener('pointermove', (ev) => {
+  const svg = ev.target.closest?.('svg.alt');
+  if (!svg) return;
+  const uid = svg.dataset.uid, perfil = perfis[uid] || [];
+  if (perfil.length < 2) return;
+  const rect = svg.getBoundingClientRect();
+  const d = (ev.clientX - rect.left) / rect.width * (perfil[perfil.length - 1][0] || 1);
+  const p = perfil.reduce((m, q) => Math.abs(q[0] - d) < Math.abs(m[0] - d) ? q : m);
+  marcarPontoTrajeto(uid, p[2]);
+});
+document.addEventListener('pointerout', (ev) => { if (ev.target.closest?.('svg.alt') && !ev.relatedTarget?.closest?.('svg.alt')) esconderPontoTrajeto(); });
+const pontoMaisPerto = (pts, ll) => pts.reduce((m, p, i) => ll.distanceTo([p.la, p.lo]) < ll.distanceTo([pts[m].la, pts[m].lo]) ? i : m, 0);
+
+// 🔥 Área queimada: pontos do trajeto com c (botão Contorno do app) fecham um
+// polígono. areaHa é CÓPIA de src/services/trajetoBrigadaTask.js — mudou um, mude o outro.
+function areaHa(pts) {
+  if (pts.length < 3) return 0;
+  const lat0 = pts.reduce((s, p) => s + p.la, 0) / pts.length * Math.PI / 180;
+  const R = 6371000, xy = pts.map(p => [p.lo * Math.PI / 180 * R * Math.cos(lat0), p.la * Math.PI / 180 * R]);
+  let a = 0;
+  xy.forEach(([x, y], i) => { const [x2, y2] = xy[(i + 1) % xy.length]; a += x * y2 - x2 * y; });
+  return Math.abs(a) / 2 / 10000;
+}
+let contornos = []; // [{ uid, nome, pts, ha, de, ate }] — o mais recente primeiro
+const fmtHa = (ha) => `${ha.toFixed(2).replace('.', ',')} ha`;
 
 function htmlTrajeto(uid) {
   const pts = trajetos[uid];
@@ -856,23 +912,47 @@ function htmlTrajeto(uid) {
   return `<hr style="border:0;border-top:1px solid rgba(255,255,255,.15);margin:6px 0"><b>🛤️ Trajeto (24 h)</b><br>
     ${(r.dist / 1000).toFixed(2).replace('.', ',')} km · andando ${duracao(r.andandoMs / 3.6e6)} · parado ${duracao(r.paradoMs / 3.6e6)} (${r.paradas.length} parada${r.paradas.length === 1 ? '' : 's'})<br>
     ${r.altMin != null ? `↗ ${Math.round(r.sobe)} m ↘ ${Math.round(r.desce)} m · altitude ${Math.round(r.altMin)}–${Math.round(r.altMax)} m` : 'sem altitude do GPS'}
-    ${svgAltimetria(r.perfil, corDaBrigada(uid))}`;
+    ${svgAltimetria(r.perfil, corDaBrigada(uid), uid)}`;
 }
 
 function desenharTrajetos() {
   const g = grupos.trajetos;
   if (!g) return;
+  // Bloco novo chega a cada ~30 s: o popup do rastro que estava aberto reabre depois do redesenho
+  const camAberta = g.getLayers().find(l => l.options.uid && l.isPopupOpen());
+  const aberto = camAberta?.options.uid, ondeAberto = camAberta?.getPopup().getLatLng();
   g.clearLayers();
   let n = 0;
+  eventos.trajetos = [];
+  contornos = [];
   Object.entries(trajetos).forEach(([uid, pts]) => {
     if (pts.length < 2) return;
     n++;
+    perfis[uid] = resumoTrajeto(pts).perfil;
     const cor = corDaBrigada(uid), nome = nomeBrigada[uid] || 'Brigada';
-    L.polyline(pts.map(p => [p.la, p.lo]), { color: cor, weight: 4, opacity: .9 }).addTo(g)
-      .bindPopup(() => `<b>🚒 ${esc(nome)}</b>${htmlTrajeto(uid)}`);
+    const linha = L.polyline(pts.map(p => [p.la, p.lo]), { color: cor, weight: 4, opacity: .9, uid }).addTo(g)
+      .bindPopup(() => `<b>🚒 ${esc(nome)}</b>${htmlTrajeto(uid)}`)
+      .on('mousemove', (e) => marcarPontoTrajeto(uid, pontoMaisPerto(pts, e.latlng)))
+      .on('mouseout', esconderPontoTrajeto);
+    if (uid === aberto) linha.openPopup(ondeAberto);
     paradasDe(pts).forEach(x => L.marker([x.p.la, x.p.lo], { icon: icone('⏸', 'rgba(0,0,0,.75)', 22, cor) }).addTo(g)
       .bindPopup(`<b>⏸ ${esc(nome)} parada</b><br>${duracao((x.ate - x.de) / 3.6e6)} · ${hm(x.de)}–${hm(x.ate)}`));
+    const fim = pts[pts.length - 1];
+    eventos.trajetos.push({ d: new Date(fim.t), txt: `🛤️ ${nome}: trajeto ${(resumoTrajeto(pts).dist / 1000).toFixed(2).replace('.', ',')} km (24 h)`, lat: fim.la, lon: fim.lo,
+      abrir: () => { mapa.fitBounds(linha.getBounds(), { padding: [40, 40] }); linha.openPopup(); } });
+    // 🔥 Contornos (pontos com o mesmo c = um contorno)
+    [...new Set(pts.filter(p => p.c).map(p => p.c))].forEach(c => {
+      const cp = pts.filter(p => p.c === c);
+      if (cp.length < 3) return;
+      const ha = areaHa(cp), perim = cp.reduce((s, p, i) => s + distPts(p, cp[(i + 1) % cp.length]), 0);
+      const pol = L.polygon(cp.map(p => [p.la, p.lo]), { color: '#E53935', weight: 2, fillColor: '#E53935', fillOpacity: .25 }).addTo(g)
+        .bindPopup(`<b>🔥 Área queimada</b> (contorno de ${esc(nome)})<br><b>${fmtHa(ha)}</b> · perímetro ${(perim / 1000).toFixed(2).replace('.', ',')} km<br>${hm(cp[0].t)}–${hm(cp[cp.length - 1].t)} · ${cp.length} pontos de GPS<br><span class="dica">Medida pelo caminho andado: só vale se a brigada fechou a volta no foco.</span>`);
+      contornos.push({ uid, nome, ha, de: cp[0].t, ate: cp[cp.length - 1].t });
+      eventos.trajetos.push({ d: new Date(cp[cp.length - 1].t), txt: `🔥 ${nome}: contorno do foco ≈ ${fmtHa(ha)}`, cls: 'fogo', lat: cp[0].la, lon: cp[0].lo,
+        abrir: () => { mapa.fitBounds(pol.getBounds(), { padding: [40, 40] }); pol.openPopup(); } });
+    });
   });
+  contornos.sort((a, b) => b.ate - a.ate);
   atualizarQtd('trajetos', n);
   desenharBrigadas(); // popups do 🚒 mostram o resumo do trajeto
 }
@@ -1786,6 +1866,7 @@ function montarROI() {
       }
     });
     if (ec.formas.length && !(roi.extincao || []).length) { roi.extincao = ec.formas; preenchidos.push('formas de extinção'); }
+    if (contornos[0]) por('area', contornos[0].ha.toFixed(2).replace('.', ','), `área queimada (contorno de ${contornos[0].nome})`);
     const pessoas = n(lerLocal('central_calc', {}).pessoas);
     if (pessoas && !roi.combatentes.brig?.qtd) { roi.combatentes.brig = { ...(roi.combatentes.brig || {}), qtd: String(pessoas) }; preenchidos.push('nº de brigadistas (calculadora)'); }
     por('respElab', usuario?.displayName || usuario?.email || '', 'responsável');
