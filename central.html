@@ -360,7 +360,7 @@ nav.abas{display:none}
         <ul>
           <li>🔥 Foco triangulado</li>
           <li><span class="amostra tracejada" style="--c:#FFEB3B"></span>Margem de erro do foco (o fogo deve estar dentro)</li>
-          <li>👁️ Visada · linha = direção mirada (20 km)</li>
+          <li>👁️ Visada · linha pontilhada (• • •) = direção mirada (20 km)</li>
           <li>📌 Foco marcado à mão</li>
           <li>📸 Foto · 💧 Água · 🚒 Brigada</li>
           <li><span class="amostra" style="--c:#60A5FA"></span>Rota</li>
@@ -531,7 +531,10 @@ const TIPOS = [
 const tipoDe = (id) => TIPOS.find(t => t.id === id) || TIPOS[3];
 const RAPIDAS = ['📍 Seguir a rota azul', '⚠️ Recuar para a zona de segurança', '⛽ Suprimento a caminho', '✅ Recebido', '🕓 Aguardar no ponto de encontro'];
 // Cor da visada por aparelho — mesma regra do MapScreen do app
-const CORES_VISADA = ['#00FF00', '#FF9800', '#00BCD4', '#E91E63', '#FFEB3B', '#9C27B0'];
+// Visada = linha PONTILHADA nestas cores — nenhum traço usa pontilhado nem estas
+// cores (verde = rota de saída, amarelo = anotação/margem, vermelho = aceiro).
+// CÓPIA em src/pages/MapScreen.js (cores) — mudou um, mude o outro.
+const CORES_VISADA = ['#FFFFFF', '#FF9800', '#B388FF', '#00E5FF', '#FF80AB'];
 const corVisada = (f) => CORES_VISADA[Math.abs(String(f.deviceId || f.id || '').split('').reduce((a, c) => a + c.charCodeAt(0), 0)) % CORES_VISADA.length];
 
 let usuario = null, papel = null;
@@ -736,7 +739,7 @@ function escutarDados() {
         nv++;
         const cor = corVisada(f), r = az * Math.PI / 180, dist = 20000; // linha de 20 km, igual ao app
         const fim = [lat + (dist / 111000) * Math.cos(r), lon + (dist / (111000 * Math.cos(lat * Math.PI / 180))) * Math.sin(r)];
-        L.polyline([[lat, lon], fim], { color: cor, weight: 3, dashArray: '10 6', opacity: .9, interactive: false }).addTo(gv);
+        L.polyline([[lat, lon], fim], { color: cor, weight: 4, dashArray: '1 8', lineCap: 'round', opacity: .95, interactive: false }).addTo(gv);
         m = L.marker([lat, lon], { icon: icone('👁️', cor, 26) }).addTo(gv)
           .bindPopup(`<b>👁️ Visada ${esc(f.tipo || '')}</b><br>Azimute: <b>${Math.round(az)}°</b><br>${lat.toFixed(5)}, ${lon.toFixed(5)}<br><span class="dica">${esc(hhmm(quando(f.createdAt)))} · ${esc(f.observadorId || '')}</span>`);
       }
