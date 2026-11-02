@@ -494,42 +494,59 @@ footer{padding:3rem 4rem;border-top:1px solid var(--border);display:flex;align-i
   <div class="privacy-inner reveal">
     <span class="section-tag">Legal</span>
     <h2>Política de Privacidade</h2>
-    <p>Última atualização: junho de 2026</p>
+    <p>Última atualização: 2 de novembro de 2026</p>
+    <p>Esta política vale para o aplicativo SmokeDistance (iPhone e Android) e para a Central de Controle (site). Ela segue a Lei Geral de Proteção de Dados (LGPD, Lei 13.709/2018).</p>
     <h3>1. Dados Coletados</h3>
-    <p>O SmokeDistance coleta os seguintes dados para funcionamento do aplicativo:</p>
     <ul>
-      <li><strong>Localização (GPS):</strong> usada exclusivamente para triangulação de focos e exibição no mapa. Não é armazenada permanentemente sem ação do usuário.</li>
-      <li><strong>Fotos de campo:</strong> capturadas pelo usuário e armazenadas no Firebase Storage associadas a um pino de localização.</li>
-      <li><strong>Dados de sensores:</strong> bússola, barômetro e giroscópio são usados localmente para cálculo de azimute e altitude — não são transmitidos.</li>
-      <li><strong>Identificador de dispositivo:</strong> usado para sincronização colaborativa entre usuários da mesma sessão.</li>
+      <li><strong>Conta anônima:</strong> o app cria sozinho uma conta sem nome nem senha, usada para proteger o banco de dados, e um identificador do aparelho para a sincronização.</li>
+      <li><strong>Localização (com o app em uso):</strong> posição de visadas, focos marcados, fotos, fontes de água, mensagens e registros de combate. Só é enviada quando você faz uma dessas ações.</li>
+      <li><strong>Localização em segundo plano (só se você ligar):</strong> em <em>Gravar trilha</em> e no botão <em>Posição</em> da Rota de Serviço o app grava o caminho (posição, altitude, velocidade, precisão do GPS e hora) mesmo com a tela apagada, até você desligar. O trajeto da Posição e o contorno do foco vão só para a Central de Controle da sua equipe e não aparecem no mapa público. O celular mostra que a localização está em uso (no Android, uma notificação fixa).</li>
+      <li><strong>Fotos de campo:</strong> a foto e seus dados (coordenadas, direção, altitude, data, modelo do aparelho). Fotos de drone importadas: o app lê a posição e a direção gravadas na própria foto.</li>
+      <li><strong>E-mail (opcional):</strong> pedido só no Registro Oficial e para liberar o acesso de equipe, confirmado por código. Fica associado aos registros oficiais enviados.</li>
+      <li><strong>Apelido e nome da brigada:</strong> crédito das trilhas publicadas e identificação da brigada para a Central.</li>
+      <li><strong>Conteúdo da operação:</strong> desenhos, textos no mapa, mensagens, tarefas, etapas do combate e recursos (estoques) que você enviar.</li>
+      <li><strong>Notificações:</strong> o código do aparelho para receber avisos (focos novos e mensagens da Central).</li>
+      <li><strong>Central de Controle:</strong> nome e e-mail da conta Google de quem coordena.</li>
+      <li><strong>Sensores:</strong> bússola (magnetômetro) e sensores de movimento são processados no próprio aparelho para calcular a direção; as leituras não são enviadas.</li>
     </ul>
-    <h3>2. Como Usamos os Dados</h3>
-    <p>Os dados coletados são utilizados exclusivamente para:</p>
+    <h3>2. Para Que Usamos</h3>
     <ul>
-      <li>Triangulação geodésica colaborativa de focos de incêndio</li>
-      <li>Exibição de focos no mapa compartilhado entre usuários</li>
-      <li>Armazenamento de fotos de campo geolocalizadas</li>
-      <li>Envio de alertas de emergência entre usuários</li>
+      <li>Localizar focos de incêndio por triangulação e mostrá-los no mapa compartilhado.</li>
+      <li>Coordenar o combate: rotas, mensagens, tarefas, posição e trajeto das brigadas, área queimada.</li>
+      <li>Avisar usuários sobre focos e mensagens da Central.</li>
+      <li>Gerar registros oficiais e o Registro de Ocorrência de Incêndio (ROI) para as autoridades.</li>
+      <li>Mapear trilhas, aceiros e caminhos para combate e resgate.</li>
     </ul>
-    <h3>3. Compartilhamento de Dados</h3>
-    <p>O SmokeDistance <strong>não vende, não aluga e não comercializa</strong> dados de usuários. Os dados são compartilhados somente:</p>
+    <h3>3. Quem Vê os Seus Dados</h3>
+    <p>O SmokeDistance <strong>não vende, não aluga e não comercializa</strong> dados.</p>
     <ul>
-      <li>Com outros usuários do mesmo grupo de monitoramento</li>
-      <li>Com o Firebase (Google) para sincronização em tempo real</li>
-      <li>Com APIs de satélite (NASA FIRMS, NOAA) — apenas coordenadas são enviadas</li>
+      <li><strong>Todos os usuários:</strong> visadas, focos, fotos (sem o autor), fontes de água e trilhas (com o apelido).</li>
+      <li><strong>Equipe liberada e Central de Controle:</strong> desenhos, mensagens, posição e trajeto das brigadas, contornos e registros de combate.</li>
+      <li><strong>Autoridades e administradores:</strong> quem tirou cada foto e os registros oficiais com o e-mail confirmado.</li>
+      <li><strong>Prestadores de serviço:</strong> Google Firebase (banco de dados, arquivos, contas, funções e notificações, servidores em São Paulo) e Expo (atualizações e entrega de notificações).</li>
+      <li><strong>Serviços que recebem apenas coordenadas, sem identificar você:</strong> NASA FIRMS e NOAA (satélites e declinação magnética), Open-Meteo (tempo e relevo), Google Maps (mapas e relevo), OpenStreetMap (picos e município), OpenRouteService, GraphHopper e OSRM (rotas a pé).</li>
+      <li><strong>OpenStreetMap:</strong> uma trilha só é enviada com a sua autorização expressa.</li>
     </ul>
-    <h3>4. Retenção de Dados</h3>
-    <p>Fotos e focos marcados são retidos no Firebase enquanto o usuário não os remover. O usuário pode excluir seus dados a qualquer momento dentro do aplicativo.</p>
+    <h3>4. Por Quanto Tempo Guardamos</h3>
+    <ul>
+      <li>Visadas, focos, fotos, fontes de água e trilhas: até serem apagados pelo autor ou por um administrador.</li>
+      <li>Trajetos, contornos, mensagens e registros de combate: guardados para o histórico da operação até serem apagados pela administração. A Central mostra os trajetos das últimas 24 horas.</li>
+      <li>Registros oficiais: guardados de forma permanente, por serem documento enviado às autoridades.</li>
+      <li>Dados guardados só no aparelho (fila sem rede, preferências): apagados ao desinstalar o app.</li>
+    </ul>
     <h3>5. Permissões do Aplicativo</h3>
     <ul>
-      <li><strong>Câmera:</strong> captura de fotos de campo</li>
-      <li><strong>Localização (em uso):</strong> triangulação e exibição no mapa</li>
-      <li><strong>Notificações:</strong> alertas de emergência</li>
-      <li><strong>Rede:</strong> sincronização Firebase e dados de satélite</li>
+      <li><strong>Câmera:</strong> visadas e fotos de campo.</li>
+      <li><strong>Localização "em uso":</strong> visadas, mapa e registros.</li>
+      <li><strong>Localização "sempre" / "o tempo todo":</strong> só para Gravar trilha e Posição, enquanto estiverem ligados.</li>
+      <li><strong>Notificações:</strong> avisos de focos e da Central.</li>
+      <li><strong>Galeria de fotos:</strong> só ao importar uma foto de drone.</li>
     </ul>
     <h3>6. Segurança</h3>
-    <p>Os dados são protegidos por autenticação Firebase e regras de segurança do Firestore. As comunicações são criptografadas via HTTPS/TLS.</p>
-    <h3>7. Contato</h3>
+    <p>O acesso é controlado por regras no servidor: desenhos, mensagens e posições só ficam visíveis para a equipe liberada por e-mail confirmado, e só o autor (ou a administração) apaga o que criou. As comunicações são criptografadas (HTTPS/TLS).</p>
+    <h3>7. Seus Direitos</h3>
+    <p>Você pode pedir acesso, correção ou exclusão dos seus dados, e revogar o consentimento, pelo e-mail abaixo. Também pode apagar no próprio app as visadas, focos, fotos e trilhas que criou, e desligar a localização em segundo plano a qualquer momento.</p>
+    <h3>8. Contato</h3>
     <div class="privacy-contact">
       Para dúvidas sobre privacidade entre em contato:<br>
       📧 rafa.rp58@gmail.com
