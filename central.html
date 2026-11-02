@@ -489,7 +489,7 @@ nav.abas{display:none}
 <script type="module">
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js';
 import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js';
-import { getFirestore, collection, query, orderBy, limit, onSnapshot, addDoc, deleteDoc, updateDoc, doc, getDoc, getDocs, setDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js';
+import { getFirestore, collection, query, orderBy, limit, onSnapshot, addDoc, deleteDoc, updateDoc, doc, getDoc, getDocs, setDoc, serverTimestamp, where } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js';
 
 // Config pública do app web (a mesma do app — a segurança vem das firestore.rules)
 const app = initializeApp({
@@ -616,6 +616,7 @@ const CAMADAS = [
   { id: 'rotulos', nome: '🏷️ Textos no mapa', cor: 'var(--alerta)' },
   { id: 'brigadas', nome: '🚒 Brigadas', cor: 'var(--alerta)' },
   { id: 'combate', nome: '🎯 Destinos e etapas das brigadas', cor: 'var(--fogo)' },
+  { id: 'trajetos', nome: '🛤️ Trajetos das brigadas (24 h)', cor: 'var(--azul)' },
   { id: 'tri', nome: '🔥 Focos triangulados', cor: 'var(--fogo-forte)' },
   { id: 'visadas', nome: '👁️ Visadas', cor: 'var(--fogo)' },
   { id: 'manuais', nome: '📌 Focos marcados', cor: 'var(--fogo)' },
@@ -780,9 +781,100 @@ function escutarDados() {
   }, erro('trilhas'));
 
   onSnapshot(collection(db, 'brigadas'), (snap) => {
-    brigadas = snap.docs.map(d => ({ id: d.id, ...d.data() })).filter(b => b.ativa && Number.isFinite(b.latitude));
+    const todas = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    brigadas = todas.filter(b => b.ativa && Number.isFinite(b.latitude));
+    nomeBrigada = Object.fromEntries(todas.map(b => [b.id, b.nome || 'Brigada']));
+    escutarTrajetos(todas);
     desenharBrigadas();
   }, erro('brigadas'));
+}
+
+/* ── 🛤️ Trajetos (botão Posição do app → brigadas/{uid}/trajeto, ver
+   src/services/trajetoBrigadaTask.js). Últimas 24 h de cada brigada: rastro,
+   paradas (≥ 5 min num raio de 20 m — mesma regra de src/utils/trilhaStats.js)
+   e altimetria (altitude do GPS do celular). */
+const JANELA_TRAJETO_MS = 24 * 3600 * 1000, PARADA_RAIO_M = 20, PARADA_MIN_MS = 5 * 60 * 1000;
+const trajetos = {}, escutasTrajeto = {};
+let nomeBrigada = {};
+const corDaBrigada = (uid) => ['#60A5FA', '#F472B6', '#FBBF24', '#34D399', '#A78BFA', '#F97316'][[...uid].reduce((a, c) => a + c.charCodeAt(0), 0) % 6];
+const distPts = (a, b) => L.latLng(a.la, a.lo).distanceTo(L.latLng(b.la, b.lo));
+
+function escutarTrajetos(todas) {
+  const limite = Date.now() - JANELA_TRAJETO_MS;
+  todas.forEach(b => {
+    if (escutasTrajeto[b.id]) return;
+    escutasTrajeto[b.id] = onSnapshot(query(collection(db, 'brigadas', b.id, 'trajeto'), where('ate', '>=', limite), orderBy('ate')), (s) => {
+      trajetos[b.id] = s.docs.flatMap(d => d.data().pontos || []).sort((x, y) => x.t - y.t);
+      desenharTrajetos();
+    }, (e) => console.warn('Central: trajeto', e.message));
+  });
+}
+
+function paradasDe(pts) {
+  const paradas = [];
+  for (let i = 0; i < pts.length;) {
+    let j = i;
+    while (j + 1 < pts.length && distPts(pts[i], pts[j + 1]) <= PARADA_RAIO_M) j++;
+    if (pts[j].t - pts[i].t >= PARADA_MIN_MS) paradas.push({ p: pts[i], de: pts[i].t, ate: pts[j].t });
+    i = j + 1;
+  }
+  return paradas;
+}
+
+function resumoTrajeto(pts) {
+  let dist = 0, sobe = 0, desce = 0, ref = null;
+  const perfil = [];
+  pts.forEach((p, i) => {
+    if (i) dist += distPts(pts[i - 1], p);
+    if (Number.isFinite(p.al)) {
+      perfil.push([dist, p.al]);
+      if (ref == null) ref = p.al;
+      else if (Math.abs(p.al - ref) >= 3) { if (p.al > ref) sobe += p.al - ref; else desce += ref - p.al; ref = p.al; } // ignora oscilação < 3 m
+    }
+  });
+  const paradas = paradasDe(pts);
+  const paradoMs = paradas.reduce((s, x) => s + x.ate - x.de, 0);
+  const totalMs = pts.length > 1 ? pts[pts.length - 1].t - pts[0].t : 0;
+  const alts = perfil.map(x => x[1]);
+  return { dist, sobe, desce, paradas, paradoMs, andandoMs: Math.max(0, totalMs - paradoMs), perfil,
+    altMin: alts.length ? Math.min(...alts) : null, altMax: alts.length ? Math.max(...alts) : null };
+}
+
+// Gráfico de altimetria (altitude × distância) em SVG, para o popup
+function svgAltimetria(perfil, cor) {
+  if (perfil.length < 2) return '';
+  const W = 240, H = 64, maxD = perfil[perfil.length - 1][0] || 1;
+  const alts = perfil.map(p => p[1]), mn = Math.min(...alts), mx = Math.max(...alts), faixa = (mx - mn) || 1;
+  const pts = perfil.map(([d, a]) => `${(d / maxD * W).toFixed(1)},${(H - 4 - (a - mn) / faixa * (H - 12)).toFixed(1)}`).join(' ');
+  return `<svg width="${W}" height="${H}" style="display:block;margin-top:4px;background:rgba(255,255,255,.04);border-radius:6px"><polyline points="${pts}" fill="none" stroke="${cor}" stroke-width="2"/><text x="3" y="10" font-size="9" fill="#aaa">${Math.round(mx)} m</text><text x="3" y="${H - 2}" font-size="9" fill="#aaa">${Math.round(mn)} m</text><text x="${W - 3}" y="${H - 2}" font-size="9" fill="#aaa" text-anchor="end">${(maxD / 1000).toFixed(2).replace('.', ',')} km</text></svg>`;
+}
+
+function htmlTrajeto(uid) {
+  const pts = trajetos[uid];
+  if (!pts?.length) return '';
+  const r = resumoTrajeto(pts);
+  return `<hr style="border:0;border-top:1px solid rgba(255,255,255,.15);margin:6px 0"><b>🛤️ Trajeto (24 h)</b><br>
+    ${(r.dist / 1000).toFixed(2).replace('.', ',')} km · andando ${duracao(r.andandoMs / 3.6e6)} · parado ${duracao(r.paradoMs / 3.6e6)} (${r.paradas.length} parada${r.paradas.length === 1 ? '' : 's'})<br>
+    ${r.altMin != null ? `↗ ${Math.round(r.sobe)} m ↘ ${Math.round(r.desce)} m · altitude ${Math.round(r.altMin)}–${Math.round(r.altMax)} m` : 'sem altitude do GPS'}
+    ${svgAltimetria(r.perfil, corDaBrigada(uid))}`;
+}
+
+function desenharTrajetos() {
+  const g = grupos.trajetos;
+  if (!g) return;
+  g.clearLayers();
+  let n = 0;
+  Object.entries(trajetos).forEach(([uid, pts]) => {
+    if (pts.length < 2) return;
+    n++;
+    const cor = corDaBrigada(uid), nome = nomeBrigada[uid] || 'Brigada';
+    L.polyline(pts.map(p => [p.la, p.lo]), { color: cor, weight: 4, opacity: .9 }).addTo(g)
+      .bindPopup(() => `<b>🚒 ${esc(nome)}</b>${htmlTrajeto(uid)}`);
+    paradasDe(pts).forEach(x => L.marker([x.p.la, x.p.lo], { icon: icone('⏸', 'rgba(0,0,0,.75)', 22, cor) }).addTo(g)
+      .bindPopup(`<b>⏸ ${esc(nome)} parada</b><br>${duracao((x.ate - x.de) / 3.6e6)} · ${hm(x.de)}–${hm(x.ate)}`));
+  });
+  atualizarQtd('trajetos', n);
+  desenharBrigadas(); // popups do 🚒 mostram o resumo do trajeto
 }
 
 // 🧮 Recursos enviados pela Calculadora do app (rotaServicoService.enviarRecursosBrigada)
@@ -802,12 +894,13 @@ function desenharBrigadas() {
   if (!grupos.brigadas) return;
   const g = grupos.brigadas; g.clearLayers();
   eventos.brigadas = brigadas.flatMap(b => {
-    const d = quando(b.atualizadoEm), i = idade(d);
+    // posicaoEm = hora do GPS (o trajeto gravado sem rede chega atrasado; atualizadoEm é a hora do envio)
+    const d = b.posicaoEm ? new Date(b.posicaoEm) : quando(b.atualizadoEm), i = idade(d);
     const cor = { ok: '#4ADE80', atencao: '#FBBF24', velho: '#E53935' }[i.cls];
     // Nome sempre à vista; a posição chega do "compartilhar posição" ou de cada registro em Brigadas de combate
     const m = L.marker([b.latitude, b.longitude], { icon: icone('🚒', 'rgba(0,0,0,.8)', 34, cor), zIndexOffset: 800 }).addTo(g)
       .bindTooltip(`${esc(b.nome || 'Brigada')}${b.ultimoRegistro ? ' · ' + esc(b.ultimoRegistro) : ''}`, { permanent: true, direction: 'bottom', offset: [0, 16] })
-      .bindPopup(`<b>🚒 ${esc(b.nome || 'Brigada')}</b><br>Posição <b style="color:${cor}">${i.txt}</b> (${hhmm(d)})${b.ultimoRegistro ? `<br>Último registro: <b>${esc(b.ultimoRegistro)}</b>` : ''}${b.precisaoM ? `<br>Precisão do GPS ± ${b.precisaoM} m` : ''}${htmlRecursos(b.recursos)}`);
+      .bindPopup(`<b>🚒 ${esc(b.nome || 'Brigada')}</b><br>Posição <b style="color:${cor}">${i.txt}</b> (${hhmm(d)})${b.ultimoRegistro ? `<br>Último registro: <b>${esc(b.ultimoRegistro)}</b>` : ''}${b.precisaoM ? `<br>Precisão do GPS ± ${b.precisaoM} m` : ''}${Number.isFinite(b.altitude) ? `<br>Altitude ${b.altitude} m` : ''}${Number.isFinite(b.velocidade) ? ` · ${(b.velocidade * 3.6).toFixed(1).replace('.', ',')} km/h` : ''}${htmlRecursos(b.recursos)}${htmlTrajeto(b.id)}`);
     const ev = [{ d, txt: `🚒 ${b.nome || 'Brigada'} ${b.ultimoRegistro ? `registrou ${b.ultimoRegistro}` : 'enviou a posição'}`, lat: b.latitude, lon: b.longitude, abrir: () => m.openPopup() }];
     if (b.recursos) ev.push({ d: quando(b.recursos.enviadoEm), txt: `🧮 ${b.nome || 'Brigada'}: recursos para ${duracao(b.recursos.horas)}`, cls: b.recursos.coberturaPct != null && b.recursos.coberturaPct < 100 ? 'fogo' : '', lat: b.latitude, lon: b.longitude, abrir: () => m.openPopup() });
     return ev;
