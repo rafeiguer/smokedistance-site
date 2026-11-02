@@ -623,6 +623,7 @@ const CAMADAS = [
   { id: 'fotos', nome: '📸 Fotos de campo', cor: 'var(--alerta)' },
   { id: 'agua', nome: '💧 Água', cor: 'var(--azul)' },
   { id: 'trilhas', nome: '🥾 Trilhas', cor: 'var(--verde)' },
+  { id: 'ucs', nome: '🌳 Áreas protegidas (UCs)', cor: '#2E7D32' },
 ];
 const grupos = {};
 
@@ -654,6 +655,7 @@ function iniciar() {
   montarCombate();
   montarROI();
   escutarDados();
+  mapa.on('moveend', desenharUCs); desenharUCs();
   montarEquipamentos();
   setInterval(() => { $('relogio').textContent = new Date().toLocaleTimeString('pt-BR'); }, 1000);
   // "há X min" muda devagar: redesenhar a cada 15 s basta (poupa o celular)
@@ -1030,6 +1032,84 @@ function popupTri(t, raio) {
     + `${t.altitudeTerrenoM != null ? `<br>⛰️ Terreno ${t.altitudeTerrenoM} m` : ''}`
     + `<br>👁️ ${(t.visadas || []).length} visadas · ${esc(hhmm(quando(t.calculadaEm)))}`
     + (c ? `<br><br>🌡️ ${esc(c.temp)}°C · 💧 ${esc(c.umidade)}% · 💨 ${esc(c.ventoKmh)} km/h de ${cardeal(c.ventoDirecao)}<br><b style="color:var(--alerta)">Fogo tende a ir para ${cardeal(c.ventoDirecao + 180)}</b>` : '');
+}
+
+/* ── 🌳 Áreas protegidas: UCs federais, estaduais e municipais (CNUC/MMA, CC-BY),
+   arquivos por estado em ucs/ (gerados por scripts/gerar-ucs.js do app — o app
+   lê os mesmos, ver src/services/areasProtegidasService.js). Só carrega com zoom
+   de região; polígonos sem clique (tooltip ao passar o mouse) para não atrapalhar
+   as ferramentas que usam o clique no mapa. */
+const ZOOM_MIN_UCS = 8;
+const COR_ESFERA = { Federal: '#2E7D32', Estadual: '#0EA5E9', Municipal: '#F59E0B' };
+const ucParticular = (p) => /Particular/i.test(p.categoria || '');
+const corUC = (p) => (ucParticular(p) ? '#A855F7' : COR_ESFERA[p.esfera] || '#4ADE80');
+let ucsIndice = null;
+const ucsPorUF = {}, ucsDesenhadas = new Set();
+const cruzaBbox = (b, r) => b[0] <= r[2] && b[2] >= r[0] && b[1] <= r[3] && b[3] >= r[1];
+
+async function ucsNaArea(r) { // r = [oeste, sul, leste, norte]
+  ucsIndice ||= await fetch('ucs/indice.json').then(x => x.json());
+  const vistas = new Map();
+  for (const [uf, bbox] of Object.entries(ucsIndice.ufs)) {
+    if (!cruzaBbox(bbox, r)) continue;
+    ucsPorUF[uf] ||= fetch(`ucs/${uf}.json`).then(x => x.json()).then(j => j.features)
+      .catch(e => { delete ucsPorUF[uf]; throw e; }); // sem rede agora: tenta de novo depois
+    (await ucsPorUF[uf]).forEach(f => { if (cruzaBbox(f.bbox, r)) vistas.set(f.properties.id, f); });
+  }
+  return [...vistas.values()];
+}
+
+async function desenharUCs() {
+  if (mapa.getZoom() < ZOOM_MIN_UCS) return;
+  const b = mapa.getBounds();
+  try {
+    (await ucsNaArea([b.getWest(), b.getSouth(), b.getEast(), b.getNorth()])).forEach(f => {
+      const p = f.properties;
+      if (ucsDesenhadas.has(p.id)) return;
+      ucsDesenhadas.add(p.id);
+      L.geoJSON(f, { style: { color: corUC(p), weight: 2, fillColor: corUC(p), fillOpacity: .1, dashArray: p.grupo === 'Uso Sustentável' ? '6 4' : null },
+        attribution: 'Áreas protegidas: CNUC/MMA' })
+        .bindTooltip(`<b>🌳 ${esc(p.nome)}</b><br>${esc(p.categoria)} · ${ucParticular(p) ? 'Particular (RPPN)' : esc(p.esfera)}<br>${esc(p.grupo)} · ${esc(p.gestor)}`, { sticky: true })
+        .addTo(grupos.ucs).bringToBack();
+    });
+    atualizarQtd('ucs', ucsDesenhadas.size);
+  } catch (e) { console.warn('Central: UCs', e.message); }
+}
+
+// Ponto dentro do polígono (raio cruzando as bordas; buraco = fora)
+function noAnel(lon, lat, anel) {
+  let dentro = false;
+  for (let i = 0, j = anel.length - 1; i < anel.length; j = i++) {
+    const [xi, yi] = anel[i], [xj, yj] = anel[j];
+    if ((yi > lat) !== (yj > lat) && lon < (xj - xi) * (lat - yi) / (yj - yi) + xi) dentro = !dentro;
+  }
+  return dentro;
+}
+const poligonosDe = (g) => (g.type === 'Polygon' ? [g.coordinates] : g.coordinates);
+const dentroUC = (lat, lon, f) => poligonosDe(f.geometry).some(([fora, ...buracos]) => noAnel(lon, lat, fora) && !buracos.some(b => noAnel(lon, lat, b)));
+// Distância (m) do ponto até a borda — projeção plana local, basta para "a X km"
+function distBordaM(lat, lon, f) {
+  const kx = 111320 * Math.cos(lat * Math.PI / 180), ky = 110540;
+  let min = Infinity;
+  poligonosDe(f.geometry).flat().forEach(anel => anel.forEach((a, i) => {
+    const b = anel[(i + 1) % anel.length];
+    const ax = (a[0] - lon) * kx, ay = (a[1] - lat) * ky, bx = (b[0] - lon) * kx, by = (b[1] - lat) * ky;
+    const dx = bx - ax, dy = by - ay, t = Math.max(0, Math.min(1, -(ax * dx + ay * dy) / ((dx * dx + dy * dy) || 1)));
+    min = Math.min(min, Math.hypot(ax + t * dx, ay + t * dy));
+  }));
+  return min;
+}
+
+/** UCs onde o ponto está (Proteção Integral primeiro) e, se nenhuma, a mais perto (até 20 km). */
+async function ucsDoPonto(lat, lon) {
+  const m = 0.2; // ~20 km de busca
+  const perto = await ucsNaArea([lon - m, lat - m, lon + m, lat + m]);
+  const dentro = perto.filter(f => dentroUC(lat, lon, f)).sort((a, b) =>
+    (a.properties.grupo === 'Proteção Integral' ? 0 : 1) - (b.properties.grupo === 'Proteção Integral' ? 0 : 1)
+    || (a.bbox[2] - a.bbox[0]) * (a.bbox[3] - a.bbox[1]) - (b.bbox[2] - b.bbox[0]) * (b.bbox[3] - b.bbox[1]));
+  if (dentro.length || !perto.length) return { dentro, maisPerto: null };
+  const maisPerto = perto.map(f => ({ f, m: distBordaM(lat, lon, f) })).sort((a, b) => a.m - b.m)[0];
+  return { dentro, maisPerto };
 }
 
 /* ───────────── REGISTRO (clicável) ───────────── */
@@ -1838,7 +1918,8 @@ function montarROI() {
   // ⚡ Preenche só o que a Central sabe; não apaga o que já foi digitado
   $('btnRoiAuto').onclick = async () => {
     const preenchidos = [];
-    const por = (k, v, nome) => { if (v != null && v !== '' && !roi[k]) { roi[k] = v; preenchidos.push(nome); } };
+    let obsUC = '';
+    const por =(k, v, nome) => { if (v != null && v !== '' && !roi[k]) { roi[k] = v; preenchidos.push(nome); } };
     if (ultimaTri) {
       por('lat', ultimaTri.latitude.toFixed(5), 'coordenadas'); por('lon', ultimaTri.longitude.toFixed(5), '');
       const d = quando(ultimaTri.calculadaEm);
@@ -1854,7 +1935,21 @@ function montarROI() {
         const uf = (a['ISO3166-2-lvl4'] || '').replace('BR-', '');
         if (uf && (roi.uf === 'BA' || !roi.uf) && uf !== roi.uf) { roi.uf = uf; preenchidos.push('UF'); }
       } catch {}
+      try { // 🌳 Área protegida (CNUC/MMA): só "Dentro"; entorno fica para quem preenche (decisão do Rafa)
+        const { dentro, maisPerto } = await ucsDoPonto(ultimaTri.latitude, ultimaTri.longitude);
+        if (dentro.length) {
+          const p = dentro[0].properties;
+          por('tipoArea', 'Área protegida', 'tipo de área');
+          if (!(roi.tipoLocalidade || []).length) { roi.tipoLocalidade = ['Unidade de conservação']; preenchidos.push('tipo de localidade'); }
+          por('localidade', dentro.map(f => f.properties.nome).join(' / '), `localidade (${dentro.length} UC${dentro.length > 1 ? 's' : ''})`);
+          por('dentroEntorno', 'Dentro', 'dentro');
+          por('classificacao', ucParticular(p) ? 'Particular' : p.esfera, 'classificação');
+        } else if (maisPerto) {
+          obsUC = ` O foco está FORA de unidade de conservação; a mais perto é ${maisPerto.f.properties.nome} (${maisPerto.f.properties.esfera}), a ${(maisPerto.m / 1000).toFixed(1).replace('.', ',')} km — marque "Entorno" se for o caso.`;
+        }
+      } catch (e) { obsUC = ' (Não consegui consultar as áreas protegidas agora.)'; }
     }
+    if (contornos[0]) por('metodoArea', 'GPS', 'método da área (GPS)');
     // Etapas marcadas pelas brigadas na ocorrência aberta
     const ec = etapasDoCombate();
     ['Deslocamento', 'Primeiro ataque', 'Reforço', 'Controle de incêndio', 'Extinção de incêndio'].forEach(nome => {
@@ -1873,7 +1968,7 @@ function montarROI() {
     por('dataElab', new Date().toLocaleDateString('sv-SE'), 'data');
     salvar(); desenhar();
     $('roiAviso').textContent = ultimaTri
-      ? `Preenchido: ${preenchidos.filter(Boolean).join(', ') || 'nada novo (campos já preenchidos ficam como estão)'}. Confira e complete o resto.`
+      ? `Preenchido: ${preenchidos.filter(Boolean).join(', ') || 'nada novo (campos já preenchidos ficam como estão)'}. Confira e complete o resto.${obsUC}`
       : 'Ainda não há foco triangulado: preenchi só o que não depende dele.';
   };
 
