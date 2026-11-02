@@ -729,6 +729,14 @@ function escutarDados() {
     const gv = grupos.visadas, gm = grupos.manuais; gv.clearLayers(); gm.clearLayers();
     let nv = 0, nm = 0;
     eventos.visadas = [];
+    // Do mesmo lugar (< 100 m) vale só a visada mais nova — CÓPIA da regra de
+    // visadasValidas (src/utils/calculations.js); as antigas ficam apagadas
+    const emUso = new Set(), ficam = [];
+    focos.filter(f => f.tipo !== 'manual' && Number.isFinite(parseFloat(f.azimuth)) && Number.isFinite(parseFloat(f.latitude)))
+      .forEach(f => { // focos já vêm do mais novo para o mais antigo
+        const ll = L.latLng(parseFloat(f.latitude), parseFloat(f.longitude));
+        if (!ficam.some(g => g.distanceTo(ll) < 100)) { ficam.push(ll); emUso.add(f.id); }
+      });
     focos.forEach((f, i) => {
       const lat = parseFloat(f.latitude), lon = parseFloat(f.longitude), az = parseFloat(f.azimuth);
       if (!Number.isFinite(lat) || !Number.isFinite(lon)) return;
@@ -739,11 +747,11 @@ function escutarDados() {
           .bindPopup(`<b>📌 Foco marcado</b><br>${lat.toFixed(5)}, ${lon.toFixed(5)}<br><span class="dica">${esc(hhmm(quando(f.createdAt)))}</span>`);
       } else {
         nv++;
-        const cor = corVisada(f), r = az * Math.PI / 180, dist = 20000; // linha de 20 km, igual ao app
+        const usa = emUso.has(f.id), cor = usa ? corVisada(f) : '#9E9E9E', r = az * Math.PI / 180, dist = 20000; // linha de 20 km, igual ao app
         const fim = [lat + (dist / 111000) * Math.cos(r), lon + (dist / (111000 * Math.cos(lat * Math.PI / 180))) * Math.sin(r)];
-        L.polyline([[lat, lon], fim], { color: cor, weight: 4, dashArray: '1 8', lineCap: 'round', opacity: .95, interactive: false }).addTo(gv);
-        m = L.marker([lat, lon], { icon: icone('👁️', cor, 26) }).addTo(gv)
-          .bindPopup(`<b>👁️ Visada ${esc(f.tipo || '')}</b><br>Azimute: <b>${Math.round(az)}°</b><br>${lat.toFixed(5)}, ${lon.toFixed(5)}<br><span class="dica">${esc(hhmm(quando(f.createdAt)))} · ${esc(f.observadorId || '')}</span>`);
+        L.polyline([[lat, lon], fim], { color: cor, weight: usa ? 4 : 2, dashArray: '1 8', lineCap: 'round', opacity: usa ? .95 : .45, interactive: false }).addTo(gv);
+        m = L.marker([lat, lon], { icon: icone('👁️', cor, usa ? 26 : 20), opacity: usa ? 1 : .6 }).addTo(gv)
+          .bindPopup(`<b>👁️ Visada ${esc(f.tipo || '')}</b><br>Azimute: <b>${Math.round(az)}°</b><br>${lat.toFixed(5)}, ${lon.toFixed(5)}<br><span class="dica">${esc(hhmm(quando(f.createdAt)))} · ${esc(f.observadorId || '')}</span>${usa ? '' : '<br><span class="dica">Fora da triangulação: há uma visada mais nova feita deste mesmo lugar (a menos de 100 m).</span>'}`);
       }
       if (i < 40) eventos.visadas.push({ d: quando(f.createdAt), txt: f.tipo === 'manual' ? '📌 Foco marcado no mapa' : `👁️ Visada ${f.tipo || ''} · az ${Math.round(az)}°`, cls: 'fogo', lat, lon, abrir: () => m.openPopup() });
     });
