@@ -775,8 +775,12 @@ function escutarDados() {
     snap.docs.forEach(d => {
       const a = d.data();
       if (typeof a.latitude !== 'number') return;
-      L.marker([a.latitude, a.longitude], { icon: icone('💧', 'rgba(21,101,192,.9)', 26) }).addTo(g)
-        .bindPopup(`<b>💧 Fonte de água</b><br>${a.latitude.toFixed(5)}, ${a.longitude.toFixed(5)}${a.reportCount ? `<br>⚠️ Reportada ${a.reportCount}x` : ''}`);
+      // Foto da fonte (app: 💧 → Foto aqui) — clique abre no visor de fotos
+      const foto = /^https:\/\/firebasestorage\.googleapis\.com\//.test(a.fotoUrl || '') ? a.fotoUrl : '';
+      const m = L.marker([a.latitude, a.longitude], { icon: icone('💧', 'rgba(21,101,192,.9)', 26, foto ? '#C5DE84' : '#fff') }).addTo(g)
+        .bindPopup(`<b>💧 Fonte de água</b><br>${a.latitude.toFixed(5)}, ${a.longitude.toFixed(5)}${a.reportCount ? `<br>⚠️ Reportada ${a.reportCount}x` : ''}${foto ? `<br><img src="${esc(foto)}" alt="Foto da fonte de água" data-foto-agua style="width:200px;max-width:100%;border-radius:8px;margin-top:6px;cursor:pointer"><br><span class="dica">${esc(hhmm(quando(a.createdAt)))} · clique para ampliar</span>` : ''}`);
+      if (foto) m.on('popupopen', (e) => e.popup.getElement().querySelector('[data-foto-agua]')
+        .addEventListener('click', () => abrirFoto({ fotoUrl: foto, latitude: a.latitude, longitude: a.longitude, createdAt: a.createdAt })));
     });
     atualizarQtd('agua', snap.size);
   }, erro('waterMarkers'));

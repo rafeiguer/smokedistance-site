@@ -588,7 +588,7 @@ body{font-size:calc(17px * var(--escala,1))}
     <div class="tabela"><table>
       <tr><th>Botão</th><th>Função</th></tr>
       <tr><td><span class="btn-tag btn-red">🔥 Marcar foco</span></td><td>Liga o modo de marcação (vira "Toque no mapa"). Toque onde está o fogo: aparece um painel com as coordenadas e a distância até você, com <span class="btn-tag btn-green">💾 Salvar Foco</span> e <span class="btn-tag btn-gray">✕</span>. Salvar envia o foco a todos (e notifica os outros usuários). O foco marcado à mão não entra na triangulação — é a posição do fogo, não uma visada.</td></tr>
-      <tr><td><span class="btn-tag btn-blue">💧 Água</span></td><td>Liga o modo de marcação de água (vira "Toque no mapa"). Toque na fonte d'água para criar o marcador 💧, compartilhado com todos.</td></tr>
+      <tr><td><span class="btn-tag btn-blue">💧 Água</span></td><td>Pergunta como marcar a fonte d'água: <strong>📷 Foto aqui</strong> abre a câmera e cria o 💧 com a foto <strong>na sua posição</strong> (precisa de internet para subir a foto); <strong>🗺️ Tocar no mapa</strong> liga o modo de marcação (vira "Toque no mapa") e o toque cria o 💧. Compartilhado com todos.</td></tr>
       <tr><td><span class="btn-tag btn-gray">🗑 Limpar</span></td><td>Abre o menu de limpeza (abaixo).</td></tr>
       <tr><td><span class="btn-tag btn-gray">‹ Voltar</span></td><td>Volta à tela inicial.</td></tr>
     </table></div>
@@ -856,9 +856,10 @@ body{font-size:calc(17px * var(--escala,1))}
     <h2>Água e Cobertura de Rede</h2>
 
     <h3>💧 Fontes de água</h3>
-    <p>Rios, açudes, tanques e represas são críticos para encher tanques e caminhões-pipa. Marque com <span class="btn-tag btn-blue">💧 Água</span> e toque no ponto do mapa. O marcador aparece para todos. Não é possível marcar duas fontes a menos de 50 m uma da outra.</p>
+    <p>Rios, açudes, tanques e represas são críticos para encher tanques e caminhões-pipa. Marque com <span class="btn-tag btn-blue">💧 Água</span>: <strong>📷 Foto aqui</strong> (de pé na fonte, a foto marca o ponto e mostra a condição dela) ou <strong>🗺️ Tocar no mapa</strong>. O marcador aparece para todos, no app e na Central. Não é possível marcar duas fontes a menos de 50 m uma da outra.</p>
     <p>Tocar num 💧 mostra as coordenadas e:</p>
     <ul class="lista">
+      <li><span class="btn-tag btn-blue">📷 Ver foto</span> — quando a fonte foi marcada com foto.</li>
       <li><span class="btn-tag btn-red">🗑️ Remover</span> — só para quem marcou a fonte (ou administrador).</li>
       <li><span class="btn-tag btn-orange">⚠️ Reportar (não existe)</span> — para os demais. Com reportes de <strong>2 pessoas diferentes</strong>, a fonte sai do mapa. Assim ninguém apaga sozinho uma fonte que outras equipes usam.</li>
     </ul>
