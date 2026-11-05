@@ -145,6 +145,7 @@ main{flex:1;display:grid;grid-template-columns:330px minmax(0,1fr) 390px;grid-te
 .leaflet-control-attribution{background:rgba(12,20,17,.7)!important;color:var(--fraco)!important}
 .leaflet-control-attribution a{color:var(--suave)!important}
 .marcador{display:flex;align-items:center;justify-content:center;border-radius:50%;border:2px solid #fff;font-size:15px}
+.marcador.apagado{filter:grayscale(1)}
 .btn-pop{margin:8px 6px 0 0;border-radius:999px;border:1px solid rgba(255,255,255,.25);background:rgba(255,255,255,.1);color:#fff;padding:6px 12px;cursor:pointer;font-weight:700;font-size:12px}
 .btn-pop.perigo{background:rgba(229,57,53,.85)}
 .rotulo-mapa{display:inline-block;transform:translate(-50%,-50%);background:rgba(12,20,17,.88);border:1.5px solid var(--alerta);color:var(--alerta);font-weight:800;font-size:13px;letter-spacing:.5px;padding:3px 9px;border-radius:8px;white-space:nowrap;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.5)}
@@ -315,6 +316,26 @@ nav.abas{display:none}
         </div>
         <p class="dica" style="margin-top:8px"><b>Brigadista</b>: no app, vê e desenha rotas, mensagens e a posição das brigadas. Ele precisa confirmar <b>esse mesmo e-mail</b> no app (Compartilhar → Registro Oficial).<br><b>Coordenador</b>: tudo isso + entra na Central (login Google com esse e-mail), edita a tabela de equipamentos e apaga traços, textos e mensagens de qualquer um.<br>Quem não está aqui não recebe nada disso. Só você (admin) vê esta seção.</p>
       </section>
+      <!-- 📊🔥🐞 Só admin: uso do app, focos no Brasil e problemas reportados -->
+      <section class="vidro secao" id="secUso" style="--c:var(--verde)" hidden>
+        <h2>📊 Uso do app</h2>
+        <div class="linha"><button class="pil destaque" id="btnUso" style="--c:var(--verde)">🔄 Atualizar</button></div>
+        <div id="usoRes" class="dica" style="margin-top:8px">Clique em Atualizar.</div>
+      </section>
+      <section class="vidro secao" id="secRelFocos" style="--c:var(--fogo)" hidden>
+        <h2>🔥 Focos registrados pelo app</h2>
+        <div class="linha" style="flex-wrap:wrap;gap:6px">
+          <button class="pil destaque" id="btnRelFocos" style="--c:var(--fogo)">🔄 Carregar</button>
+          <button class="pil" id="btnRelMun" style="--c:var(--azul)" title="Município e UF de cada foco (OpenStreetMap, 1 por segundo)">📍 Municípios</button>
+          <button class="pil" id="btnRelCsv" style="--c:var(--verde)">⬇️ Planilha</button>
+        </div>
+        <div id="relFocosRes" class="dica" style="margin-top:8px">Clique em Carregar.</div>
+      </section>
+      <section class="vidro secao" id="secBugs" style="--c:var(--alerta)" hidden>
+        <h2>🐞 Problemas reportados <span id="qtdBugs" class="dica"></span></h2>
+        <label class="dica" style="display:flex;gap:6px;align-items:center"><input type="checkbox" id="chkBugsResolvidos"> mostrar os resolvidos</label>
+        <div id="listaBugs" class="dica" style="margin-top:8px">Carregando…</div>
+      </section>
       <section class="vidro secao" id="secRegistro" style="--c:var(--alerta)">
         <h2>📜 Registro da operação</h2>
         <p class="dica" style="margin:-4px 0 6px">Clique num evento para ir até ele no mapa.</p>
@@ -471,6 +492,9 @@ nav.abas{display:none}
     <button data-aba="secRegistro"><span>📜</span>Registro</button>
     <button data-aba="secCamadas"><span>🗂️</span>Camadas</button>
     <button data-aba="secEquipe" id="abaEquipe" hidden><span>👥</span>Equipe</button>
+    <button data-aba="secUso" id="abaUso" hidden><span>📊</span>Uso</button>
+    <button data-aba="secRelFocos" id="abaRelFocos" hidden><span>🔥</span>Focos</button>
+    <button data-aba="secBugs" id="abaBugs" hidden><span>🐞</span>Bugs</button>
     <button data-aba="secTempo"><span>🌤️</span>Tempo</button>
     <button data-aba="secEquip"><span>🧰</span>Equip.</button>
     <button data-aba="secCalc"><span>🧮</span>Cálculo</button>
@@ -491,6 +515,7 @@ nav.abas{display:none}
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js';
 import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js';
 import { getFirestore, collection, query, orderBy, limit, onSnapshot, addDoc, deleteDoc, updateDoc, doc, getDoc, getDocs, setDoc, serverTimestamp, where } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js';
+import { getFunctions, httpsCallable } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-functions.js';
 
 // Config pública do app web (a mesma do app — a segurança vem das firestore.rules)
 const app = initializeApp({
@@ -616,7 +641,7 @@ const bases = {
 let baseAtual;
 
 const CAMADAS = [
-  { id: 'rota', nome: '🧭 Rota de serviço', cor: 'var(--azul)' },
+  { id: 'rota', nome: '🧭 Operação (desenhos)', cor: 'var(--azul)' },
   { id: 'rotulos', nome: '🏷️ Textos no mapa', cor: 'var(--alerta)' },
   { id: 'brigadas', nome: '🚒 Brigadas', cor: 'var(--alerta)' },
   { id: 'combate', nome: '🎯 Destinos e etapas das brigadas', cor: 'var(--fogo)' },
@@ -657,6 +682,7 @@ function iniciar() {
   montarVisor();
   montarMensagens();
   montarEquipe();
+  montarAdmin();
   montarCombate();
   montarROI();
   escutarDados();
@@ -687,8 +713,9 @@ function enquadrar(pontos) {
   mapa.fitBounds(L.latLngBounds(pontos), { padding: [40, 40], maxZoom: 15 });
 }
 
-const icone = (emoji, cor, tam = 30, borda = '#fff') => L.divIcon({ className: '', iconSize: [tam, tam], iconAnchor: [tam / 2, tam / 2],
-  html: `<div class="marcador" style="width:${tam}px;height:${tam}px;background:${cor};border-color:${borda}">${emoji}</div>` });
+// apagado = foco extinto: preto e branco (filtro no emoji também)
+const icone = (emoji, cor, tam = 30, borda = '#fff', apagado = false) => L.divIcon({ className: '', iconSize: [tam, tam], iconAnchor: [tam / 2, tam / 2],
+  html: `<div class="marcador${apagado ? ' apagado' : ''}" style="width:${tam}px;height:${tam}px;background:${cor};border-color:${borda}">${emoji}</div>` });
 
 // Ir até um ponto do mapa (registro, mensagem com posição)
 function irPara(lat, lon, abrir) {
@@ -700,7 +727,7 @@ function irPara(lat, lon, abrir) {
 
 /* ───────────── DADOS AO VIVO ───────────── */
 // eventos[categoria] = [{ d, txt, cls, lat, lon, abrir }]
-const eventos = { rota: [], tri: [], visadas: [], fotos: [], trilhas: [], brigadas: [], trajetos: [], msg: [] };
+const eventos = { rota: [], tri: [], visadas: [], fotos: [], trilhas: [], brigadas: [], trajetos: [], extincoes: [], msg: [] };
 let tracos = [], ultimaTri = null, brigadas = [];
 
 function escutarDados() {
@@ -725,38 +752,17 @@ function escutarDados() {
   }, erro('rotulosMapa'));
 
   onSnapshot(query(collection(db, 'focos'), orderBy('createdAt', 'desc'), limit(300)), (snap) => {
-    const focos = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-    const gv = grupos.visadas, gm = grupos.manuais; gv.clearLayers(); gm.clearLayers();
-    let nv = 0, nm = 0;
-    eventos.visadas = [];
-    // Do mesmo lugar (< 100 m) vale só a visada mais nova — CÓPIA da regra de
-    // visadasValidas (src/utils/calculations.js); as antigas ficam apagadas
-    const emUso = new Set(), ficam = [];
-    focos.filter(f => f.tipo !== 'manual' && Number.isFinite(parseFloat(f.azimuth)) && Number.isFinite(parseFloat(f.latitude)))
-      .forEach(f => { // focos já vêm do mais novo para o mais antigo
-        const ll = L.latLng(parseFloat(f.latitude), parseFloat(f.longitude));
-        if (!ficam.some(g => g.distanceTo(ll) < 100)) { ficam.push(ll); emUso.add(f.id); }
-      });
-    focos.forEach((f, i) => {
-      const lat = parseFloat(f.latitude), lon = parseFloat(f.longitude), az = parseFloat(f.azimuth);
-      if (!Number.isFinite(lat) || !Number.isFinite(lon)) return;
-      let m;
-      if (f.tipo === 'manual' || !Number.isFinite(az)) {
-        nm++;
-        m = L.marker([lat, lon], { icon: icone('📌', 'rgba(255,107,53,.9)', 28) }).addTo(gm)
-          .bindPopup(`<b>📌 Foco marcado</b><br>${lat.toFixed(5)}, ${lon.toFixed(5)}<br><span class="dica">${esc(hhmm(quando(f.createdAt)))}</span>`);
-      } else {
-        nv++;
-        const usa = emUso.has(f.id), cor = usa ? corVisada(f) : '#9E9E9E', r = az * Math.PI / 180, dist = 20000; // linha de 20 km, igual ao app
-        const fim = [lat + (dist / 111000) * Math.cos(r), lon + (dist / (111000 * Math.cos(lat * Math.PI / 180))) * Math.sin(r)];
-        L.polyline([[lat, lon], fim], { color: cor, weight: usa ? 4 : 2, dashArray: '1 8', lineCap: 'round', opacity: usa ? .95 : .45, interactive: false }).addTo(gv);
-        m = L.marker([lat, lon], { icon: icone('👁️', cor, usa ? 26 : 20), opacity: usa ? 1 : .6 }).addTo(gv)
-          .bindPopup(`<b>👁️ Visada ${esc(f.tipo || '')}</b><br>Azimute: <b>${Math.round(az)}°</b><br>${lat.toFixed(5)}, ${lon.toFixed(5)}<br><span class="dica">${esc(hhmm(quando(f.createdAt)))} · ${esc(f.observadorId || '')}</span>${usa ? '' : '<br><span class="dica">Fora da triangulação: há uma visada mais nova feita deste mesmo lugar (a menos de 100 m).</span>'}`);
-      }
-      if (i < 40) eventos.visadas.push({ d: quando(f.createdAt), txt: f.tipo === 'manual' ? '📌 Foco marcado no mapa' : `👁️ Visada ${f.tipo || ''} · az ${Math.round(az)}°`, cls: 'fogo', lat, lon, abrir: () => m.openPopup() });
-    });
-    atualizarQtd('visadas', nv); atualizarQtd('manuais', nm);
+    focosCache = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    desenharFocos();
   }, erro('focos'));
+
+  // ✅ Fogo extinto por área (app: src/services/extincaoService.js)
+  onSnapshot(collection(db, 'extincoes'), (snap) => {
+    extincoes = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    eventos.extincoes = extincoes.map(e => ({ d: new Date(e.emMs), txt: `✅ Fogo extinto${e.origem === 'combate' ? ' (Combate)' : ''} · ${e.nome || ''}`, lat: e.latitude, lon: e.longitude }));
+    desenharFocos();
+    desenharTris();
+  }, erro('extincoes'));
 
   onSnapshot(query(collection(db, 'fotos_campo'), orderBy('createdAt', 'desc'), limit(100)), (snap) => {
     const g = grupos.fotos; g.clearLayers();
@@ -809,6 +815,71 @@ function escutarDados() {
     escutarTrajetos(todas);
     desenharBrigadas();
   }, erro('brigadas'));
+}
+
+/* ── ✅ EXTINÇÕES: foco coberto por extinção registrada DEPOIS dele = cinza.
+   CÓPIA da regra de extincoesDo (src/services/extincaoService.js). */
+let extincoes = [], focosCache = [];
+function extintoEm(lat, lon, desdeMs) {
+  const p = L.latLng(lat, lon);
+  return extincoes.filter(e => e.emMs >= desdeMs && p.distanceTo([e.latitude, e.longitude]) <= e.raioM).sort((a, b) => b.emMs - a.emMs);
+}
+// Botão do popup (só coordenação): marca extinto ou desfaz ("Reacendeu")
+function botaoExtinto(lat, lon, raio, desde) {
+  if (!ehChefe()) return '';
+  const ext = extintoEm(lat, lon, desde).length;
+  return `<br><button class="pil" style="margin-top:6px;--c:${ext ? 'var(--fogo-forte)' : 'var(--verde)'}" data-ext="${lat},${lon},${Math.round(raio || 0)},${desde}">${ext ? '🔥 Reacendeu' : '✅ Fogo extinto'}</button>`;
+}
+function textoExtinto(lat, lon, desde) {
+  const e = extintoEm(lat, lon, desde)[0];
+  return e ? `<br><b style="color:#BDBDBD">✅ Extinto</b> <span class="dica">${new Date(e.emMs).toLocaleString('pt-BR')} · ${esc(e.nome || '')}${e.origem === 'combate' ? ' (etapa Extinto do Combate)' : ''}</span>` : '';
+}
+document.addEventListener('click', async (ev) => {
+  const b = ev.target.closest('[data-ext]');
+  if (!b) return;
+  const [lat, lon, raio, desde] = b.dataset.ext.split(',').map(Number);
+  const cobrindo = extintoEm(lat, lon, desde);
+  b.disabled = true;
+  try {
+    if (cobrindo.length) await Promise.all(cobrindo.map(e => deleteDoc(doc(db, 'extincoes', e.id))));
+    else await addDoc(collection(db, 'extincoes'), { latitude: lat, longitude: lon, raioM: Math.round(Math.max(500, Math.min(20000, raio))), emMs: Date.now(), nome: usuario.displayName || usuario.email, uid: usuario.uid, origem: 'central' });
+    mapa.closePopup();
+  } catch (e) { alert('Não foi possível salvar: ' + e.message); b.disabled = false; }
+});
+
+function desenharFocos() {
+    const focos = focosCache;
+    const gv = grupos.visadas, gm = grupos.manuais; gv.clearLayers(); gm.clearLayers();
+    let nv = 0, nm = 0;
+    eventos.visadas = [];
+    // Do mesmo lugar (< 100 m) vale só a visada mais nova — CÓPIA da regra de
+    // visadasValidas (src/utils/calculations.js); as antigas ficam apagadas
+    const emUso = new Set(), ficam = [];
+    focos.filter(f => f.tipo !== 'manual' && Number.isFinite(parseFloat(f.azimuth)) && Number.isFinite(parseFloat(f.latitude)))
+      .forEach(f => { // focos já vêm do mais novo para o mais antigo
+        const ll = L.latLng(parseFloat(f.latitude), parseFloat(f.longitude));
+        if (!ficam.some(g => g.distanceTo(ll) < 100)) { ficam.push(ll); emUso.add(f.id); }
+      });
+    focos.forEach((f, i) => {
+      const lat = parseFloat(f.latitude), lon = parseFloat(f.longitude), az = parseFloat(f.azimuth);
+      if (!Number.isFinite(lat) || !Number.isFinite(lon)) return;
+      let m;
+      if (f.tipo === 'manual' || !Number.isFinite(az)) {
+        nm++;
+        const desde = quando(f.createdAt)?.getTime?.() || 0, apagado = extintoEm(lat, lon, desde).length;
+        m = L.marker([lat, lon], { icon: icone('📌', apagado ? 'rgba(66,66,66,.92)' : 'rgba(255,107,53,.9)', 28, apagado ? '#BDBDBD' : '#fff', apagado) }).addTo(gm)
+          .bindPopup(() => `<b>📌 Foco marcado</b><br>${lat.toFixed(5)}, ${lon.toFixed(5)}<br><span class="dica">${esc(hhmm(quando(f.createdAt)))}</span>${textoExtinto(lat, lon, desde)}${botaoExtinto(lat, lon, 300, desde)}`);
+      } else {
+        nv++;
+        const usa = emUso.has(f.id), cor = usa ? corVisada(f) : '#9E9E9E', r = az * Math.PI / 180, dist = 20000; // linha de 20 km, igual ao app
+        const fim = [lat + (dist / 111000) * Math.cos(r), lon + (dist / (111000 * Math.cos(lat * Math.PI / 180))) * Math.sin(r)];
+        L.polyline([[lat, lon], fim], { color: cor, weight: usa ? 4 : 2, dashArray: '1 8', lineCap: 'round', opacity: usa ? .95 : .45, interactive: false }).addTo(gv);
+        m = L.marker([lat, lon], { icon: icone('👁️', cor, usa ? 26 : 20), opacity: usa ? 1 : .6 }).addTo(gv)
+          .bindPopup(`<b>👁️ Visada ${esc(f.tipo || '')}</b><br>Azimute: <b>${Math.round(az)}°</b><br>${lat.toFixed(5)}, ${lon.toFixed(5)}<br><span class="dica">${esc(hhmm(quando(f.createdAt)))} · ${esc(f.observadorId || '')}</span>${usa ? '' : '<br><span class="dica">Fora da triangulação: há uma visada mais nova feita deste mesmo lugar (a menos de 100 m).</span>'}`);
+      }
+      if (i < 40) eventos.visadas.push({ d: quando(f.createdAt), txt: f.tipo === 'manual' ? '📌 Foco marcado no mapa' : `👁️ Visada ${f.tipo || ''} · az ${Math.round(az)}°`, cls: 'fogo', lat, lon, abrir: () => m.openPopup() });
+    });
+    atualizarQtd('visadas', nv); atualizarQtd('manuais', nm);
 }
 
 /* ── 🛤️ Trajetos (botão Posição do app → brigadas/{uid}/trajeto, ver
@@ -1041,12 +1112,14 @@ function desenharTris() {
   const g = grupos.tri, ga = grupos.triAnt; g.clearLayers(); ga.clearLayers();
   eventos.tri = trisCache.map((t, i) => {
     const raio = raioTri(t), atual = i === 0;
+    const desde = quando(t.calculadaEm)?.getTime?.() || 0, apagado = extintoEm(t.latitude, t.longitude, desde).length > 0;
     const m = atual
-      ? L.marker([t.latitude, t.longitude], { icon: icone('🔥', 'rgba(183,28,28,.92)', 38, '#FFEB3B'), zIndexOffset: 900 }).addTo(g).bindPopup(() => popupTri(t, raio))
+      ? L.marker([t.latitude, t.longitude], { icon: icone('🔥', apagado ? 'rgba(66,66,66,.92)' : 'rgba(183,28,28,.92)', 38, apagado ? '#BDBDBD' : '#FFEB3B', apagado), zIndexOffset: 900 }).addTo(g)
+        .bindPopup(() => popupTri(t, raio) + textoExtinto(t.latitude, t.longitude, desde) + botaoExtinto(t.latitude, t.longitude, raio, desde))
       : L.marker([t.latitude, t.longitude], { icon: icone('🕓', 'rgba(60,60,60,.85)', 24, '#9E9E9E') }).addTo(ga).bindPopup(() => `<b>🕓 Triangulação anterior</b> <span class="dica">(não é o foco das linhas de agora)</span><br>${popupTri(t, raio)}`);
-    if (atual && raio) L.circle([t.latitude, t.longitude], { radius: raio, color: '#FFEB3B', weight: 1.5, fillOpacity: .06, dashArray: '4 4', interactive: false }).addTo(g);
+    if (atual && raio) L.circle([t.latitude, t.longitude], { radius: raio, color: apagado ? '#9E9E9E' : '#FFEB3B', weight: 1.5, fillOpacity: .06, dashArray: '4 4', interactive: false }).addTo(g);
     return atual
-      ? { d: quando(t.calculadaEm), txt: `🔥 Foco triangulado · ± ${raio ?? '?'} m`, cls: 'fogo', lat: t.latitude, lon: t.longitude, abrir: () => m.openPopup() }
+      ? { d: quando(t.calculadaEm), txt: `${apagado ? '✅ Foco extinto' : '🔥 Foco triangulado'} · ± ${raio ?? '?'} m`, cls: apagado ? '' : 'fogo', lat: t.latitude, lon: t.longitude, abrir: () => m.openPopup() }
       : { d: quando(t.calculadaEm), txt: `🕓 Triangulação anterior · ± ${raio ?? '?'} m`, lat: t.latitude, lon: t.longitude, abrir: () => { ga.addTo(mapa); document.querySelector('[data-camada="triAnt"]').checked = true; m.openPopup(); } };
   });
   atualizarQtd('tri', Math.min(trisCache.length, 1));
@@ -1672,6 +1745,107 @@ function montarEquipe() {
   };
   $('btnEquipe').onclick = dar;
   $('txtEquipe').addEventListener('keydown', (e) => { if (e.key === 'Enter') dar(); });
+}
+
+/* ───────────── 📊🔥🐞 SÓ ADMIN: uso, focos no Brasil e bugs ─────────────
+   Uso: Cloud Function relatorioUso (contas do Auth de todos os tempos + uso/{uid},
+   gravado pelo app a cada abertura desde 11/2026). Focos: triangulações + focos
+   marcados + extinções, com município/UF (OpenStreetMap, 1 por segundo, cache no
+   navegador) e planilha CSV. Bugs: bugs/{id} (Configurações → Reportar problema). */
+function montarAdmin() {
+  if (papel !== 'admin') return;
+  ['secUso', 'abaUso', 'secRelFocos', 'abaRelFocos', 'secBugs', 'abaBugs'].forEach(id => { $(id).hidden = false; });
+  const n = (v) => Number(v || 0).toLocaleString('pt-BR');
+  const kv = (rot, v) => `<div class="kv"><span>${rot}</span><b>${v}</b></div>`;
+  const lista = (o) => Object.entries(o || {}).sort((a, b) => b[1] - a[1]).map(([k, v]) => `${esc(k)}: <b>${v}</b>`).join(' · ') || '—';
+
+  // 📊 Uso
+  $('btnUso').onclick = async () => {
+    $('usoRes').textContent = 'Calculando…';
+    try {
+      const r = (await httpsCallable(getFunctions(app, 'southamerica-east1'), 'relatorioUso')()).data;
+      $('usoRes').innerHTML = kv('Contas criadas (todos os tempos)', n(r.contas))
+        + kv('… no app (anônimas)', n(r.anonimas)) + kv('… na Central (Google)', n(r.google))
+        + kv('E-mails confirmados / Central', n(r.emails.length))
+        + `<hr style="border:0;border-top:1px solid var(--borda);margin:8px 0">`
+        + kv('Aparelhos que abriram o app (desde 11/2026)', n(r.comApp))
+        + kv('Ativos nas últimas 24 h', n(r.ativos1d)) + kv('Ativos em 7 dias', n(r.ativos7d)) + kv('Ativos em 30 dias', n(r.ativos30d))
+        + kv('Aberturas do app', n(r.aberturas))
+        + `<p class="dica" style="margin-top:6px">Sistema: ${lista(r.porPlataforma)}<br>Versão: ${lista(r.porVersao)}</p>`
+        + `<details style="margin-top:6px"><summary>📧 E-mails (${r.emails.length})</summary>${r.emails.map(e => `<div class="dica">${esc(e.email)} · ${esc(e.tipo)} · último acesso ${esc(new Date(e.ultimoAcesso).toLocaleDateString('pt-BR'))}</div>`).join('')}</details>`
+        + `<p class="dica">Gerado ${new Date(r.geradoEm).toLocaleString('pt-BR')}</p>`;
+    } catch (e) { $('usoRes').textContent = 'Não foi possível: ' + e.message; }
+  };
+
+  // 🔥 Focos no Brasil
+  let linhasFocos = [];
+  const cacheMun = lerLocal('central_municipios', {});
+  const chave = (l) => `${l.lat.toFixed(3)},${l.lon.toFixed(3)}`;
+  const tabela = () => {
+    const ext = linhasFocos.filter(l => l.situacao === 'Extinto').length;
+    const porUF = linhasFocos.reduce((m, l) => { const uf = cacheMun[chave(l)]?.uf; if (uf) m[uf] = (m[uf] || 0) + 1; return m; }, {});
+    $('relFocosRes').innerHTML = kv('Focos registrados', n(linhasFocos.length)) + kv('Extintos', n(ext)) + kv('Ativos / sem registro de extinção', n(linhasFocos.length - ext))
+      + (Object.keys(porUF).length ? `<p class="dica">Por UF: ${lista(porUF)}</p>` : '')
+      + `<div class="planilha-wrap rolagem" style="max-height:340px;margin-top:6px"><table class="planilha"><thead><tr><th>Data</th><th>Tipo</th><th>Município/UF</th><th>Situação</th><th>Margem</th></tr></thead><tbody>`
+      + linhasFocos.map((l, i) => { const m = cacheMun[chave(l)]; return `<tr data-ir-foco="${i}" style="cursor:pointer"><td>${esc(l.data.toLocaleString('pt-BR'))}</td><td>${esc(l.tipo)}</td><td>${m ? esc(`${m.municipio}/${m.uf}`) : '<span class="dica">—</span>'}</td><td>${l.situacao === 'Extinto' ? '✅ Extinto' : '🔥 Ativo'}</td><td>${l.margem ? `± ${l.margem} m` : '—'}</td></tr>`; }).join('')
+      + '</tbody></table></div><p class="dica">Clique numa linha para ir ao foco no mapa.</p>';
+  };
+  $('relFocosRes').onclick = (ev) => { const tr = ev.target.closest('[data-ir-foco]'); if (tr) { const l = linhasFocos[+tr.dataset.irFoco]; irPara(l.lat, l.lon); } };
+  $('btnRelFocos').onclick = async () => {
+    $('relFocosRes').textContent = 'Carregando…';
+    try {
+      const [tris, focos] = await Promise.all([getDocs(query(collection(db, 'triangulacoes'), orderBy('calculadaEm', 'desc'), limit(1000))), getDocs(collection(db, 'focos'))]);
+      linhasFocos = [
+        ...tris.docs.map(d => d.data()).filter(t => Number.isFinite(t.latitude)).map(t => ({ data: quando(t.calculadaEm) || new Date(0), tipo: 'Triangulado', lat: t.latitude, lon: t.longitude, margem: raioTri(t), visadas: (t.visadas || []).length })),
+        ...focos.docs.map(d => d.data()).filter(f => (f.tipo === 'manual' || !Number.isFinite(parseFloat(f.azimuth))) && Number.isFinite(parseFloat(f.latitude)))
+          .map(f => ({ data: quando(f.createdAt) || new Date(0), tipo: 'Marcado à mão', lat: parseFloat(f.latitude), lon: parseFloat(f.longitude), margem: null, visadas: 0 })),
+      ].map(l => ({ ...l, situacao: extintoEm(l.lat, l.lon, l.data.getTime()).length ? 'Extinto' : 'Ativo' })).sort((a, b) => b.data - a.data);
+      tabela();
+    } catch (e) { $('relFocosRes').textContent = 'Não foi possível: ' + e.message; }
+  };
+  $('btnRelMun').onclick = async () => {
+    const faltam = linhasFocos.filter(l => !cacheMun[chave(l)]);
+    if (!linhasFocos.length) return alert('Clique em Carregar primeiro.');
+    for (const [i, l] of faltam.entries()) {
+      $('btnRelMun').textContent = `📍 ${i + 1}/${faltam.length}…`;
+      try {
+        const a = (await (await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&zoom=10&accept-language=pt-BR&lat=${l.lat}&lon=${l.lon}`)).json()).address || {};
+        cacheMun[chave(l)] = { municipio: a.city || a.town || a.municipality || a.village || '?', uf: (a['ISO3166-2-lvl4'] || '').replace('BR-', '') || '?' };
+        gravarLocal('central_municipios', cacheMun);
+      } catch {}
+      await new Promise(r => setTimeout(r, 1100)); // regra de uso do OpenStreetMap: 1 por segundo
+    }
+    $('btnRelMun').textContent = '📍 Municípios';
+    tabela();
+  };
+  $('btnRelCsv').onclick = () => {
+    if (!linhasFocos.length) return alert('Clique em Carregar primeiro.');
+    const cel = (v) => `"${String(v ?? '').replace(/"/g, '""')}"`;
+    const csv = ['Data;Tipo;Latitude;Longitude;Município;UF;Situação;Margem (m);Visadas']
+      .concat(linhasFocos.map(l => { const m = cacheMun[chave(l)] || {}; return [l.data.toLocaleString('pt-BR'), l.tipo, l.lat.toFixed(5), l.lon.toFixed(5), m.municipio, m.uf, l.situacao, l.margem ?? '', l.visadas].map(cel).join(';'); }))
+      .join('\r\n');
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8' }));
+    a.download = `focos-smokedistance-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+  };
+
+  // 🐞 Bugs
+  let bugs = [];
+  const desenharBugs = () => {
+    const mostrar = $('chkBugsResolvidos').checked ? bugs : bugs.filter(b => b.status !== 'resolvido');
+    const novos = bugs.filter(b => b.status !== 'resolvido').length;
+    $('qtdBugs').textContent = novos ? `· ${novos} aberto(s)` : '';
+    $('listaBugs').innerHTML = mostrar.length ? mostrar.map(b => `<div class="vidro" style="padding:8px;margin-bottom:6px;border-radius:10px;${b.status === 'resolvido' ? 'opacity:.55' : ''}">
+        <div><b>${esc(b.modelo || b.plataforma || 'Aparelho')}</b> <span class="dica">· ${esc(b.sistema || '')} · versão ${esc(b.runtime || '?')} · ${esc(hhmm(quando(b.criadoEm)))}${b.email ? ` · ${esc(b.email)}` : ''}</span></div>
+        <div style="white-space:pre-wrap;margin:4px 0">${esc(b.texto)}</div>
+        ${/^https:\/\/firebasestorage\.googleapis\.com\//.test(b.fotoUrl || '') ? `<a href="${esc(b.fotoUrl)}" target="_blank" rel="noopener"><img src="${esc(b.fotoUrl)}" alt="Print do problema" style="max-width:120px;border-radius:8px"></a><br>` : ''}
+        ${b.status === 'resolvido' ? '<span class="dica">✅ Resolvido</span>' : `<button class="pil" style="--c:var(--verde)" data-bug-ok="${b.id}">✅ Marcar como resolvido</button>`}
+      </div>`).join('') : '<span class="dica">Nenhum problema aberto. 🎉</span>';
+  };
+  onSnapshot(query(collection(db, 'bugs'), orderBy('criadoEm', 'desc'), limit(200)), (s) => { bugs = s.docs.map(d => ({ id: d.id, ...d.data() })); desenharBugs(); }, (e) => console.warn('Central: bugs', e.message));
+  $('chkBugsResolvidos').onchange = desenharBugs;
+  $('listaBugs').onclick = (ev) => { const b = ev.target.closest('[data-bug-ok]'); if (b) updateDoc(doc(db, 'bugs', b.dataset.bugOk), { status: 'resolvido', resolvidoEm: serverTimestamp() }).catch(e => alert('Não foi possível: ' + e.message)); };
 }
 
 /* ───────────── 🚒 BRIGADAS DE COMBATE ─────────────

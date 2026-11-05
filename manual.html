@@ -354,9 +354,9 @@ body{font-size:calc(17px * var(--escala,1))}
       <li><a href="#triangulacao">Triangulação do Foco</a></li>
       <li><a href="#drone">Observação por Drone</a></li>
       <li><a href="#rota">Rota a Pé até o Foco</a></li>
-      <li><a href="#rota-servico">Rota de Serviço — Desenhar no Mapa</a></li>
+      <li><a href="#rota-servico">Operação — Desenhar no Mapa</a></li>
       <li><a href="#calculadora">Calculadora de Campo</a></li>
-      <li><a href="#brigadas-combate">Brigadas de Combate (na Rota de Serviço)</a></li>
+      <li><a href="#brigadas-combate">Brigadas de Combate (na Operação)</a></li>
       <li><a href="#fotos">Fotos de Campo</a></li>
       <li><a href="#agua">Água e Cobertura de Rede</a></li>
       <li><a href="#trilhas">Trilhas — Gravar e Explorar</a></li>
@@ -498,7 +498,7 @@ body{font-size:calc(17px * var(--escala,1))}
       <tr><td>Ícone <strong>ⓘ</strong> nos cartões</td><td>Abre uma explicação rápida: o que é, quando usar, requisitos e cuidados.</td></tr>
       <tr><td><strong>LOCALIZAÇÃO</strong></td><td>Latitude, longitude e altitude. A altitude vem do modelo de relevo; sem internet, vem do GPS e aparece como "Altitude (GPS)".</td></tr>
       <tr><td><strong>METEOROLOGIA</strong></td><td>Temperatura, umidade, vento, de onde o vento vem e para onde o fogo tende a ir. Sem internet, avisa que não há dados (o app nunca mostra valores inventados).</td></tr>
-      <tr><td>Grade de atalhos</td><td><span class="btn-tag btn-green">Mapa</span> <span class="btn-tag btn-blue">Rota de serviço</span> <span class="btn-tag btn-orange">Gravar trilha</span> <span class="btn-tag btn-red">Propagação</span> <span class="btn-tag btn-blue">Satélites</span> <span class="btn-tag btn-purple">Compartilhar</span> <span class="btn-tag btn-gray">Configurações</span> <span class="btn-tag btn-purple">🧮 Calculadora</span> <span class="btn-tag btn-orange">📖 Manual do app</span> — abre este manual no navegador do celular (precisa de internet).</td></tr>
+      <tr><td>Grade de atalhos</td><td><span class="btn-tag btn-green">Mapa</span> <span class="btn-tag btn-blue">Operação</span> <span class="btn-tag btn-orange">Gravar trilha</span> <span class="btn-tag btn-red">Propagação</span> <span class="btn-tag btn-blue">Satélites</span> <span class="btn-tag btn-purple">Compartilhar</span> <span class="btn-tag btn-gray">Configurações</span> <span class="btn-tag btn-purple">🧮 Calculadora</span> <span class="btn-tag btn-orange">📖 Manual do app</span> — abre este manual no navegador do celular (precisa de internet).</td></tr>
     </table></div>
   </div>
 
@@ -581,7 +581,7 @@ body{font-size:calc(17px * var(--escala,1))}
       <tr><td><span class="btn-tag btn-gray">Drone</span></td><td>Importa uma foto original de drone DJI e cria uma visada a partir dela. Veja <a href="#drone" style="color:var(--gold-light)">Drone</a>.</td></tr>
       <tr><td><span class="btn-tag btn-gray">Fotos (N)</span></td><td>Abre a biblioteca com todas as fotos de campo. Veja <a href="#fotos" style="color:var(--gold-light)">Fotos</a>.</td></tr>
       <tr><td><span class="btn-tag btn-green">Trilhas (N)</span></td><td>Mostra ou esconde as trilhas da comunidade. Tocar numa trilha abre a ficha dela.</td></tr>
-      <tr><td><span class="btn-tag btn-green">🌳 Áreas protegidas</span></td><td>Mostra os limites das <strong>unidades de conservação</strong> (parques, APAs, reservas): verde = federal, azul = estadual, laranja = municipal, roxo = particular (RPPN); tracejado = uso sustentável. Fonte oficial: CNUC/MMA. Liga em um mapa e vale para <strong>todos</strong> (principal, propagação, Rota de Serviço, Trilhas). Baixa só o seu estado na 1ª vez e depois funciona sem rede. Aparece com zoom de região; com zoom perto, mostra o nome (toque para ver categoria e órgão gestor).</td></tr>
+      <tr><td><span class="btn-tag btn-green">🌳 Áreas protegidas</span></td><td>Mostra os limites das <strong>unidades de conservação</strong> (parques, APAs, reservas): verde = federal, azul = estadual, laranja = municipal, roxo = particular (RPPN); tracejado = uso sustentável. Fonte oficial: CNUC/MMA. Liga em um mapa e vale para <strong>todos</strong> (principal, propagação, Operação, Trilhas). Baixa só o seu estado na 1ª vez e depois funciona sem rede. Aparece com zoom de região; com zoom perto, mostra o nome (toque para ver categoria e órgão gestor).</td></tr>
     </table></div>
 
     <h3>Botões inferiores</h3>
@@ -708,6 +708,7 @@ body{font-size:calc(17px * var(--escala,1))}
       <li><strong>Visadas</strong>: cada uma com coordenadas, azimute e distância até o foco.</li>
       <li><strong>Meteorologia no foco</strong>: temperatura, umidade, vento e rajadas, de onde o vento vem, para onde o fogo tende a avançar, chuva, condição do tempo e risco de incêndio.</li>
       <li>Botões <span class="btn-tag btn-gray">Fechar</span> e <span class="btn-tag btn-orange">➤ Traçar rota</span>.</li>
+      <li><span class="btn-tag btn-green">✅ Fogo extinto</span> (só a equipe liberada): o foco fica <strong>cinza, em preto e branco</strong>, para todos e na Central. Também fica cinza sozinho quando uma brigada marca a etapa <strong>Extinto</strong> no Combate. Se o fogo voltar, <span class="btn-tag btn-red">🔥 Reacendeu</span> desfaz. Uma visada nova feita depois, no mesmo lugar, volta a aparecer como fogo ativo. O foco marcado à mão tem a mesma opção ao ser tocado.</li>
     </ul>
     <p>Cada triangulação com conexão fica <strong>registrada</strong> com a meteorologia do momento — um retrato igual para todos os usuários e para consulta das autoridades.</p>
   </div>
@@ -762,7 +763,7 @@ body{font-size:calc(17px * var(--escala,1))}
   <!-- 8B. ROTA DE SERVIÇO -->
   <div class="section" id="rota-servico">
     <span class="section-label">08B</span>
-    <h2>Rota de Serviço — Desenhar no Mapa</h2>
+    <h2>Operação — Desenhar no Mapa</h2>
     <p>Aba para <strong>explicar a rota e o plano aos demais combatentes desenhando no mapa com o dedo</strong>, conversar com a Central, registrar o combate e mostrar onde a sua brigada está. Tudo o que é desenhado aparece <strong>ao vivo</strong> no celular de todos — e na <a href="central.html" style="color:var(--gold-light)">Central de Controle</a>, que também desenha e aparece no app.</p>
     <p>O mapa ocupa a tela inteira; os botões ficam numa <strong>coluna na lateral direita</strong> (como na Central): <strong>Tipo · Desenhar · Texto · Msgs · Combate · Posição · Mapa</strong>. Cada botão abre a sua janelinha; tocar de novo fecha.</p>
     <div class="tabela"><table>
@@ -816,7 +817,7 @@ body{font-size:calc(17px * var(--escala,1))}
     <p>Depois de calcular, aparece o quadro <strong>📤 Informar a Central</strong>. Para avisar o que <strong>resta</strong>, troque o estoque pelo que tem agora e calcule de novo. Em <strong>Missão já cumprida (%)</strong>, diga quanto do trabalho já foi feito: a conta passa a considerar só o que falta da missão.</p>
     <div class="tabela"><table>
       <tr><th>Botão</th><th>O que faz</th></tr>
-      <tr><td><span class="btn-tag btn-purple">Enviar recursos</span></td><td>Manda o que resta, quanto dura, a % cumprida e a % do resto da missão que o estoque cobre. Aparece no 🚒 da brigada na Central, <strong>enquanto você compartilha a posição</strong> (Rota de Serviço).</td></tr>
+      <tr><td><span class="btn-tag btn-purple">Enviar recursos</span></td><td>Manda o que resta, quanto dura, a % cumprida e a % do resto da missão que o estoque cobre. Aparece no 🚒 da brigada na Central, <strong>enquanto você compartilha a posição</strong> (tela Operação).</td></tr>
       <tr><td><span class="btn-tag btn-orange">Pedir suprimento</span></td><td>Manda uma mensagem à Central com o que falta para o resto da missão (ex.: "faltam 3,2 L de mistura").</td></tr>
     </table></div>
     <p>Sem sinal, os dois ficam guardados e saem quando a internet voltar (com o app aberto).</p>
@@ -825,7 +826,7 @@ body{font-size:calc(17px * var(--escala,1))}
   <div class="section" id="brigadas-combate">
     <span class="section-label">08D</span>
     <h2>Brigadas de Combate</h2>
-    <p>Fica na <strong>Rota de Serviço, botão 🚒 Combate</strong> da coluna lateral. Registro do combate na <strong>ocorrência aberta pela Central de Controle</strong>. Só para quem o administrador liberou (e-mail confirmado em Compartilhar → Registro Oficial e cadastrado na Equipe da Central).</p>
+    <p>Fica na <strong>Operação, botão 🚒 Combate</strong> da coluna lateral. Registro do combate na <strong>ocorrência aberta pela Central de Controle</strong>. Só para quem o administrador liberou (e-mail confirmado em Compartilhar → Registro Oficial e cadastrado na Equipe da Central).</p>
     <div class="tabela"><table>
       <tr><th>Parte</th><th>O que faz</th></tr>
       <tr><td>Nome da brigada</td><td>Escreva uma vez (ex.: "Brigada Capão"). Fica salvo no celular.</td></tr>
@@ -1032,6 +1033,7 @@ body{font-size:calc(17px * var(--escala,1))}
       <tr><td>📵 Cobertura de Rede</td><td><span class="btn-tag btn-blue">📵 Limpar Rede (N)</span> remove os círculos azuis de sinal <strong>só deste celular</strong>.</td></tr>
       <tr><td>💧 Fontes de Água</td><td><strong>Só administradores.</strong> <span class="btn-tag btn-red">🗑️ Limpar Fontes de Água</span> apaga as fontes de água marcadas <strong>para todos os usuários</strong>, com confirmação.</td></tr>
       <tr><td>🧭 Diagnóstico da bússola e 🔄 das atualizações</td><td>Informações técnicas para suporte (leituras da bússola, declinação magnética, versão e registros de atualização).</td></tr>
+      <tr><td>🐞 Reportar problema</td><td>Descreva o que aconteceu e em qual tela, e anexe um print se quiser. Modelo do celular e versão do app vão junto. Precisa de internet.</td></tr>
       <tr><td>ℹ️ Sobre</td><td>Resumo das tecnologias do app.</td></tr>
     </table></div>
   </div>
@@ -1067,7 +1069,7 @@ body{font-size:calc(17px * var(--escala,1))}
     <h3>Sincronização automática</h3>
     <p>O que foi feito sem rede fica numa fila no celular e é enviado sozinho quando a conexão volta — focos, visadas e trilhas. O app avisa com "📡 Sync Automático" quantos itens enviou. Exceção: a foto de uma observação de drone feita offline se perde se o app for fechado antes de reconectar.</p>
     <h3>Notificações</h3>
-    <p>Quando alguém reporta um foco ou uma observação de drone, os outros usuários recebem um alerta com coordenadas e horário.</p>
+    <p>Quando alguém reporta um foco ou uma observação de drone, recebem um alerta com coordenadas e horário <strong>só os usuários a até 50 km</strong> do ponto (pela posição aproximada do celular). Quem está longe não é incomodado.</p>
     <h3>Atualizações automáticas</h3>
     <p>Correções e melhorias chegam sem passar pela loja. Ao abrir o app com internet, se houver novidade, aparece "🔄 Atualização Disponível" e o app recarrega sozinho. Se não aparecer, feche o app por completo e abra de novo.</p>
   </div>
@@ -1082,7 +1084,7 @@ body{font-size:calc(17px * var(--escala,1))}
       <li><strong>Fotos</strong>: quem tirou cada foto é visível só para autoridades e administradores; só o autor apaga a própria foto.</li>
       <li><strong>Trilhas</strong>: 200 m de cada ponta cortados; crédito por apelido; envio ao OpenStreetMap só com sua autorização.</li>
       <li><strong>E-mail</strong>: pedido só no Registro Oficial e para liberar o acesso de equipe, confirmado por código; fica associado aos registros oficiais.</li>
-      <li><strong>Localização em segundo plano</strong>: usada só enquanto você grava uma trilha ou deixa a <strong>Posição</strong> ligada na Rota de Serviço. O trajeto da Posição e o contorno vão só para a Central da sua equipe.</li>
+      <li><strong>Localização em segundo plano</strong>: usada só enquanto você grava uma trilha ou deixa a <strong>Posição</strong> ligada na tela Operação. O trajeto da Posição e o contorno vão só para a Central da sua equipe.</li>
       <li><strong>Equipe</strong>: desenhos, mensagens, posições e registros de combate só ficam visíveis para a equipe liberada.</li>
     </ul>
     <p>Política de privacidade completa: <a href="index.html#privacidade" style="color:var(--gold-light)">site do SmokeDistance</a>.</p>
